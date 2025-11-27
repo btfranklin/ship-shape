@@ -110,3 +110,5 @@ export class RNG {
 export interface Drawable {
     draw(context: CanvasRenderingContext2D, rng: RNG): void;
 }
+
+export const UNIT_SCALE = 450;

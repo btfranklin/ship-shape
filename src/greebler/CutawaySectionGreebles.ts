@@ -161,9 +161,6 @@ export class CutawaySectionGreebles implements Drawable {
                     }
                     path.lineTo(xPos, yPos);
                     break;
-
-                case 'finished':
-                    break;
             }
         }
         
