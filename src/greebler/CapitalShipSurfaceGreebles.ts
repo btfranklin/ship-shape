@@ -8,13 +8,14 @@ import { HoseGreebles } from './HoseGreebles.js';
 import { WireGreebles } from './WireGreebles.js';
 import { CutawaySectionGreebles } from './CutawaySectionGreebles.js';
 
-type SurfaceArchetype = 'standard' | 'industrial' | 'tech' | 'clean' | 'dense';
+export type SurfaceArchetype = 'standard' | 'industrial' | 'tech' | 'clean' | 'dense';
 
 export class CapitalShipSurfaceGreebles implements Drawable {
     constructor(
         public xUnits: number, 
         public yUnits: number, 
-        public themeColor: HSBAColor
+        public themeColor: HSBAColor,
+        public forcedArchetype?: SurfaceArchetype
     ) {}
 
     draw(context: CanvasRenderingContext2D, rng: RNG): void {
@@ -39,7 +40,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         }
 
         // Pick Archetype
-        const archetype: SurfaceArchetype = rng.choice(['standard', 'standard', 'industrial', 'tech', 'clean', 'dense']);
+        const archetype: SurfaceArchetype = this.forcedArchetype ?? rng.choice(['standard', 'standard', 'industrial', 'tech', 'clean', 'dense']);
         
         let panelCount = 8;
         let pipeRange = [2, 5];
@@ -104,45 +105,42 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 break;
         }
 
-        // 2. Panels (Hull Plating)
+        // 2. Panels (Hull Plating) - BASE LAYER
         const panels = new PanelGreebles(this.xUnits, this.yUnits, this.themeColor, panelCount, archetype === 'industrial' || archetype === 'dense');
         panels.draw(context, rng);
         
-        // 3. Pipes (Infrastructure)
-        if (rng.bool(pipeChance)) {
-            const pipes = new PipeGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(pipeRange[0], pipeRange[1]));
-            pipes.draw(context, rng);
-        }
-        
-        // 3b. Cutaway Sections (Damage/Exposed Innards)
-        // Draw BEFORE heavy equipment/hoses so those can layer on top? 
-        // Or draw AFTER to show deep damage cutting through everything?
-        // Swift version doesn't specify layer order, but logically damage cuts through panels/pipes.
-        // Let's draw it here.
+        // 3. Cutaway Sections (Damage/Exposed Innards) - INSET LAYER
+        // Draws "into" the hull, so should be before raised elements.
         if (rng.bool(cutawayChance)) {
             const cutaways = new CutawaySectionGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(1, 2));
             cutaways.draw(context, rng);
         }
 
-        // 4. Hoses (Heavy connectors)
-        if (rng.bool(hoseChance)) {
-            const hoses = new HoseGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(hoseRange[0], hoseRange[1]));
-            hoses.draw(context, rng);
-        }
-
-        // 5. Equipment (Tech bits)
+        // 4. Equipment (Tech bits) - SURFACE LAYER
         if (rng.bool(equipChance)) {
             const equip = new EquipmentGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(equipRange[0], equipRange[1]));
             equip.draw(context, rng);
         }
         
-        // 6. Wires (Messy cables)
+        // 5. Pipes (Infrastructure) - RAISED LAYER 1
+        if (rng.bool(pipeChance)) {
+            const pipes = new PipeGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(pipeRange[0], pipeRange[1]));
+            pipes.draw(context, rng);
+        }
+
+        // 6. Hoses (Heavy connectors) - RAISED LAYER 2
+        if (rng.bool(hoseChance)) {
+            const hoses = new HoseGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(hoseRange[0], hoseRange[1]));
+            hoses.draw(context, rng);
+        }
+        
+        // 7. Wires (Messy cables) - RAISED LAYER 3 (Topmost messy stuff)
         if (rng.bool(wireChance)) {
             const wires = new WireGreebles(this.xUnits, this.yUnits, rng.intRange(wireRange[0], wireRange[1]), undefined, rng.intRange(1, 3));
             wires.draw(context, rng);
         }
         
-        // 7. Light Panels
+        // 8. Light Panels - OVERLAY
         if (rng.bool(lightChance)) {
             const lights = new LightPanelGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(lightRange[0], lightRange[1]));
             lights.draw(context, rng);

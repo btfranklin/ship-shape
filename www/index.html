@@ -19,22 +19,12 @@
     </style>
 </head>
 <body>
+    <div id="main">
+        <canvas id="appCanvas"></canvas>
+    </div>
+
     <div id="controls">
-        <h2>Configuration</h2>
-        
-        <div class="control-group">
-            <a href="showcase.html" style="color: #88c0d0; text-decoration: none; display: block; padding: 5px 0;">View Component Showcase &rarr;</a>
-        </div>
-
-        <div class="control-group">
-            <label>Mode</label>
-            <select id="modeSelect" style="width: 100%; padding: 5px; background: #222; color: #fff; border: 1px solid #444;">
-                <option value="full">Full Ship</option>
-                <option value="surface">Surface Detail</option>
-                <option value="shape">Hull Shape</option>
-            </select>
-        </div>
-
+        <h2>Greebler</h2>
         <div class="control-group">
             <label>Seed</label>
             <div style="display: flex; gap: 5px;">
@@ -42,37 +32,28 @@
                 <button id="randomSeedBtn">🎲</button>
             </div>
         </div>
-
-        <div id="surfaceControls" class="mode-controls">
-            <div class="control-group">
-                <label>Panels (Hull)</label>
-                <input type="checkbox" id="showPanels" checked>
-            </div>
-            <div class="control-group">
-                <label>Pipes</label>
-                <input type="checkbox" id="showPipes" checked>
-            </div>
-            <div class="control-group">
-                <label>Light Panels</label>
-                <input type="checkbox" id="showLights" checked>
-            </div>
-            <div class="control-group">
-                <label>Base Color (Hue)</label>
-                <input type="range" id="hueInput" min="0" max="360" value="210">
-            </div>
+        
+        <div class="control-group">
+            <label>Base Color (Hue)</label>
+            <input type="range" id="hueInput" min="0" max="360" value="200">
         </div>
 
-        <div id="shapeControls" class="mode-controls" style="display:none;">
             <div class="control-group">
-                <label>Complexity</label>
-                <input type="range" id="complexityInput" min="1" max="20" value="8">
+                <label>Mode</label>
+                <select id="modeSelect">
+                    <option value="full">Full Ship</option>
+                    <option value="shape">Structure (Wireframe)</option>
+                    <option value="surface">Surface Detail</option>
+                </select>
+            </div>
+
+            <button id="generateBtn">Generate Ship</button>
+            <br><br>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <a href="greeble_showcase.html" style="color: #0ff; text-decoration: none; border-bottom: 1px dotted #0ff;">View Greeble Library</a>
+                <a href="element_showcase.html" style="color: #0ff; text-decoration: none; border-bottom: 1px dotted #0ff;">View Element Library</a>
             </div>
         </div>
-
-        <button id="generateBtn">Generate</button>
-    </div>
-    <div id="main">
-        <canvas id="appCanvas"></canvas>
     </div>
     <script type="module" src="/main.ts"></script>
 </body>

@@ -71,6 +71,12 @@ export class HSBAColor {
     withAlpha(newAlpha: number): HSBAColor {
         return new HSBAColor(this.h, this.s, this.b, newAlpha);
     }
+
+    withHueShift(shift: number): HSBAColor {
+        let newH = (this.h + shift) % 1.0;
+        if (newH < 0) newH += 1.0;
+        return new HSBAColor(newH, this.s, this.b, this.a);
+    }
 }
 
 export class RNG {

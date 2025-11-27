@@ -2,9 +2,9 @@ import { HSBAColor, RNG } from './common.js';
 import type { Drawable } from './common.js';
 
 export class LightPanelGreebles implements Drawable {
-    static LIGHT_INSET = 0.01;
-    static LIGHT_PADDING = 0.007;
-    static LIGHT_SIZE = 0.02;
+    static LIGHT_INSET = 0.005;
+    static LIGHT_PADDING = 0.0035;
+    static LIGHT_SIZE = 0.01;
 
     constructor(
         public xUnits: number,
