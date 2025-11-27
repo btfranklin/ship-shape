@@ -21,7 +21,7 @@ export class HoseGreebles implements Drawable {
 
         // 2. Draw Endpoints (Fixtures)
         const fixtureColor = this.themeColor.withSaturation(-0.25).toRGBAString();
-        const endpointRadius = 0.04;
+        const endpointRadius = 0.025;
 
         context.lineWidth = 0.003;
         context.strokeStyle = 'black';
@@ -43,14 +43,14 @@ export class HoseGreebles implements Drawable {
 
         // 3. Draw Hoses
         // Shadow
-        context.shadowOffsetX = 0.01;
-        context.shadowOffsetY = 0.01;
-        context.shadowBlur = 0.01;
+        context.shadowOffsetX = 0.005;
+        context.shadowOffsetY = 0.005;
+        context.shadowBlur = 0.005;
         context.shadowColor = 'rgba(0,0,0,0.5)';
 
         context.lineCap = 'round';
         context.lineJoin = 'round';
-        context.lineWidth = 0.05; // Thick hose
+        context.lineWidth = 0.025; // Thinner hose
         context.strokeStyle = this.themeColor.withBrightness(-0.4).toRGBAString();
 
         for (const hose of hoses) {

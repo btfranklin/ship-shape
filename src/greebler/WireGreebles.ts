@@ -42,10 +42,10 @@ export class WireGreebles implements Drawable {
         }
 
         // 3. Draw Endpoints
-        const endpointRadius = 0.005;
+        const endpointRadius = 0.003;
         context.fillStyle = 'black';
         context.strokeStyle = 'black';
-        context.lineWidth = 0.003;
+        context.lineWidth = 0.002;
 
         for (const wire of wires) {
             for (const pt of wire.endPoints) {
@@ -57,14 +57,14 @@ export class WireGreebles implements Drawable {
         }
 
         // 4. Draw Wires
-        context.shadowOffsetX = 0.006;
-        context.shadowOffsetY = -0.004;
-        context.shadowBlur = 0.004;
+        context.shadowOffsetX = 0.003;
+        context.shadowOffsetY = -0.002;
+        context.shadowBlur = 0.002;
         context.shadowColor = 'rgba(0,0,0,0.5)';
         
         context.lineCap = 'round';
         context.lineJoin = 'round';
-        context.lineWidth = 0.005;
+        context.lineWidth = 0.003;
 
         for (const wire of wires) {
             const color = rng.choice(this.wireColors);
