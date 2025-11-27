@@ -80,175 +80,91 @@ export class CutawaySectionGreebles implements Drawable {
         context.restore();
     }
 
-            private generateClippingPath(rect: {x:number, y:number, w:number, h:number}, rng: RNG): Path2D {
-
-                const path = new Path2D();
-
-                
-
-                const safeMargin = 0.05; // Fixed small margin for internal path generation
-
-                const innerRectX = rect.x + safeMargin;
-
-                const innerRectY = rect.y + safeMargin;
-
-                const innerRectW = rect.w - 2 * safeMargin;
-
-                const innerRectH = rect.h - 2 * safeMargin;
-
+    private generateClippingPath(rect: {x:number, y:number, w:number, h:number}, rng: RNG): Path2D {
+        const path = new Path2D();
         
-
-                if (innerRectW <= 0 || innerRectH <= 0) { // Handle very small rects
-
-                    path.rect(rect.x, rect.y, rect.w, rect.h);
-
-                    path.closePath();
-
-                    return path;
-
-                }
-
+        let xPos = rect.x;
+        let yPos = rng.range(rect.y + rect.h/2, rect.y + rect.h);
         
+        path.moveTo(xPos, yPos);
 
-                let xPos = innerRectX;
-
-                let yPos = rng.range(innerRectY + innerRectH/2, innerRectY + innerRectH);
-
-                
-
-                // Clamp initial position to be within the safe inner rect
-
-                yPos = Math.max(innerRectY, Math.min(innerRectY + innerRectH, yPos));
-
-                
-
-                path.moveTo(xPos, yPos);
-
+        let phase: 'movingRight' | 'movingDown' | 'movingLeft' = 'movingRight';
+        let isFinished = false;
         
+        let iterations = 0;
+        while (!isFinished && iterations < 100) {
+            iterations++;
+            
+            const midY = rect.y + rect.h/2;
+            const maxX = rect.x + rect.w;
+            const minX = rect.x;
 
-                let phase: 'movingRight' | 'movingDown' | 'movingLeft' = 'movingRight';
-
-                let isFinished = false;
-
-                let iterations = 0;
-
-                while (!isFinished && iterations < 100) {
-
-                    iterations++;
-
-                    
-
-                    const midY = innerRectY + innerRectH/2;
-
-                    const maxX = innerRectX + innerRectW;
-
-                    const minX = innerRectX;
-
-                    const maxY = innerRectY + innerRectH;
-
-                    const minY = innerRectY; 
-
-        
-
-                    switch (phase) {
-
-                        case 'movingRight':
-
-                            // Clamp rng.range outputs to stay within bounds
-
-                            const targetX_R = rng.range(xPos, maxX);
-
-                            xPos = Math.max(innerRectX, Math.min(maxX, targetX_R));
-
-        
-
-                            if (yPos > midY) {
-
-                                const newY_R = rng.range(midY, yPos);
-
-                                yPos = Math.max(minY, Math.min(maxY, newY_R));
-
-                            } else {
-
-                                const newY_R = rng.range(yPos, midY);
-
-                                yPos = Math.max(minY, Math.min(maxY, newY_R));
-
-                            }
-
-                            if (xPos >= maxX - 0.001) { // Small epsilon to account for float inaccuracies
-
-                                xPos = maxX;
-
-                                phase = 'movingDown';
-
-                            }
-
-                            path.lineTo(xPos, yPos);
-
-                            break;
-
-        
-
-                        case 'movingDown':
-
-                            const targetY_D = rng.range(minY, yPos);
-
-                            yPos = Math.max(minY, Math.min(maxY, targetY_D));
-
-                            path.lineTo(xPos, yPos);
-
-                            phase = 'movingLeft';
-
-                            break;
-
-        
-
-                        case 'movingLeft':
-
-                            const targetX_L = rng.range(minX, xPos);
-
-                            xPos = Math.max(minX, Math.min(maxX, targetX_L));
-
-        
-
-                            if (yPos > midY) {
-
-                                const newY_L = rng.range(midY, yPos);
-
-                                yPos = Math.max(minY, Math.min(maxY, newY_L));
-
-                            } else {
-
-                                const newY_L = rng.range(yPos, midY);
-
-                                yPos = Math.max(minY, Math.min(maxY, newY_L));
-
-                            }
-
-                            if (xPos <= minX + 0.001) { // Small epsilon
-
-                                xPos = minX;
-
-                                isFinished = true; // Set flag to terminate loop
-
-                            }
-
-                            path.lineTo(xPos, yPos);
-
-                            break;
-
+            switch (phase) {
+                case 'movingRight':
+                    if (yPos > midY) { 
+                        if (rng.bool()) {
+                            xPos = rng.range(xPos, maxX);
+                        } else {
+                            const newY = rng.range(midY, yPos);
+                            const delta = yPos - newY;
+                            yPos = newY;
+                            xPos += delta;
+                        }
+                    } else { 
+                         if (rng.bool()) {
+                            xPos = rng.range(xPos, maxX);
+                        } else {
+                            const newY = rng.range(yPos, midY);
+                            const delta = newY - yPos;
+                            yPos = newY;
+                            xPos += delta;
+                        }
                     }
+                    if (xPos >= maxX) {
+                        xPos = maxX;
+                        phase = 'movingDown';
+                    }
+                    path.lineTo(xPos, yPos);
+                    break;
 
-                }
+                case 'movingDown':
+                    yPos = rng.range(rect.y, yPos);
+                    path.lineTo(xPos, yPos);
+                    phase = 'movingLeft';
+                    break;
 
-                
-
-                path.closePath();
-
-                return path;
-
+                case 'movingLeft':
+                    if (yPos > midY) {
+                         if (rng.bool()) {
+                            xPos = rng.range(minX, xPos);
+                        } else {
+                            const newY = rng.range(midY, yPos);
+                            const delta = yPos - newY;
+                            yPos = newY;
+                            xPos -= delta;
+                        }
+                    } else {
+                        if (rng.bool()) {
+                            xPos = rng.range(minX, xPos);
+                        } else {
+                            const newY = rng.range(yPos, midY);
+                            const delta = newY - yPos;
+                            yPos = newY;
+                            xPos -= delta;
+                        }
+                    }
+                    if (xPos <= minX) {
+                        xPos = minX;
+                        isFinished = true;
+                    }
+                    path.lineTo(xPos, yPos);
+                    break;
             }
+        }
+        
+        path.closePath();
+        return path;
+    }
 
     private drawInnards(context: CanvasRenderingContext2D, rect: {x:number, y:number, w:number, h:number}, color: HSBAColor, rng: RNG) {
         context.save();
