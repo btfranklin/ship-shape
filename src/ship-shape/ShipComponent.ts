@@ -414,16 +414,35 @@ export class ShipComponent {
                  return; // Done for engine
             }
     
-            // STANDARD COMPONENT DRAWING
+                    // STANDARD COMPONENT DRAWING
     
-
-            ctx.fillStyle = this.color.withBrightness(-0.3).toRGBAString(); 
-
-            ctx.fill(this.shapePath);
-
+                    
     
-
-            // 2. Draw Greebles (Clipped)
+                    // 1. Volume Fill (Gradient)
+    
+                    // Light Top-Left to Dark Bottom-Right
+    
+                    const grad = ctx.createLinearGradient(this.bounds.x, this.bounds.y, this.bounds.x + this.bounds.w, this.bounds.y + this.bounds.h);
+    
+                    const base = this.color;
+    
+                    grad.addColorStop(0, base.withBrightness(0.1).toRGBAString()); // Highlight
+    
+                    grad.addColorStop(0.5, base.withBrightness(-0.2).toRGBAString()); // Mid
+    
+                    grad.addColorStop(1, base.withBrightness(-0.5).toRGBAString()); // Shadow
+    
+                    
+    
+                    ctx.fillStyle = grad;
+    
+                    ctx.fill(this.shapePath);
+    
+            
+    
+                    // 2. Draw Greebles (Clipped)
+    
+            
 
             ctx.save();
 
@@ -437,15 +456,307 @@ export class ShipComponent {
 
             
 
-            this.greebles.draw(ctx, rng);
+                    this.greebles.draw(ctx, rng);
 
             
 
-            ctx.restore(); 
+                    
 
-    
+            
 
-            // 3. Inner Highlight (Bevel)
+                    ctx.restore(); 
+
+            
+
+            
+
+            
+
+                            // 2b. Lighting Overlays (Post-Greeble Volume)
+
+            
+
+            
+
+            
+
+                            ctx.save();
+
+            
+
+            
+
+            
+
+                            ctx.clip(this.shapePath);
+
+            
+
+            
+
+            
+
+                            
+
+            
+
+            
+
+            
+
+                            // Determine Lighting Direction
+
+            
+
+            
+
+            
+
+                            // Towers (Tall) get side lighting (Shadow Right)
+
+            
+
+            
+
+            
+
+                            // Hulls (Wide) get top-down lighting (Shadow Bottom)
+
+            
+
+            
+
+            
+
+                            const isTall = this.bounds.h > this.bounds.w;
+
+            
+
+            
+
+            
+
+                            
+
+            
+
+            
+
+            
+
+                            let shadowGrad, lightGrad;
+
+            
+
+            
+
+            
+
+                            
+
+            
+
+            
+
+            
+
+                            if (isTall) {
+
+            
+
+            
+
+            
+
+                                // Horizontal: Left (Light) -> Right (Shadow)
+
+            
+
+            
+
+            
+
+                                shadowGrad = ctx.createLinearGradient(this.bounds.x, this.bounds.y, this.bounds.x + this.bounds.w, this.bounds.y);
+
+            
+
+            
+
+            
+
+                                lightGrad = ctx.createLinearGradient(this.bounds.x, this.bounds.y, this.bounds.x + this.bounds.w, this.bounds.y);
+
+            
+
+            
+
+            
+
+                            } else {
+
+            
+
+            
+
+            
+
+                                // Vertical: Top (Light) -> Bottom (Shadow)
+
+            
+
+            
+
+            
+
+                                shadowGrad = ctx.createLinearGradient(this.bounds.x, this.bounds.y, this.bounds.x, this.bounds.y + this.bounds.h);
+
+            
+
+            
+
+            
+
+                                lightGrad = ctx.createLinearGradient(this.bounds.x, this.bounds.y, this.bounds.x, this.bounds.y + this.bounds.h);
+
+            
+
+            
+
+            
+
+                            }
+
+            
+
+            
+
+            
+
+                            
+
+            
+
+            
+
+            
+
+                            // Shadow (End of gradient)
+
+            
+
+            
+
+            
+
+                            shadowGrad.addColorStop(0.4, 'rgba(0,0,0,0)');
+
+            
+
+            
+
+            
+
+                            shadowGrad.addColorStop(1, 'rgba(0,0,0,0.6)');
+
+            
+
+            
+
+            
+
+                            ctx.fillStyle = shadowGrad;
+
+            
+
+            
+
+            
+
+                            ctx.fill(this.shapePath);
+
+            
+
+            
+
+            
+
+                            
+
+            
+
+            
+
+            
+
+                            // Highlight (Start of gradient)
+
+            
+
+            
+
+            
+
+                            lightGrad.addColorStop(0, 'rgba(255,255,255,0.2)');
+
+            
+
+            
+
+            
+
+                            lightGrad.addColorStop(0.4, 'rgba(255,255,255,0)');
+
+            
+
+            
+
+            
+
+                            ctx.fillStyle = lightGrad;
+
+            
+
+            
+
+            
+
+                            ctx.fill(this.shapePath);
+
+            
+
+            
+
+            
+
+                            
+
+            
+
+            
+
+            
+
+                            ctx.restore();
+
+            
+
+            
+
+            
+
+                    
+
+            
+
+            
+
+            
+
+                    // 3. Inner Highlight (Bevel)
+
+            
+
+            
 
             ctx.save();
 
