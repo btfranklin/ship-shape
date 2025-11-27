@@ -1,0 +1,46 @@
+# Node.js
+node_modules/
+dist/
+
+# npm
+npm-debug.log*
+.npm/
+.node-gyp/
+.vscode-test/
+
+# Vite
+.vite/
+
+# TypeScript
+# Compiled JavaScript and D.TS files, especially if they end up in src/
+# (though we want to avoid them being generated in src/ in the first place)
+*.js
+*.js.map
+*.d.ts
+*.d.ts.map
+
+# OS
+.DS_Store
+
+# Editor/IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Generated images
+ship_ts.png
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+
+# Misc
+*.bak
+*.swp
+*~
+

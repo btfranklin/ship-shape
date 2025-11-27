@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Greebler Playground</title>
+    <style>
+        body { font-family: sans-serif; display: flex; height: 100vh; margin: 0; overflow: hidden; background: #222; color: #eee; }
+        #controls { width: 300px; background: #333; padding: 20px; overflow-y: auto; border-right: 1px solid #444; display: flex; flex-direction: column; gap: 10px; }
+        #main { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; background: #111; overflow: hidden; }
+        canvas { box-shadow: 0 0 20px rgba(0,0,0,0.5); background: #000; max-width: 95%; max-height: 95%; object-fit: contain; }
+        .control-group { border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 10px; }
+        .control-group label { display: block; margin-bottom: 5px; font-size: 0.9em; color: #ccc; }
+        .control-group input[type="range"] { width: 100%; }
+        .control-group input[type="number"] { width: 100%; box-sizing: border-box; background: #222; border: 1px solid #444; color: #fff; padding: 5px; }
+        button { padding: 10px; cursor: pointer; background: #444; color: #fff; border: 1px solid #555; border-radius: 4px; }
+        button:hover { background: #555; }
+        h2 { margin-top: 0; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h2>Configuration</h2>
+        
+        <div class="control-group">
+            <label>Mode</label>
+            <select id="modeSelect" style="width: 100%; padding: 5px; background: #222; color: #fff; border: 1px solid #444;">
+                <option value="full">Full Ship</option>
+                <option value="surface">Surface Detail</option>
+                <option value="shape">Hull Shape</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>Seed</label>
+            <div style="display: flex; gap: 5px;">
+                <input type="number" id="seedInput" value="12345">
+                <button id="randomSeedBtn">🎲</button>
+            </div>
+        </div>
+
+        <div id="surfaceControls" class="mode-controls">
+            <div class="control-group">
+                <label>Panels (Hull)</label>
+                <input type="checkbox" id="showPanels" checked>
+            </div>
+            <div class="control-group">
+                <label>Pipes</label>
+                <input type="checkbox" id="showPipes" checked>
+            </div>
+            <div class="control-group">
+                <label>Light Panels</label>
+                <input type="checkbox" id="showLights" checked>
+            </div>
+            <div class="control-group">
+                <label>Base Color (Hue)</label>
+                <input type="range" id="hueInput" min="0" max="360" value="210">
+            </div>
+        </div>
+
+        <div id="shapeControls" class="mode-controls" style="display:none;">
+            <div class="control-group">
+                <label>Complexity</label>
+                <input type="range" id="complexityInput" min="1" max="20" value="8">
+            </div>
+        </div>
+
+        <button id="generateBtn">Generate</button>
+    </div>
+    <div id="main">
+        <canvas id="appCanvas"></canvas>
+    </div>
+    <script type="module" src="/main.ts"></script>
+</body>
+</html>
