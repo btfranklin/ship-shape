@@ -1,7 +1,7 @@
 import { HSBAColor, RNG, UNIT_SCALE } from '../greebler/common.js';
 import { CapitalShipSurfaceGreebles, SurfaceArchetype } from '../greebler/CapitalShipSurfaceGreebles.js';
 
-export type ComponentType = 'hull' | 'superstructure' | 'engine' | 'weapon' | 'sensor' | 'tank' | 'sphere' | 'ring';
+export type ComponentType = 'hull' | 'superstructure' | 'engine' | 'weapon' | 'sensor' | 'tank' | 'sphere' | 'ring' | 'trench';
 
 export class ShipComponent {
     public bounds: { x: number, y: number, w: number, h: number };
@@ -65,10 +65,13 @@ export class ShipComponent {
             case 'ring':
                 archetype = 'structure'; // Plain panels only
                 break;
+            case 'trench':
+                archetype = 'trench';
+                break;
         }
 
         // Configure greebles
-        const skipBaseFill = (type === 'sphere' || type === 'ring');
+        const skipBaseFill = (type === 'sphere' || type === 'ring' || type === 'trench');
         this.greebles = new CapitalShipSurfaceGreebles(w / UNIT_SCALE, h / UNIT_SCALE, color, archetype, skipBaseFill);
     }
 
@@ -92,6 +95,10 @@ export class ShipComponent {
             case 'hull':
                 // Hulls are main structural blocks (Horizontal)
                 shapeType = rng.choice(['rect', 'cut-corner', 'taper-front']);
+                break;
+
+            case 'trench':
+                shapeType = 'rect';
                 break;
 
             case 'superstructure':
@@ -277,9 +284,9 @@ export class ShipComponent {
         // 1. Base Fill (Radial)
         const grad = ctx.createRadialGradient(cx - r*0.3, cy - r*0.3, r*0.1, cx, cy, r);
         const base = this.color;
-        grad.addColorStop(0, base.withBrightness(0.4).toRGBAString()); 
+        grad.addColorStop(0, base.withBrightness(0.3).toRGBAString()); 
         grad.addColorStop(0.5, base.withBrightness(-0.1).toRGBAString()); 
-        grad.addColorStop(1, base.withBrightness(-0.3).toRGBAString()); 
+        grad.addColorStop(1, base.withBrightness(-0.2).toRGBAString()); 
         
         ctx.fillStyle = grad;
         ctx.fill(this.shapePath);
@@ -298,9 +305,9 @@ export class ShipComponent {
         
         const overlayGrad = ctx.createRadialGradient(cx - r*0.3, cy - r*0.3, r*0.1, cx, cy, r);
         // Light source top-left
-        overlayGrad.addColorStop(0, 'rgba(255,255,255,0.3)'); 
+        overlayGrad.addColorStop(0, 'rgba(255,255,255,0.2)'); 
         overlayGrad.addColorStop(0.5, 'rgba(0,0,0,0)'); 
-        overlayGrad.addColorStop(1, 'rgba(0,0,0,0.4)'); // Deep shadow at edges
+        overlayGrad.addColorStop(1, 'rgba(0,0,0,0.3)'); // Deep shadow at edges
         
         ctx.fillStyle = overlayGrad;
         ctx.fill(this.shapePath);

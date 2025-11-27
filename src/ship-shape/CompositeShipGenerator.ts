@@ -168,6 +168,20 @@ export class CompositeShipGenerator {
             ring.generateShape(rng);
             components.push(ring);
         }
+
+        // EQUATORIAL TRENCH
+        // Runs along the side/middle of the hull
+        if (rng.bool(0.5)) {
+            const trenchH = height * rng.range(0.05, 0.1); // Narrow strip
+            const trenchW = width * rng.range(0.5, 0.8);
+            const trenchX = engineX + engineW; // Start after engine
+            const trenchY = centerY - trenchH/2;
+            
+            // High Z to draw on top of hull segments
+            const trench = new ShipComponent(trenchX, trenchY, trenchW, trenchH, 20, 'trench', themeColor.withBrightness(-0.3), rng);
+            trench.generateShape(rng);
+            components.push(trench);
+        }
         
         // Sort components by Z-Index so they draw correctly (Painter's Algorithm)
         components.sort((a, b) => a.zIndex - b.zIndex);

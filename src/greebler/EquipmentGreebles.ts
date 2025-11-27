@@ -228,37 +228,45 @@ export class EquipmentTrenchGreebles implements Drawable {
         
         // Base fill for the trench
         const trenchX = 0;
+        // Swift code uses y = 0.05 for the rect.
         const trenchY = 0.05; 
         const trenchW = this.xUnits / scale;
         const trenchH = this.trenchWidth;
 
         context.fillStyle = this.themeColor.withBrightness(-0.3).toRGBAString();
         context.fillRect(trenchX, trenchY, trenchW, trenchH);
-
-        // Draw equipment inside the trench
-        equipment.draw(context, rng);
-
-        // Inner Shadow (Linear Gradient for Recessed Look)
-        // Drawn AFTER equipment so it casts shadow OVER the equipment
+        
+        // Clip to trench area for equipment
         context.save();
-        // Clip to trench to ensure gradients don't bleed out
         context.beginPath();
         context.rect(trenchX, trenchY, trenchW, trenchH);
         context.clip();
 
-        // Top Shadow (Depth from top edge + Ambient Occlusion)
-        const shadowDepth = trenchH; // Full height gradient
+        // Draw equipment inside the trench
+        equipment.draw(context, rng);
         
-        const gradTop = context.createLinearGradient(trenchX, trenchY, trenchX, trenchY + shadowDepth);
-        gradTop.addColorStop(0, 'rgba(0,0,0,0.7)'); // Deep shadow from top lip
-        gradTop.addColorStop(1, 'rgba(0,0,0,0.3)'); // Ambient darkness at bottom
-        context.fillStyle = gradTop;
-        context.fillRect(trenchX, trenchY, trenchW, shadowDepth);
+        context.restore(); // End clip
 
-        context.restore();
+        // Shadow Casting (Bottom Lip)
+        // Swift: context.setShadow(offset: CGSize(width: 12, height: -6), blur: 12, color: .black)
+        // Swift: context.fill(CGRect(x: 0.0, y: trenchWidth+0.05, width: xUnits/scaleFactor, height: 0.4))
+        // This draws a rect BELOW the trench, casting a shadow UP into it (or onto the edge).
         
-        context.restore();
+        context.save();
+        // Shadow offset (12, -6) at scale 0.1 implies (1.2, -0.6) in logical units? 
+        // Or context is scaled. At 0.1 scale, 12px is huge.
+        // Let's try to approximate the visual effect.
+        // Shadow pointing Up-Right.
+        context.shadowOffsetX = 12;
+        context.shadowOffsetY = -6;
+        context.shadowBlur = 12;
+        context.shadowColor = 'black';
         
+        context.fillStyle = this.themeColor.toRGBAString(); // Or just a filler color, it's the caster.
+        // Rect below trench
+        context.fillRect(trenchX, trenchY + trenchH, trenchW, 0.4);
+        context.restore();
+
         context.restore();
     }
 }

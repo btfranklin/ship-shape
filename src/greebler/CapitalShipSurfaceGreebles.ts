@@ -3,12 +3,12 @@ import type { Drawable } from './common.js';
 import { PanelGreebles } from './PanelGreebles.js';
 import { PipeGreebles } from './PipeGreebles.js';
 import { LightPanelGreebles } from './LightPanelGreebles.js';
-import { EquipmentGreebles } from './EquipmentGreebles.js';
+import { EquipmentGreebles, EquipmentTrenchGreebles } from './EquipmentGreebles.js';
 import { HoseGreebles } from './HoseGreebles.js';
 import { WireGreebles } from './WireGreebles.js';
 import { CutawaySectionGreebles } from './CutawaySectionGreebles.js';
 
-export type SurfaceArchetype = 'standard' | 'industrial' | 'tech' | 'clean' | 'dense' | 'structure';
+export type SurfaceArchetype = 'standard' | 'industrial' | 'tech' | 'clean' | 'dense' | 'structure' | 'trench';
 
 export class CapitalShipSurfaceGreebles implements Drawable {
     constructor(
@@ -115,11 +115,28 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 wireChance = 0.0;
                 cutawayChance = 0.0;
                 break;
+            case 'trench':
+                panelCount = 0;
+                pipeChance = 0.0;
+                lightChance = 0.0;
+                equipChance = 0.0;
+                hoseChance = 0.0;
+                wireChance = 0.0;
+                cutawayChance = 0.0;
+                break;
         }
 
-        // 2. Panels (Hull Plating) - BASE LAYER
-        const panels = new PanelGreebles(this.xUnits, this.yUnits, this.themeColor, panelCount, archetype === 'industrial' || archetype === 'dense', this.skipBaseFill);
-        panels.draw(context, rng);
+        // 2. Panels OR Trench - BASE LAYER
+        if (archetype === 'trench') {
+            // EquipmentTrenchGreebles has a hardcoded internal scale of 0.1. 
+            // To make it fill the component height (this.yUnits), we must pass a width scaled up by 10.
+            const trenchWidth = this.yUnits * 10;
+            const trench = new EquipmentTrenchGreebles(this.xUnits, this.yUnits, this.themeColor, this.yUnits / 2, trenchWidth);
+            trench.draw(context, rng);
+        } else {
+            const panels = new PanelGreebles(this.xUnits, this.yUnits, this.themeColor, panelCount, archetype === 'industrial' || archetype === 'dense', this.skipBaseFill);
+            panels.draw(context, rng);
+        }
         
         // 3. Cutaway Sections (Damage/Exposed Innards) - INSET LAYER
         // Draws "into" the hull, so should be before raised elements.

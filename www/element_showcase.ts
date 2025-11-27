@@ -50,10 +50,37 @@ const types: { type: ComponentType, desc: string, greebles: string[] }[] = [
     },
     {
         type: 'weapon',
-        desc: "Turrets or heavy batteries (Not fully implemented in generator yet).",
+        desc: "Turrets or heavy batteries.",
         greebles: [
             "Archetype: Dense",
             "Greebles: Heavy pipes, vents, reinforcement",
+        ]
+    },
+    {
+        type: 'sphere',
+        desc: "Spherical modules, often containing reactors or gravity drives.",
+        greebles: [
+            "Archetype: Tech",
+            "Visual Style: Radial 3D Shading + Clipped Greebles",
+            "Overlay: Lighting gradients to reinforce volume"
+        ]
+    },
+    {
+        type: 'ring',
+        desc: "Large structural rings encircling the hull.",
+        greebles: [
+            "Archetype: Structure (Plain)",
+            "Visual Style: Cylindrical Gradient (Harsh shadows)",
+            "Greebles: Panels only, with multiply blending"
+        ]
+    },
+    {
+        type: 'trench',
+        desc: "Recessed equatorial trench filled with heavy equipment.",
+        greebles: [
+            "Archetype: Trench",
+            "Visual Style: Inset / Recessed",
+            "Greebles: Dense pipes/machinery, no panels"
         ]
     }
 ];
@@ -106,29 +133,37 @@ function render() {
             ctx.fillStyle = '#111';
             ctx.fillRect(0,0,300,200); // Background
             
-            // Create a dummy component centered in the canvas
-            const w = 200;
-            const h = 120;
+            // Base size
+            let w = 200;
+            let h = 120;
             
-                    // For towers, make them tall
+            // Sizing logic based on type
+            if (def.type === 'sensor' || def.type === 'superstructure') {
+                // Tall towers
+                h *= 1.5;
+                w *= 0.6;
+            } else if (def.type === 'ring') {
+                // Very tall, somewhat narrow
+                h = 180;
+                w = 60;
+            } else if (def.type === 'sphere') {
+                // Square aspect ratio
+                const s = 140;
+                w = s;
+                h = s;
+            } else if (def.type === 'trench') {
+                // Wide and short
+                w = 280;
+                h = 40;
+            }
             
-                    const hMod = (def.type === 'sensor' || def.type === 'superstructure') ? 1.5 : 1.0;
-            
-                    const wMod = (def.type === 'sensor' || def.type === 'superstructure') ? 0.6 : 1.0;
-            
-                    
-            
-                    const finalW = w * wMod;
-            
-            
-            const finalH = h * hMod;
-            const finalX = (300 - finalW)/2;
-            const finalY = (200 - finalH)/2;
+            const finalX = (300 - w)/2;
+            const finalY = (200 - h)/2;
 
             // New RNG every click
             const localRng = new RNG(Math.random() * 10000);
             
-            const comp = new ShipComponent(finalX, finalY, finalW, finalH, 10, def.type, theme, localRng);
+            const comp = new ShipComponent(finalX, finalY, w, h, 10, def.type, theme, localRng);
             comp.generateShape(localRng);
             comp.draw(ctx, localRng);
             
