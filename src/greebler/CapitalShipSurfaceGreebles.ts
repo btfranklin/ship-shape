@@ -4,6 +4,9 @@ import { PanelGreebles } from './PanelGreebles.js';
 import { PipeGreebles } from './PipeGreebles.js';
 import { LightPanelGreebles } from './LightPanelGreebles.js';
 import { EquipmentGreebles } from './EquipmentGreebles.js';
+import { HoseGreebles } from './HoseGreebles.js';
+import { WireGreebles } from './WireGreebles.js';
+import { CutawaySectionGreebles } from './CutawaySectionGreebles.js';
 
 type SurfaceArchetype = 'standard' | 'industrial' | 'tech' | 'clean' | 'dense';
 
@@ -45,6 +48,13 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         let lightChance = 0.6;
         let equipRange = [1, 3];
         let equipChance = 0.2;
+        
+        let hoseChance = 0.1;
+        let hoseRange = [1, 2];
+        let wireChance = 0.1;
+        let wireRange = [5, 10];
+        
+        let cutawayChance = 0.05; // Rare by default
 
         switch (archetype) {
             case 'industrial':
@@ -54,6 +64,9 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 lightRange = [0, 1];
                 lightChance = 0.3;
                 equipChance = 0.1;
+                hoseChance = 0.8;
+                hoseRange = [2, 5];
+                cutawayChance = 0.2;
                 break;
             case 'tech':
                 panelCount = 5;
@@ -63,6 +76,9 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 lightChance = 0.8;
                 equipRange = [5, 10];
                 equipChance = 0.9;
+                wireChance = 0.8;
+                wireRange = [10, 20];
+                cutawayChance = 0.1;
                 break;
             case 'clean':
                 panelCount = 4;
@@ -70,6 +86,9 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 lightRange = [1, 2];
                 lightChance = 0.4;
                 equipChance = 0.0;
+                hoseChance = 0.0;
+                wireChance = 0.0;
+                cutawayChance = 0.0;
                 break;
             case 'dense':
                 panelCount = 20;
@@ -79,6 +98,9 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 lightChance = 0.5;
                 equipRange = [2, 5];
                 equipChance = 0.5;
+                hoseChance = 0.6;
+                wireChance = 0.6;
+                cutawayChance = 0.1;
                 break;
         }
 
@@ -91,15 +113,36 @@ export class CapitalShipSurfaceGreebles implements Drawable {
             const pipes = new PipeGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(pipeRange[0], pipeRange[1]));
             pipes.draw(context, rng);
         }
+        
+        // 3b. Cutaway Sections (Damage/Exposed Innards)
+        // Draw BEFORE heavy equipment/hoses so those can layer on top? 
+        // Or draw AFTER to show deep damage cutting through everything?
+        // Swift version doesn't specify layer order, but logically damage cuts through panels/pipes.
+        // Let's draw it here.
+        if (rng.bool(cutawayChance)) {
+            const cutaways = new CutawaySectionGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(1, 2));
+            cutaways.draw(context, rng);
+        }
 
-        // 4. Equipment (Tech bits - Antennae, Vents)
-        // Draw before lights so lights can be on top if needed, or interspersed.
+        // 4. Hoses (Heavy connectors)
+        if (rng.bool(hoseChance)) {
+            const hoses = new HoseGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(hoseRange[0], hoseRange[1]));
+            hoses.draw(context, rng);
+        }
+
+        // 5. Equipment (Tech bits)
         if (rng.bool(equipChance)) {
             const equip = new EquipmentGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(equipRange[0], equipRange[1]));
             equip.draw(context, rng);
         }
         
-        // 5. Light Panels
+        // 6. Wires (Messy cables)
+        if (rng.bool(wireChance)) {
+            const wires = new WireGreebles(this.xUnits, this.yUnits, rng.intRange(wireRange[0], wireRange[1]), undefined, rng.intRange(1, 3));
+            wires.draw(context, rng);
+        }
+        
+        // 7. Light Panels
         if (rng.bool(lightChance)) {
             const lights = new LightPanelGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(lightRange[0], lightRange[1]));
             lights.draw(context, rng);

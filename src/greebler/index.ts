@@ -5,3 +5,6 @@ export * from './EquipmentGreebles.js';
 export * from './PanelGreebles.js';
 export * from './LightPanelGreebles.js';
 export * from './PipeGreebles.js';
+export * from './HoseGreebles.js';
+export * from './WireGreebles.js';
+export * from './CutawaySectionGreebles.js';

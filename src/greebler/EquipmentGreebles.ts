@@ -55,7 +55,6 @@ export class EquipmentGreebles implements Drawable {
         ctx.fillStyle = this.themeColor.withBrightness(0.1).toRGBAString();
         
         // Stronger Shadow settings
-        // Note: Shadows in canvas apply to fill/stroke.
         ctx.shadowColor = 'rgba(0,0,0,0.7)';
         ctx.shadowBlur = 0.01; 
         ctx.shadowOffsetX = 0.015; 
@@ -65,7 +64,11 @@ export class EquipmentGreebles implements Drawable {
         const cx = x + w/2 - size/2;
         const cy = y + h/2 - size/2;
         
-        this.drawItemRecursive(ctx, cx, cy, size, size, rng);
+        if (rng.bool(0.25)) {
+            this.drawVents(ctx, cx, cy, size, size, rng);
+        } else {
+            this.drawItemRecursive(ctx, cx, cy, size, size, rng);
+        }
         ctx.restore();
     }
 
@@ -90,9 +93,65 @@ export class EquipmentGreebles implements Drawable {
         for (let i = 0; i < count; i++) {
             const ix = horizontal ? startX + i*size : startX;
             const iy = horizontal ? startY : startY + i*size;
-            this.drawItemRecursive(ctx, ix + inset, iy + inset, size - inset*2, size - inset*2, rng);
+            
+            if (rng.bool(0.25)) {
+                this.drawVents(ctx, ix + inset, iy + inset, size - inset*2, size - inset*2, rng);
+            } else {
+                this.drawItemRecursive(ctx, ix + inset, iy + inset, size - inset*2, size - inset*2, rng);
+            }
         }
         ctx.restore();
+    }
+
+    private drawVents(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, rng: RNG) {
+        // 1. Base Rect
+        ctx.fillStyle = this.themeColor.toRGBAString();
+        ctx.lineWidth = 0.001;
+        ctx.strokeStyle = 'black';
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeRect(x, y, w, h);
+        
+        // 2. Inset Black Rect
+        const inset = 0.02;
+        const ix = x + inset;
+        const iy = y + inset;
+        const iw = w - inset*2;
+        const ih = h - inset*2;
+        
+        if (iw <= 0 || ih <= 0) return;
+        
+        ctx.fillStyle = 'black';
+        ctx.fillRect(ix, iy, iw, ih);
+        
+        // 3. Slats
+        ctx.fillStyle = this.themeColor.toRGBAString();
+        ctx.shadowColor = 'transparent'; // No shadow in original Swift code for slats
+        
+        const horizontal = rng.bool();
+        const slatWidth = 0.01;
+        const gap = 0.01; // Stride is 0.02 (0.01 slat + 0.01 gap)
+        
+        if (horizontal) {
+            // Draw vertical slats across the horizontal width? 
+            // Swift code: if horizontal, iterates slatX. So vertical lines.
+            // Wait, Swift: `rect.orientation == .horizontal`.
+            // If rect is wider than tall, usually horizontal.
+            // If horizontal, it draws slats at `slatX`. `CGRect(x: slatX... width: 0.01, height: height)`.
+            // So horizontal vent has VERTICAL slats (like a fence).
+            
+            // Ensure we cover the inset area
+            for (let sx = ix; sx < ix + iw; sx += (slatWidth + gap)) {
+                // Clip the last slat if it exceeds
+                const curW = Math.min(slatWidth, ix + iw - sx);
+                ctx.fillRect(sx, iy, curW, ih);
+            }
+        } else {
+            // Vertical vent has HORIZONTAL slats (like a shutter)
+            for (let sy = iy; sy < iy + ih; sy += (slatWidth + gap)) {
+                const curH = Math.min(slatWidth, iy + ih - sy);
+                ctx.fillRect(ix, sy, iw, curH);
+            }
+        }
     }
 
     private drawScatteredItems(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, rng: RNG) {
@@ -175,17 +234,6 @@ export class EquipmentTrenchGreebles implements Drawable {
 
         context.fillStyle = this.themeColor.withBrightness(-0.3).toRGBAString();
         context.fillRect(trenchX, trenchY, trenchW, trenchH);
-
-        // Draw equipment inside the trench
-        equipment.draw(context, rng);
-
-        // Inner Shadow (Linear Gradient for Recessed Look)
-        // Drawn AFTER equipment so it casts shadow OVER the equipment
-        context.save();
-        // Clip to trench to ensure gradients don't bleed out
-        context.beginPath();
-        context.rect(trenchX, trenchY, trenchW, trenchH);
-        context.clip();
 
         // Draw equipment inside the trench
         equipment.draw(context, rng);
