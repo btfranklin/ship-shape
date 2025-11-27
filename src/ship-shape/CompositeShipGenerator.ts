@@ -20,7 +20,7 @@ export class CompositeShipGenerator {
         const engineX = width * 0.05;
         const engineY = centerY - engineH/2;
         
-        const engine = new ShipComponent(engineX, engineY, engineW, engineH, 10, 'engine', themeColor.withBrightness(-0.1));
+        const engine = new ShipComponent(engineX, engineY, engineW, engineH, 10, 'engine', themeColor.withBrightness(-0.1), rng);
         engine.generateShape(rng);
         components.push(engine);
         
@@ -28,7 +28,7 @@ export class CompositeShipGenerator {
         // Let's add a "Thrust block" behind
         const nozzleW = engineW * 0.3;
         const nozzleH = engineH * 0.8;
-        const nozzle = new ShipComponent(engineX - nozzleW*0.8, centerY - nozzleH/2, nozzleW, nozzleH, 9, 'engine', themeColor.withBrightness(-0.2));
+        const nozzle = new ShipComponent(engineX - nozzleW*0.8, centerY - nozzleH/2, nozzleW, nozzleH, 9, 'engine', themeColor.withBrightness(-0.2), rng);
         nozzle.generateShape(rng); // likely rect
         components.push(nozzle);
 
@@ -52,7 +52,7 @@ export class CompositeShipGenerator {
             // Or front overlaps rear? Let's say Front overlaps Rear -> Higher Z.
             const hullZ = 10 + i;
             
-            const hull = new ShipComponent(currentX, segY, segW, segH, hullZ, 'hull', themeColor);
+            const hull = new ShipComponent(currentX, segY, segW, segH, hullZ, 'hull', themeColor, rng);
             hull.generateShape(rng);
             components.push(hull);
             
@@ -72,7 +72,10 @@ export class CompositeShipGenerator {
                 if (isTower) {
                     // Tall and narrow
                     topW = segW * rng.range(0.15, 0.3);
-                    topH = segH * rng.range(0.8, 1.5); // Stick up significantly
+                    topH = segH * rng.range(0.8, 1.5); 
+                    
+                    // Enforce verticality for shape logic
+                    if (topW >= topH) topW = topH * 0.8;
                 } else {
                     // Low and wide (Deck)
                     topW = segW * rng.range(0.5, 0.8);
@@ -91,7 +94,7 @@ export class CompositeShipGenerator {
                 // If I put Tower Z < Hull Z: Hull draws over Tower bottom. Good for integration.
                 const z = hullZ - 1; 
                 
-                const topStruct = new ShipComponent(topX, topY, topW, topH, z, type, themeColor.withBrightness(0.1));
+                const topStruct = new ShipComponent(topX, topY, topW, topH, z, type, themeColor.withBrightness(0.1), rng);
                 topStruct.generateShape(rng);
                 components.push(topStruct);
             }
@@ -107,7 +110,7 @@ export class CompositeShipGenerator {
                 // Tanks behind hull?
                 const z = hullZ - 1;
                 
-                const botStruct = new ShipComponent(botX, botY, botW, botH, z, 'tank', themeColor.withBrightness(-0.15));
+                const botStruct = new ShipComponent(botX, botY, botW, botH, z, 'tank', themeColor.withBrightness(-0.15), rng);
                 botStruct.generateShape(rng);
                 components.push(botStruct);
             }
@@ -130,7 +133,7 @@ export class CompositeShipGenerator {
             // Or In Front?
             // Let's try BEHIND (Z=5) so Engine overlaps its base.
             
-            const bridge = new ShipComponent(bridgeX, bridgeY, bridgeW, bridgeH, 5, 'superstructure', themeColor.withBrightness(0.2));
+            const bridge = new ShipComponent(bridgeX, bridgeY, bridgeW, bridgeH, 5, 'superstructure', themeColor.withBrightness(0.2), rng);
             bridge.generateShape(rng);
             components.push(bridge);
         }

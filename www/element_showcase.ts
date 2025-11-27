@@ -110,11 +110,17 @@ function render() {
             const w = 200;
             const h = 120;
             
-            // For towers, make them tall
-            const hMod = (def.type === 'sensor' || def.type === 'superstructure') ? 1.5 : 1.0;
-            const wMod = (def.type === 'sensor') ? 0.5 : 1.0;
+                    // For towers, make them tall
             
-            const finalW = w * wMod;
+                    const hMod = (def.type === 'sensor' || def.type === 'superstructure') ? 1.5 : 1.0;
+            
+                    const wMod = (def.type === 'sensor' || def.type === 'superstructure') ? 0.6 : 1.0;
+            
+                    
+            
+                    const finalW = w * wMod;
+            
+            
             const finalH = h * hMod;
             const finalX = (300 - finalW)/2;
             const finalY = (200 - finalH)/2;
@@ -122,7 +128,7 @@ function render() {
             // New RNG every click
             const localRng = new RNG(Math.random() * 10000);
             
-            const comp = new ShipComponent(finalX, finalY, finalW, finalH, 10, def.type, theme);
+            const comp = new ShipComponent(finalX, finalY, finalW, finalH, 10, def.type, theme, localRng);
             comp.generateShape(localRng);
             comp.draw(ctx, localRng);
             

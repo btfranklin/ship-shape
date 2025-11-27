@@ -5,88 +5,119 @@ export type ComponentType = 'hull' | 'superstructure' | 'engine' | 'weapon' | 's
 
 export class ShipComponent {
     public bounds: { x: number, y: number, w: number, h: number };
-        public engineStyle: 'standard' | 'radiator' | 'energy' = 'standard';
+    public _energyGlowHue: number = 0.0;
+    public engineStyle: 'standard' | 'radiator' | 'energy' = 'standard';
     
-        constructor(
-            x: number, 
-            y: number, 
-            w: number, 
-            h: number, 
-            zIndex: number, 
-            type: ComponentType, 
-            color: HSBAColor
-        ) {
-            this.bounds = { x, y, w, h };
-            this.zIndex = zIndex;
-            this.type = type;
-            this.color = color;
-            
-            // Normalize units for Greeblers
-            // We treat 450px as roughly 1.0 unit of detail density
-            const UNIT_SCALE = 450;
-            
-            // Select Archetype & Style
-            let archetype: SurfaceArchetype = 'standard';
-            
-            switch (type) {
-                case 'engine':
-                    archetype = 'industrial'; 
-                    // Random Engine Style (Simple Hash-based RNG)
-                    const seed = x + y + w;
-                    const r = Math.abs(Math.sin(seed * 9999));
-                    if (r < 0.4) this.engineStyle = 'standard';
-                    else if (r < 0.7) this.engineStyle = 'radiator';
-                    else this.engineStyle = 'energy';
-                    break;
-                case 'hull':
-                    archetype = 'standard'; // Balanced
-                    break;
-                case 'superstructure':
-                    archetype = 'tech'; // Lots of lights/antennas
-                    break;
-                case 'sensor':
-                    archetype = 'tech'; // High tech
-                    break;
-                case 'tank':
-                    archetype = 'clean'; // Smooth, few greebles
-                    break;
-                case 'weapon':
-                    archetype = 'dense'; // Busy
-                    break;
+            constructor(
+                x: number, 
+                y: number, 
+                w: number, 
+                h: number, 
+                zIndex: number, 
+                type: ComponentType, 
+                color: HSBAColor,
+                rng: RNG
+            ) {
+                this.bounds = { x, y, w, h };
+                this.zIndex = zIndex;
+                this.type = type;
+                this.color = color;
+                
+                // Normalize units for Greeblers
+                // We treat 450px as roughly 1.0 unit of detail density
+                const UNIT_SCALE = 450;
+                
+                // Select Archetype & Style
+                let archetype: SurfaceArchetype = 'standard';
+                
+                switch (type) {
+                    case 'engine':
+                        archetype = 'industrial'; 
+                        // Random Engine Style
+                        const r = rng.next();
+                        if (r < 0.4) this.engineStyle = 'standard';
+                        else if (r < 0.7) this.engineStyle = 'radiator';
+                        else {
+                            this.engineStyle = 'energy';
+                            this._energyGlowHue = rng.range(0.0, 1.0);
+                        }
+                        break;
+                    case 'hull':
+                        archetype = 'standard'; // Balanced
+                        break;
+                    case 'superstructure':
+                        archetype = 'tech'; // Lots of lights/antennas
+                        break;
+                    case 'sensor':
+                        archetype = 'tech'; // High tech
+                        break;
+                    case 'tank':
+                        archetype = 'clean'; // Smooth, few greebles
+                        break;
+                    case 'weapon':
+                        archetype = 'dense'; // Busy
+                        break;
+                }
+                
+                // Configure greebles
+                this.greebles = new CapitalShipSurfaceGreebles(w / UNIT_SCALE, h / UNIT_SCALE, color, archetype);
             }
-            
-            // Configure greebles
-            this.greebles = new CapitalShipSurfaceGreebles(w / UNIT_SCALE, h / UNIT_SCALE, color, archetype);
-        }
-    
-        generateShape(rng: RNG) {
+                generateShape(rng: RNG) {
             // Generate interesting polygonal shapes
             const p = new Path2D();
             const { x, y, w, h } = this.bounds;
             
-            // Pick shape based on Type
-            let shapeType = 'rect';
-            const isTall = h > w * 1.2;
+                    // Pick shape based on Type
             
-            switch (this.type) {
-                case 'engine':
-                    // Engines are blocky or tapered at back
-                    if (this.engineStyle === 'radiator') shapeType = 'rect';
-                    else if (this.engineStyle === 'energy') shapeType = rng.choice(['rect', 'chamfer']);
-                    else shapeType = rng.choice(['rect', 'taper-back', 'chamfer']);
-                    break;
-                case 'hull':
-                    // Hulls are main structural blocks (Horizontal)
-                    shapeType = rng.choice(['rect', 'cut-corner', 'taper-front']);
-                    break;
-                case 'superstructure':
-                    // Decks (Horizontal) or Towers (Vertical)
-                    if (isTall) {
-                         shapeType = rng.choice(['taper-top', 'rect', 'cut-corner']);
-                    } else {
-                         shapeType = rng.choice(['taper-front', 'chamfer', 'rect']);
-                    }
-                    break;
+                    let shapeType = 'rect';
+            
+                    const isTall = h > w; // Simple verticality check
+            
+                    
+            
+                    switch (this.type) {
+            
+                        case 'engine':
+            
+                            // Engines are blocky or tapered at back
+            
+                            if (this.engineStyle === 'radiator') shapeType = 'rect';
+            
+                            else if (this.engineStyle === 'energy') shapeType = rng.choice(['rect', 'chamfer']);
+            
+                            else shapeType = rng.choice(['rect', 'taper-back', 'chamfer']);
+            
+                            break;
+            
+                        case 'hull':
+            
+                            // Hulls are main structural blocks (Horizontal)
+            
+                            shapeType = rng.choice(['rect', 'cut-corner', 'taper-front']);
+            
+                            break;
+            
+                        case 'superstructure':
+            
+                            // Decks (Horizontal) or Towers (Vertical)
+            
+                            if (isTall) {
+            
+                                 // Tall towers should point UP
+            
+                                 shapeType = rng.choice(['taper-top', 'taper-top', 'rect']); 
+            
+                            } else {
+            
+                                 // Decks point forward/flat
+            
+                                 shapeType = rng.choice(['taper-front', 'chamfer', 'rect']);
+            
+                            }
+            
+                            break;
+            
+            
                 case 'sensor':
                     // Towers (Vertical)
                     shapeType = rng.choice(['taper-top', 'rect', 'cut-corner']);
@@ -194,27 +225,161 @@ export class ShipComponent {
                          ctx.fillRect(this.bounds.x + 5, sy, this.bounds.w - 10, slatH);
                      }
     
-                 } else if (this.engineStyle === 'energy') {
-                     // Energy Core
-                     ctx.fillStyle = '#111'; // Dark frame
-                     ctx.fill(this.shapePath);
-                     
-                     // Glowing Core Gradient
-                     const cx = this.bounds.x + this.bounds.w/2;
-                     const cy = this.bounds.y + this.bounds.h/2;
-                     const r = Math.min(this.bounds.w, this.bounds.h) * 0.6;
-                     
-                     const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-                     const energyColor = base.withHueShift(0.5).withSaturation(1.0); 
-                     grad.addColorStop(0, energyColor.withBrightness(0.8).toRGBAString()); // White hot center
-                     grad.addColorStop(0.5, energyColor.toRGBAString());
-                     grad.addColorStop(1, 'rgba(0,0,0,0)');
-                     
-                     ctx.fillStyle = grad;
-                     ctx.globalCompositeOperation = 'lighter'; // Additive glow
-                     ctx.fillRect(this.bounds.x, this.bounds.y, this.bounds.w, this.bounds.h);
-                     ctx.globalCompositeOperation = 'source-over';
-                 } else {
+                                           } else if (this.engineStyle === 'energy') {
+    
+                                               // 1. Draw Housing (Chassis)
+    
+                                               // Dark metallic block to hold the core
+    
+                                               const housingGrad = ctx.createLinearGradient(this.bounds.x, this.bounds.y, this.bounds.x, this.bounds.y + this.bounds.h);
+    
+                                               housingGrad.addColorStop(0, '#2a2a2a');
+    
+                                               housingGrad.addColorStop(0.5, '#444');
+    
+                                               housingGrad.addColorStop(1, '#2a2a2a');
+    
+                                               ctx.fillStyle = housingGrad;
+    
+                                               ctx.fill(this.shapePath);
+    
+                                               
+    
+                                               // 2. Inset for Core
+    
+                                               const inset = Math.min(this.bounds.w, this.bounds.h) * 0.15;
+    
+                                               const innerX = this.bounds.x + inset;
+    
+                                               const innerY = this.bounds.y + inset;
+    
+                                               const innerW = this.bounds.w - inset*2;
+    
+                                               const innerH = this.bounds.h - inset*2;
+    
+                                               
+    
+                                               // Dark background for core area
+    
+                                               ctx.fillStyle = '#050505';
+    
+                                               ctx.fillRect(innerX, innerY, innerW, innerH);
+    
+                                               
+    
+                                               // 3. Glowing Core Gradient
+    
+                                               const cx = innerX + innerW/2;
+    
+                                               const cy = innerY + innerH/2;
+    
+                                               const r = Math.min(innerW, innerH) * 0.7;
+    
+                                               
+    
+                                               const grad = ctx.createRadialGradient(cx, cy, r*0.2, cx, cy, r);
+    
+                                               const energyColor = new HSBAColor(this._energyGlowHue, 1.0, 1.0); 
+    
+                                               grad.addColorStop(0, energyColor.withBrightness(1.0).toRGBAString()); // White hot
+    
+                                               grad.addColorStop(0.4, energyColor.toRGBAString());
+    
+                                               grad.addColorStop(1, 'rgba(0,0,0,0)');
+    
+                                               
+    
+                                               ctx.fillStyle = grad;
+    
+                                               ctx.globalCompositeOperation = 'lighter';
+    
+                                               ctx.fillRect(innerX, innerY, innerW, innerH);
+    
+                                               ctx.globalCompositeOperation = 'source-over';
+    
+                                               
+    
+                                               // 4. Containment Brackets (Over the core, attached to housing)
+    
+                                               ctx.fillStyle = '#333'; // Darker metal
+    
+                                               ctx.strokeStyle = '#111';
+    
+                                               ctx.lineWidth = 1;
+    
+                                               
+    
+                                               const clampH = innerH * 0.25;
+    
+                                               const clampW = innerW * 0.5;
+    
+                                               
+    
+                                               // Top Clamp (extending down from housing top)
+    
+                                               ctx.beginPath();
+    
+                                               ctx.moveTo(cx - clampW/2, innerY);
+    
+                                               ctx.lineTo(cx + clampW/2, innerY);
+    
+                                               ctx.lineTo(cx + clampW/3, innerY + clampH); 
+    
+                                               ctx.lineTo(cx - clampW/3, innerY + clampH);
+    
+                                               ctx.closePath();
+    
+                                               ctx.fill();
+    
+                                               ctx.stroke();
+    
+                              
+    
+                                               // Bottom Clamp
+    
+                                               ctx.beginPath();
+    
+                                               ctx.moveTo(cx - clampW/2, innerY + innerH);
+    
+                                               ctx.lineTo(cx + clampW/2, innerY + innerH);
+    
+                                               ctx.lineTo(cx + clampW/3, innerY + innerH - clampH);
+    
+                                               ctx.lineTo(cx - clampW/3, innerY + innerH - clampH);
+    
+                                               ctx.closePath();
+    
+                                               ctx.fill();
+    
+                                               ctx.stroke();
+    
+                                               
+    
+                                               // Rivet details on clamps
+    
+                                               ctx.fillStyle = '#0f0'; // tiny indicator lights? No, simple rivets.
+    
+                                               ctx.fillStyle = '#555';
+    
+                                               ctx.beginPath();
+    
+                                               ctx.arc(cx, innerY + clampH/2, 2, 0, Math.PI*2);
+    
+                                               ctx.fill();
+    
+                                               ctx.beginPath();
+    
+                                               ctx.arc(cx, innerY + innerH - clampH/2, 2, 0, Math.PI*2);
+    
+                                               ctx.fill();
+    
+                              
+    
+                                           } else {
+    
+                              
+    
+                 
                      // Standard Cylinder
                      const grad = ctx.createLinearGradient(this.bounds.x, this.bounds.y, this.bounds.x, this.bounds.y + this.bounds.h);
                      grad.addColorStop(0, base.withBrightness(-0.4).toRGBAString());
