@@ -22,7 +22,12 @@ export class WireGreebles implements Drawable {
         context.save();
         
         // 1. Generate Clusters
-        const margin = this.allowOffSide ? -0.3 : 0.1;
+        let margin = -0.3;
+        if (!this.allowOffSide) {
+            // Safe margin, proportional for small units
+            margin = Math.min(0.1, Math.min(this.xUnits, this.yUnits) * 0.1);
+        }
+
         const minX = margin, maxX = this.xUnits - margin;
         const minY = margin, maxY = this.yUnits - margin;
         

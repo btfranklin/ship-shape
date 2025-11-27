@@ -142,7 +142,32 @@ export class CompositeShipGenerator {
         // Pipes, structural ribs, pods that float in front of the main hull.
         // Z = 30+
         // Add a "Side Pod" to a random segment
-        // ...
+        
+        // SPHERE (High Z, floating near front/mid)
+        if (rng.bool(0.4)) {
+            const sphereSize = height * rng.range(0.2, 0.35);
+            // Position: Randomly along the mid-to-front section
+            const sphereX = width * rng.range(0.4, 0.8);
+            const sphereY = centerY + rng.range(-height * 0.1, height * 0.1) - sphereSize/2; // Roughly centered
+            
+            const sphere = new ShipComponent(sphereX, sphereY, sphereSize, sphereSize, 50, 'sphere', themeColor.withBrightness(0.05), rng);
+            sphere.generateShape(rng);
+            components.push(sphere);
+        }
+
+        // RING (Centered vertically, around hull)
+        if (rng.bool(0.3)) {
+            const ringH = height * rng.range(0.5, 0.8); // Tall
+            const ringW = ringH * rng.range(0.2, 0.3); // Narrow width relative to height
+            
+            const ringX = width * rng.range(0.3, 0.7);
+            const ringY = centerY - ringH/2;
+            
+            // Ring should be behind some foreground details but definitely distinct
+            const ring = new ShipComponent(ringX, ringY, ringW, ringH, 100, 'ring', themeColor.withBrightness(-0.2), rng);
+            ring.generateShape(rng);
+            components.push(ring);
+        }
         
         // Sort components by Z-Index so they draw correctly (Painter's Algorithm)
         components.sort((a, b) => a.zIndex - b.zIndex);

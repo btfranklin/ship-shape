@@ -1,7 +1,7 @@
 import { HSBAColor, RNG, UNIT_SCALE } from '../greebler/common.js';
 import { CapitalShipSurfaceGreebles, SurfaceArchetype } from '../greebler/CapitalShipSurfaceGreebles.js';
 
-export type ComponentType = 'hull' | 'superstructure' | 'engine' | 'weapon' | 'sensor' | 'tank';
+export type ComponentType = 'hull' | 'superstructure' | 'engine' | 'weapon' | 'sensor' | 'tank' | 'sphere' | 'ring';
 
 export class ShipComponent {
     public bounds: { x: number, y: number, w: number, h: number };
@@ -59,10 +59,17 @@ export class ShipComponent {
             case 'weapon':
                 archetype = 'dense'; // Busy
                 break;
+            case 'sphere':
+                archetype = 'tech'; // Greebled like towers
+                break;
+            case 'ring':
+                archetype = 'structure'; // Plain panels only
+                break;
         }
 
         // Configure greebles
-        this.greebles = new CapitalShipSurfaceGreebles(w / UNIT_SCALE, h / UNIT_SCALE, color, archetype);
+        const skipBaseFill = (type === 'sphere' || type === 'ring');
+        this.greebles = new CapitalShipSurfaceGreebles(w / UNIT_SCALE, h / UNIT_SCALE, color, archetype, skipBaseFill);
     }
 
     generateShape(rng: RNG) {
@@ -108,6 +115,14 @@ export class ShipComponent {
                 shapeType = 'chamfer'; // Approximate capsule
                 break;
 
+            case 'sphere':
+                shapeType = 'circle';
+                break;
+
+            case 'ring':
+                shapeType = 'stadium';
+                break;
+
             default:
                 shapeType = rng.choice(['rect', 'chamfer', 'taper-front', 'taper-back', 'cut-corner']);
         }
@@ -117,6 +132,26 @@ export class ShipComponent {
         switch (shapeType) {
             case 'rect':
                 p.rect(x, y, w, h);
+                break;
+
+            case 'circle':
+                // Assume w = diameter
+                const radius = Math.min(w, h) / 2;
+                p.arc(x + w/2, y + h/2, radius, 0, Math.PI * 2);
+                break;
+
+            case 'stadium':
+                // Vertical stadium / pill shape
+                // Semi-circles at top and bottom
+                const r = w / 2;
+                // Start top-left of the rect part
+                // Or better, use arc logic
+                // Center top
+                p.arc(x + w/2, y + r, r, Math.PI, 0); // Top cap
+                p.lineTo(x + w, y + h - r);
+                p.arc(x + w/2, y + h - r, r, 0, Math.PI); // Bottom cap
+                p.lineTo(x, y + r);
+                p.closePath();
                 break;
 
             case 'taper-top': // Vertical Trapezoid (Pyramid-like)
@@ -181,11 +216,100 @@ export class ShipComponent {
 
         if (this.type === 'engine') {
             this.drawEngine(ctx, rng);
+        } else if (this.type === 'sphere') {
+            this.drawSphere(ctx, rng);
+        } else if (this.type === 'ring') {
+            this.drawRing(ctx, rng);
         } else {
             this.drawStandardComponent(ctx, rng);
         }
 
         ctx.restore();
+    }
+
+    private drawRing(ctx: CanvasRenderingContext2D, rng: RNG) {
+        if (!this.shapePath) return;
+
+        // 1. Volume Fill (Cylindrical Gradient)
+        // Top Dark -> Mid Light -> Bottom Dark
+        const grad = ctx.createLinearGradient(this.bounds.x, this.bounds.y, this.bounds.x, this.bounds.y + this.bounds.h);
+        const base = this.color;
+        
+        grad.addColorStop(0, base.withBrightness(-0.4).toRGBAString()); // Top Shadow
+        grad.addColorStop(0.1, base.withBrightness(-0.2).toRGBAString()); 
+        grad.addColorStop(0.5, base.withBrightness(0.3).toRGBAString()); // Mid Highlight
+        grad.addColorStop(0.9, base.withBrightness(-0.2).toRGBAString());
+        grad.addColorStop(1, base.withBrightness(-0.4).toRGBAString()); // Bottom Shadow
+
+        ctx.fillStyle = grad;
+        ctx.fill(this.shapePath);
+
+        // 2. Draw Greebles (Clipped)
+        ctx.save();
+        ctx.clip(this.shapePath);
+        ctx.translate(this.bounds.x, this.bounds.y);
+        ctx.scale(UNIT_SCALE, UNIT_SCALE);
+        this.greebles.draw(ctx, rng);
+        ctx.restore();
+        
+        // 3. Inner Highlight/Bevel
+        ctx.save();
+        ctx.clip(this.shapePath);
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 4;
+        ctx.stroke(this.shapePath);
+        ctx.restore();
+
+        // 4. Outer Stroke
+        ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+        ctx.lineWidth = 1;
+        ctx.stroke(this.shapePath);
+    }
+
+    private drawSphere(ctx: CanvasRenderingContext2D, rng: RNG) {
+        if (!this.shapePath) return;
+        
+        const { x, y, w, h } = this.bounds;
+        const cx = x + w/2;
+        const cy = y + h/2;
+        const r = Math.min(w, h) / 2;
+
+        // 1. Base Fill (Radial)
+        const grad = ctx.createRadialGradient(cx - r*0.3, cy - r*0.3, r*0.1, cx, cy, r);
+        const base = this.color;
+        grad.addColorStop(0, base.withBrightness(0.4).toRGBAString()); 
+        grad.addColorStop(0.5, base.withBrightness(-0.1).toRGBAString()); 
+        grad.addColorStop(1, base.withBrightness(-0.3).toRGBAString()); 
+        
+        ctx.fillStyle = grad;
+        ctx.fill(this.shapePath);
+        
+        // 2. Greebles (Clipped to sphere)
+        ctx.save();
+        ctx.clip(this.shapePath);
+        ctx.translate(x, y);
+        ctx.scale(UNIT_SCALE, UNIT_SCALE);
+        this.greebles.draw(ctx, rng);
+        ctx.restore();
+        
+        // 3. Lighting Overlay (Radial Shadow/Highlight to reinforce 3D)
+        ctx.save();
+        ctx.clip(this.shapePath);
+        
+        const overlayGrad = ctx.createRadialGradient(cx - r*0.3, cy - r*0.3, r*0.1, cx, cy, r);
+        // Light source top-left
+        overlayGrad.addColorStop(0, 'rgba(255,255,255,0.3)'); 
+        overlayGrad.addColorStop(0.5, 'rgba(0,0,0,0)'); 
+        overlayGrad.addColorStop(1, 'rgba(0,0,0,0.4)'); // Deep shadow at edges
+        
+        ctx.fillStyle = overlayGrad;
+        ctx.fill(this.shapePath);
+        ctx.restore();
+        
+        // 4. Rim Stroke
+        ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+        ctx.lineWidth = 1;
+        ctx.stroke(this.shapePath);
     }
 
     private drawEngine(ctx: CanvasRenderingContext2D, rng: RNG) {

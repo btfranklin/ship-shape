@@ -8,35 +8,38 @@ import { HoseGreebles } from './HoseGreebles.js';
 import { WireGreebles } from './WireGreebles.js';
 import { CutawaySectionGreebles } from './CutawaySectionGreebles.js';
 
-export type SurfaceArchetype = 'standard' | 'industrial' | 'tech' | 'clean' | 'dense';
+export type SurfaceArchetype = 'standard' | 'industrial' | 'tech' | 'clean' | 'dense' | 'structure';
 
 export class CapitalShipSurfaceGreebles implements Drawable {
     constructor(
         public xUnits: number, 
         public yUnits: number, 
         public themeColor: HSBAColor,
-        public forcedArchetype?: SurfaceArchetype
+        public forcedArchetype?: SurfaceArchetype,
+        public skipBaseFill: boolean = false
     ) {}
 
     draw(context: CanvasRenderingContext2D, rng: RNG): void {
         context.save();
         
-        // Base fill
-        context.fillStyle = this.themeColor.toRGBAString();
-        context.fillRect(0, 0, this.xUnits, this.yUnits);
+        if (!this.skipBaseFill) {
+            // Base fill
+            context.fillStyle = this.themeColor.toRGBAString();
+            context.fillRect(0, 0, this.xUnits, this.yUnits);
 
-        // 1. Noise (Texture)
-        const area = this.xUnits * this.yUnits;
-        const count = Math.floor(area * 1000); 
+            // 1. Noise (Texture)
+            const area = this.xUnits * this.yUnits;
+            const count = Math.floor(area * 1000); 
 
-        for (let i = 0; i < count; i++) {
-            const panelColor = this.themeColor.withSaturation(rng.range(-0.05, 0.05));
-            context.fillStyle = panelColor.toRGBAString();
-            const w = rng.range(0.01, 0.03);
-            const h = rng.range(0.01, 0.03);
-            const x = rng.range(0, this.xUnits);
-            const y = rng.range(0, this.yUnits);
-            context.fillRect(x, y, w, h);
+            for (let i = 0; i < count; i++) {
+                const panelColor = this.themeColor.withSaturation(rng.range(-0.05, 0.05));
+                context.fillStyle = panelColor.toRGBAString();
+                const w = rng.range(0.01, 0.03);
+                const h = rng.range(0.01, 0.03);
+                const x = rng.range(0, this.xUnits);
+                const y = rng.range(0, this.yUnits);
+                context.fillRect(x, y, w, h);
+            }
         }
 
         // Pick Archetype
@@ -103,10 +106,19 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 wireChance = 0.6;
                 cutawayChance = 0.1;
                 break;
+            case 'structure':
+                panelCount = 6;
+                pipeChance = 0.0;
+                lightChance = 0.0;
+                equipChance = 0.0;
+                hoseChance = 0.0;
+                wireChance = 0.0;
+                cutawayChance = 0.0;
+                break;
         }
 
         // 2. Panels (Hull Plating) - BASE LAYER
-        const panels = new PanelGreebles(this.xUnits, this.yUnits, this.themeColor, panelCount, archetype === 'industrial' || archetype === 'dense');
+        const panels = new PanelGreebles(this.xUnits, this.yUnits, this.themeColor, panelCount, archetype === 'industrial' || archetype === 'dense', this.skipBaseFill);
         panels.draw(context, rng);
         
         // 3. Cutaway Sections (Damage/Exposed Innards) - INSET LAYER
@@ -128,22 +140,22 @@ export class CapitalShipSurfaceGreebles implements Drawable {
             pipes.draw(context, rng);
         }
 
-        // 6. Hoses (Heavy connectors) - RAISED LAYER 2
-        if (rng.bool(hoseChance)) {
-            const hoses = new HoseGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(hoseRange[0], hoseRange[1]));
-            hoses.draw(context, rng);
-        }
-        
-        // 7. Wires (Messy cables) - RAISED LAYER 3 (Topmost messy stuff)
-        if (rng.bool(wireChance)) {
-            const wires = new WireGreebles(this.xUnits, this.yUnits, rng.intRange(wireRange[0], wireRange[1]), undefined, rng.intRange(1, 3));
-            wires.draw(context, rng);
-        }
-        
-        // 8. Light Panels - OVERLAY
+        // 6. Light Panels - OVERLAY
         if (rng.bool(lightChance)) {
             const lights = new LightPanelGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(lightRange[0], lightRange[1]));
             lights.draw(context, rng);
+        }
+
+        // 7. Hoses (Heavy connectors) - RAISED LAYER 2
+        if (rng.bool(hoseChance)) {
+            const hoses = new HoseGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(hoseRange[0], hoseRange[1]), false);
+            hoses.draw(context, rng);
+        }
+        
+        // 8. Wires (Messy cables) - RAISED LAYER 3 (Topmost messy stuff)
+        if (rng.bool(wireChance)) {
+            const wires = new WireGreebles(this.xUnits, this.yUnits, rng.intRange(wireRange[0], wireRange[1]), undefined, rng.intRange(1, 3), false);
+            wires.draw(context, rng);
         }
 
         context.restore();

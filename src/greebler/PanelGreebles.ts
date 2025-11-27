@@ -7,7 +7,8 @@ export class PanelGreebles implements Drawable {
         public yUnits: number,
         public themeColor: HSBAColor,
         public panelCount: number,
-        public showRivets: boolean = false
+        public showRivets: boolean = false,
+        public skipBaseFill: boolean = false
     ) {}
 
     draw(context: CanvasRenderingContext2D, rng: RNG): void {
@@ -15,16 +16,33 @@ export class PanelGreebles implements Drawable {
         context.lineWidth = 0.001;
         context.strokeStyle = 'black';
 
+        if (this.skipBaseFill) {
+            context.globalCompositeOperation = 'multiply';
+        }
+
         const rects = this.divideRect({ x: 0, y: 0, w: this.xUnits, h: this.yUnits }, this.panelCount, rng);
 
         for (const rect of rects) {
-            const panelColor = this.themeColor.withSaturation(rng.range(-0.1, 0.1));
-            context.fillStyle = panelColor.toRGBAString();
+            if (this.skipBaseFill) {
+                // Use simple semi-transparent overlays for variation, preserving underlying gradient
+                const lightnessVar = rng.range(-0.1, 0.1);
+                const overlayColor = lightnessVar > 0 ? `rgba(255,255,255,${lightnessVar})` : `rgba(0,0,0,${-lightnessVar})`;
+                context.fillStyle = overlayColor;
+            } else {
+                const panelColor = this.themeColor.withSaturation(rng.range(-0.1, 0.1));
+                context.fillStyle = panelColor.toRGBAString();
+            }
+            
             context.fillRect(rect.x, rect.y, rect.w, rect.h);
+            
+            // Always stroke
+            context.globalCompositeOperation = 'source-over';
             context.strokeRect(rect.x, rect.y, rect.w, rect.h);
+            if (this.skipBaseFill) context.globalCompositeOperation = 'multiply';
 
             if (this.showRivets && rect.w > 0.1 && rect.h > 0.1) {
                 context.save();
+                context.globalCompositeOperation = 'source-over';
                 // Rivets - dashed line inset?
                 context.lineWidth = 0.005;
                 context.setLineDash([0.005, 0.1]);
