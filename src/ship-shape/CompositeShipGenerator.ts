@@ -1,5 +1,6 @@
 import { HSBAColor, RNG } from '../greebler/common.js';
 import { ShipComponent, ComponentType, ShipArchetype } from './ShipComponent.js';
+import { UnifiedTrunkComponent } from './UnifiedTrunkComponent.js';
 
 interface ShipNode {
     component: ShipComponent;
@@ -9,7 +10,7 @@ interface ShipNode {
 export class CompositeShipGenerator {
     constructor() {}
 
-    generate(width: number, height: number, themeColor: HSBAColor, rng: RNG, shipArchetype?: ShipArchetype): ShipComponent[] {
+    generate(width: number, height: number, themeColor: HSBAColor, rng: RNG, shipArchetype?: ShipArchetype): (ShipComponent | UnifiedTrunkComponent)[] {
         const centerY = height / 2;
         
         // Pick Random Archetype if not provided
@@ -46,10 +47,21 @@ export class CompositeShipGenerator {
             drawList.push(comp);
         });
         
-        // 5. Explicitly Sort by Z-Index just to be safe (Painter's Algo)
-        drawList.sort((a, b) => a.zIndex - b.zIndex);
+        // 5. Merge Trunk Components
+        const hulls = drawList.filter(c => c.type === 'hull' && c.isTrunk);
+        const others = drawList.filter(c => c.type !== 'hull' || !c.isTrunk); // Keep everything else
+        
+        const finalComponents: (ShipComponent | UnifiedTrunkComponent)[] = [...others];
+        
+        if (hulls.length > 0) {
+            const trunk = new UnifiedTrunkComponent(hulls, rng);
+            finalComponents.push(trunk);
+        }
 
-        return drawList;
+        // 6. Sort by Z-Index
+        finalComponents.sort((a, b) => a.zIndex - b.zIndex);
+
+        return finalComponents;
     }
 
     private grow(node: ShipNode, depth: number, maxDepth: number, totalW: number, totalH: number, theme: HSBAColor, rng: RNG, archetype: ShipArchetype) {
@@ -118,6 +130,7 @@ export class CompositeShipGenerator {
                     rng,
                     archetype
                 );
+                childComp.isTrunk = true;
                 childComp.generateShape(rng);
                 
                 const childNode = { component: childComp, children: [] };

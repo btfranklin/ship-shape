@@ -23,6 +23,7 @@ export class ShipComponent {
     public energyGlowHue: number = 0.0;
     public variant: string = 'default';
     public shipArchetype: ShipArchetype;
+    public isTrunk: boolean = false;
     
     private renderer: ComponentRenderer;
 

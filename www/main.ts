@@ -2,6 +2,7 @@ import { HSBAColor, RNG, CapitalShipSurfaceGreebles, CapitalShipWindowsGreebles,
 import { ShipShapeGenerator, CompositeShipGenerator } from '../src/ship-shape/index.js';
 import { PanelGreebles, PipeGreebles, LightPanelGreebles } from '../src/greebler/index.js';
 import { ShipArchetype } from '../src/ship-shape/ShipComponent.js';
+import { UnifiedTrunkComponent } from '../src/ship-shape/UnifiedTrunkComponent.js';
 
 console.log('Greebler Playground Loaded');
 
@@ -76,7 +77,16 @@ function renderShape(rng: RNG) {
     ctx.lineWidth = 2;
     
     for (const comp of components) {
-        if (comp.shapePath) {
+        if (comp instanceof UnifiedTrunkComponent) {
+            for (const child of comp.components) {
+                 if (child.shapePath) {
+                    ctx.stroke(child.shapePath);
+                    // Draw center for debugging
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(child.bounds.x + child.bounds.w/2 - 2, child.bounds.y + child.bounds.h/2 - 2, 4, 4);
+                }
+            }
+        } else if (comp.shapePath) {
             ctx.stroke(comp.shapePath);
             // Draw center for debugging
             ctx.fillStyle = '#fff';
