@@ -111,9 +111,9 @@ export class CompositeShipGenerator {
                 w = spaceRemaining;
             }
             
-            let h = pBounds.h * rng.range(0.8, 1.2);
-            if (h > totalH * 0.45) h = totalH * 0.45;
-            if (h < totalH * 0.15) h = totalH * 0.15; 
+            let h = pBounds.h * rng.range(0.6, 1.5);
+            if (h > totalH * 0.55) h = totalH * 0.55;
+            if (h < totalH * 0.1) h = totalH * 0.1; 
             
             const overlap = pBounds.w * 0.1;
             const x = pBounds.x + pBounds.w - overlap;

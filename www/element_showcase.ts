@@ -77,10 +77,12 @@ const types: { type: ComponentType, desc: string, greebles: string[] }[] = [
 ];
 
 const listDiv = document.getElementById('list') as HTMLDivElement;
+const archetypeSelect = document.getElementById('archetypeSelect') as HTMLSelectElement;
 
 function render() {
-    const rng = new RNG(123); // Fixed seed for consistent showcase
+    listDiv.innerHTML = ''; // Clear list
     const theme = new HSBAColor(0.6, 0.1, 0.5); // Blue-ish default
+    const selectedArchetype = archetypeSelect.value as ShipArchetype;
     
     types.forEach(def => {
         const row = document.createElement('div');
@@ -154,13 +156,10 @@ function render() {
             // New RNG every click
             const localRng = new RNG(Math.random() * 10000);
             
-            // Always use 'science' archetype for consistent display in showcase
-            const arch: ShipArchetype = 'science';
-            
             // Update button text to indicate action
             btn.innerText = "Regenerate";
             
-            const comp = new ShipComponent(finalX, finalY, w, h, 10, def.type, theme, localRng, arch);
+            const comp = new ShipComponent(finalX, finalY, w, h, 10, def.type, theme, localRng, selectedArchetype);
             comp.generateShape(localRng);
             comp.draw(ctx, localRng);
             
@@ -180,4 +179,5 @@ function render() {
     });
 }
 
+archetypeSelect.addEventListener('change', render);
 render();

@@ -18,6 +18,7 @@ const seedInput = document.getElementById('seedInput') as HTMLInputElement;
 const randomSeedBtn = document.getElementById('randomSeedBtn') as HTMLButtonElement;
 const generateBtn = document.getElementById('generateBtn') as HTMLButtonElement;
 const modeSelect = document.getElementById('modeSelect') as HTMLSelectElement;
+const archetypeSelect = document.getElementById('archetypeSelect') as HTMLSelectElement;
 const hueInput = document.getElementById('hueInput') as HTMLInputElement;
 
 // State
@@ -98,7 +99,15 @@ function renderShape(rng: RNG) {
 function renderFullShip(rng: RNG, theme: HSBAColor) {
     const generator = new CompositeShipGenerator();
     // Pick archetype
-    const arch: ShipArchetype = rng.choice(['freight', 'science', 'industry', 'passengers', 'combat']);
+    let archVal = archetypeSelect.value;
+    let arch: ShipArchetype;
+
+    if (archVal === 'random') {
+        arch = rng.choice(['freight', 'science', 'industry', 'passengers', 'combat']);
+    } else {
+        arch = archVal as ShipArchetype;
+    }
+
     archetypeDisplay.innerText = "Archetype: " + arch.toUpperCase();
     
     const components = generator.generate(WIDTH, HEIGHT, theme, rng, arch);
@@ -111,6 +120,7 @@ function renderFullShip(rng: RNG, theme: HSBAColor) {
 
 // Event Listeners
 modeSelect.addEventListener('change', () => { updateUI(); generate(); });
+archetypeSelect.addEventListener('change', () => { generate(); });
 generateBtn.addEventListener('click', generate);
 randomSeedBtn.addEventListener('click', () => {
     seedInput.value = Math.floor(Math.random() * 100000).toString();
