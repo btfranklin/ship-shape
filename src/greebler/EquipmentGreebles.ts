@@ -244,28 +244,28 @@ export class EquipmentTrenchGreebles implements Drawable {
 
         // Draw equipment inside the trench
         equipment.draw(context, rng);
+
+        // Inner Shadows to simulate depth
+        context.save();
+        context.shadowColor = 'rgba(0,0,0,1.0)'; // Darker shadow
+        context.shadowBlur = 15.0; // Much larger blur
+        context.fillStyle = 'black'; 
+
+        // Top Lip (Shadow Down)
+        context.save();
+        context.shadowOffsetY = 8.0; // Larger offset
+        context.fillRect(trenchX, trenchY - 10.0, trenchW, 10.0); // Move caster further up
+        context.restore();
+
+        // Bottom Lip (Shadow Up)
+        context.save();
+        context.shadowOffsetY = -8.0;
+        context.fillRect(trenchX, trenchY + trenchH, trenchW, 10.0); // Move caster further down
+        context.restore();
+
+        context.restore();
         
         context.restore(); // End clip
-
-        // Shadow Casting (Bottom Lip)
-        // Swift: context.setShadow(offset: CGSize(width: 12, height: -6), blur: 12, color: .black)
-        // Swift: context.fill(CGRect(x: 0.0, y: trenchWidth+0.05, width: xUnits/scaleFactor, height: 0.4))
-        // This draws a rect BELOW the trench, casting a shadow UP into it (or onto the edge).
-        
-        context.save();
-        // Shadow offset (12, -6) at scale 0.1 implies (1.2, -0.6) in logical units? 
-        // Or context is scaled. At 0.1 scale, 12px is huge.
-        // Let's try to approximate the visual effect.
-        // Shadow pointing Up-Right.
-        context.shadowOffsetX = 12;
-        context.shadowOffsetY = -6;
-        context.shadowBlur = 12;
-        context.shadowColor = 'black';
-        
-        context.fillStyle = this.themeColor.toRGBAString(); // Or just a filler color, it's the caster.
-        // Rect below trench
-        context.fillRect(trenchX, trenchY + trenchH, trenchW, 0.4);
-        context.restore();
 
         context.restore();
     }

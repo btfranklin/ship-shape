@@ -129,7 +129,6 @@ export class StandardComponentRenderer implements ComponentRenderer {
         // Determine Lighting Direction
         // Towers (Tall) get side lighting (Shadow Right)
         // Hulls (Wide) get top-down lighting (Shadow Bottom)
-        // StandardComponentRenderer is mostly for Sensors/Weapons now
         const isTall = component.bounds.h > component.bounds.w;
         let shadowGrad, lightGrad;
 
@@ -137,21 +136,38 @@ export class StandardComponentRenderer implements ComponentRenderer {
             // Horizontal: Left (Light) -> Right (Shadow)
             shadowGrad = ctx.createLinearGradient(component.bounds.x, component.bounds.y, component.bounds.x + component.bounds.w, component.bounds.y);
             lightGrad = ctx.createLinearGradient(component.bounds.x, component.bounds.y, component.bounds.x + component.bounds.w, component.bounds.y);
+            
+            // Standard Side Lighting (Unchanged for now)
+            shadowGrad.addColorStop(0.4, 'rgba(0,0,0,0)');
+            shadowGrad.addColorStop(1, 'rgba(0,0,0,0.6)');
+            lightGrad.addColorStop(0, 'rgba(255,255,255,0.2)');
+            lightGrad.addColorStop(0.4, 'rgba(255,255,255,0)');
+            
         } else {
             // Vertical: Top (Light) -> Bottom (Shadow)
             shadowGrad = ctx.createLinearGradient(component.bounds.x, component.bounds.y, component.bounds.x, component.bounds.y + component.bounds.h);
             lightGrad = ctx.createLinearGradient(component.bounds.x, component.bounds.y, component.bounds.x, component.bounds.y + component.bounds.h);
+            
+            if (component.invertLighting) {
+                // Inverted: Shadow at Top, Highlight at Bottom
+                shadowGrad.addColorStop(0, 'rgba(0,0,0,0.6)');
+                shadowGrad.addColorStop(0.6, 'rgba(0,0,0,0)');
+                
+                lightGrad.addColorStop(0.6, 'rgba(255,255,255,0)');
+                lightGrad.addColorStop(1, 'rgba(255,255,255,0.2)');
+            } else {
+                // Normal: Shadow Bottom, Highlight Top
+                shadowGrad.addColorStop(0.4, 'rgba(0,0,0,0)');
+                shadowGrad.addColorStop(1, 'rgba(0,0,0,0.6)');
+                
+                lightGrad.addColorStop(0, 'rgba(255,255,255,0.2)');
+                lightGrad.addColorStop(0.4, 'rgba(255,255,255,0)');
+            }
         }
 
-        // Shadow (End of gradient)
-        shadowGrad.addColorStop(0.4, 'rgba(0,0,0,0)');
-        shadowGrad.addColorStop(1, 'rgba(0,0,0,0.6)');
         ctx.fillStyle = shadowGrad;
         ctx.fill(component.shapePath);
 
-        // Highlight (Start of gradient)
-        lightGrad.addColorStop(0, 'rgba(255,255,255,0.2)');
-        lightGrad.addColorStop(0.4, 'rgba(255,255,255,0)');
         ctx.fillStyle = lightGrad;
         ctx.fill(component.shapePath);
 

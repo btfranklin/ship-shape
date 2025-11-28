@@ -228,7 +228,9 @@ export class CompositeShipGenerator {
                 theme.withBrightness(-0.1),
                 rng,
                 archetype,
-                variant
+                variant,
+                false, // isTrunk
+                true   // invertLighting
             );
             childComp.generateShape(rng);
             

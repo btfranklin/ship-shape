@@ -24,6 +24,7 @@ export class ShipComponent {
     public variant: string = 'default';
     public shipArchetype: ShipArchetype;
     public isTrunk: boolean = false;
+    public invertLighting: boolean = false;
     
     private renderer: ComponentRenderer;
 
@@ -38,7 +39,8 @@ export class ShipComponent {
         rng: RNG,
         shipArchetype: ShipArchetype,
         variant: string = 'default',
-        isTrunk: boolean = false
+        isTrunk: boolean = false,
+        invertLighting: boolean = false
     ) {
         this.bounds = { x, y, w, h };
         this.zIndex = zIndex;
@@ -47,6 +49,7 @@ export class ShipComponent {
         this.shipArchetype = shipArchetype;
         this.variant = variant;
         this.isTrunk = isTrunk;
+        this.invertLighting = invertLighting;
 
         // Select Renderer
         switch (type) {

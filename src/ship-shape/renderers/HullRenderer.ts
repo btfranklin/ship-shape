@@ -142,15 +142,25 @@ export class HullRenderer implements ComponentRenderer {
         const shadowGrad = ctx.createLinearGradient(component.bounds.x, component.bounds.y, component.bounds.x, component.bounds.y + component.bounds.h);
         const lightGrad = ctx.createLinearGradient(component.bounds.x, component.bounds.y, component.bounds.x, component.bounds.y + component.bounds.h);
 
-        // Shadow (End of gradient)
-        shadowGrad.addColorStop(0.4, 'rgba(0,0,0,0)');
-        shadowGrad.addColorStop(1, 'rgba(0,0,0,0.6)');
+        if (component.invertLighting) {
+            // Inverted: Shadow at Top, Highlight at Bottom
+            shadowGrad.addColorStop(0, 'rgba(0,0,0,0.6)');
+            shadowGrad.addColorStop(0.6, 'rgba(0,0,0,0)');
+            
+            lightGrad.addColorStop(0.6, 'rgba(255,255,255,0)');
+            lightGrad.addColorStop(1, 'rgba(255,255,255,0.2)');
+        } else {
+            // Normal: Highlight Top, Shadow Bottom
+            shadowGrad.addColorStop(0.4, 'rgba(0,0,0,0)');
+            shadowGrad.addColorStop(1, 'rgba(0,0,0,0.6)');
+            
+            lightGrad.addColorStop(0, 'rgba(255,255,255,0.2)');
+            lightGrad.addColorStop(0.4, 'rgba(255,255,255,0)');
+        }
+
         ctx.fillStyle = shadowGrad;
         ctx.fill(component.shapePath);
 
-        // Highlight (Start of gradient)
-        lightGrad.addColorStop(0, 'rgba(255,255,255,0.2)');
-        lightGrad.addColorStop(0.4, 'rgba(255,255,255,0)');
         ctx.fillStyle = lightGrad;
         ctx.fill(component.shapePath);
 
