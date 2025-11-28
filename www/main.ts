@@ -1,6 +1,7 @@
-import { HSBAColor, RNG, CapitalShipSurfaceGreebles, CapitalShipWindowsGreebles, EquipmentTrenchGreebles } from '../src/greebler/index';
-import { ShipShapeGenerator, CompositeShipGenerator } from '../src/ship-shape/index';
-import { PanelGreebles, PipeGreebles, LightPanelGreebles } from '../src/greebler/index';
+import { HSBAColor, RNG, CapitalShipSurfaceGreebles, CapitalShipWindowsGreebles, EquipmentTrenchGreebles } from '../src/greebler/index.js';
+import { ShipShapeGenerator, CompositeShipGenerator } from '../src/ship-shape/index.js';
+import { PanelGreebles, PipeGreebles, LightPanelGreebles } from '../src/greebler/index.js';
+import { ShipArchetype } from '../src/ship-shape/ShipComponent.js';
 
 console.log('Greebler Playground Loaded');
 
@@ -9,6 +10,7 @@ const WIDTH = 1800;
 const HEIGHT = 600; // Larger for web
 const canvas = document.getElementById('appCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
+const archetypeDisplay = document.getElementById('archetypeDisplay') as HTMLDivElement;
 
 // UI Elements
 const seedInput = document.getElementById('seedInput') as HTMLInputElement;
@@ -33,6 +35,7 @@ function generate() {
         canvas.width = WIDTH;
         canvas.height = HEIGHT;
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
+        archetypeDisplay.innerText = ""; // Clear prev
 
         const theme = new HSBAColor(hue, 0.1, 0.6); // Blue-ish grey default
 
@@ -66,6 +69,7 @@ function renderSurface(rng: RNG, theme: HSBAColor) {
 function renderShape(rng: RNG) {
     const generator = new CompositeShipGenerator();
     const theme = new HSBAColor(0,0,0); // Dummy
+    // Archetype doesn't affect shape currently, just pass random or undefined
     const components = generator.generate(WIDTH, HEIGHT, theme, rng);
     
     ctx.strokeStyle = '#0f0';
@@ -83,7 +87,11 @@ function renderShape(rng: RNG) {
 
 function renderFullShip(rng: RNG, theme: HSBAColor) {
     const generator = new CompositeShipGenerator();
-    const components = generator.generate(WIDTH, HEIGHT, theme, rng);
+    // Pick archetype
+    const arch: ShipArchetype = rng.choice(['freight', 'science', 'industry', 'passengers', 'combat']);
+    archetypeDisplay.innerText = "Archetype: " + arch.toUpperCase();
+    
+    const components = generator.generate(WIDTH, HEIGHT, theme, rng, arch);
     
     // Draw components (sorted by Z-Index inside generator)
     for (const comp of components) {

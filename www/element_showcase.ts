@@ -1,5 +1,5 @@
-import { HSBAColor, RNG } from '../src/greebler/common';
-import { ShipComponent, ComponentType } from '../src/ship-shape/ShipComponent';
+import { HSBAColor, RNG } from '../src/greebler/common.js';
+import { ShipComponent, ComponentType, ShipArchetype } from '../src/ship-shape/ShipComponent.js';
 
 // Definition of Types
 const types: { type: ComponentType, desc: string, greebles: string[] }[] = [
@@ -7,7 +7,6 @@ const types: { type: ComponentType, desc: string, greebles: string[] }[] = [
         type: 'engine',
         desc: "Propulsion units. Blocky or tapered rear sections.",
         greebles: [
-            "Archetype: Industrial",
             "Visual Style: Standard (Cylinder), Radiator (Vented), or Energy (Core)",
             "Custom Render: Gradients & Rings/Glows (No standard panels)"
         ]
@@ -16,25 +15,14 @@ const types: { type: ComponentType, desc: string, greebles: string[] }[] = [
         type: 'hull',
         desc: "Main structural spine blocks. Rectangular or trapezoidal.",
         greebles: [
-            "Archetype: Standard",
             "Greebles: Balanced mix of Panels, Pipes, and small Vents",
-            "Shapes: Rect, Chamfer, Taper-Front, Cut-Corner"
-        ]
-    },
-    {
-        type: 'superstructure',
-        desc: "Decks, platforms, and command towers.",
-        greebles: [
-            "Archetype: Tech",
-            "Greebles: High density of Lights, Wires, and Antennas",
-            "Shapes: Taper-Front (Deck) or Taper-Top (Tower)"
+            "Shapes: Rect, Chamfer, Cut-Corner (Original & Flipped)"
         ]
     },
     {
         type: 'sensor',
         desc: "Dedicated sensor arrays and comms spires.",
         greebles: [
-            "Archetype: Tech",
             "Greebles: Dense small details, exposed wiring",
             "Shapes: Taper-Top (Pyramid/Spire) or Cut-Corner"
         ]
@@ -43,7 +31,6 @@ const types: { type: ComponentType, desc: string, greebles: string[] }[] = [
         type: 'tank',
         desc: "Fuel or cargo storage pods.",
         greebles: [
-            "Archetype: Clean",
             "Greebles: Minimal. Mostly smooth plating.",
             "Shapes: Chamfer (Capsule-like)"
         ]
@@ -52,7 +39,6 @@ const types: { type: ComponentType, desc: string, greebles: string[] }[] = [
         type: 'weapon',
         desc: "Turrets or heavy batteries.",
         greebles: [
-            "Archetype: Dense",
             "Greebles: Heavy pipes, vents, reinforcement",
         ]
     },
@@ -60,7 +46,6 @@ const types: { type: ComponentType, desc: string, greebles: string[] }[] = [
         type: 'sphere',
         desc: "Spherical modules, often containing reactors or gravity drives.",
         greebles: [
-            "Archetype: Tech",
             "Visual Style: Radial 3D Shading + Clipped Greebles",
             "Overlay: Lighting gradients to reinforce volume"
         ]
@@ -69,7 +54,6 @@ const types: { type: ComponentType, desc: string, greebles: string[] }[] = [
         type: 'ring',
         desc: "Large structural rings encircling the hull.",
         greebles: [
-            "Archetype: Structure (Plain)",
             "Visual Style: Cylindrical Gradient (Harsh shadows)",
             "Greebles: Panels only, with multiply blending"
         ]
@@ -78,9 +62,16 @@ const types: { type: ComponentType, desc: string, greebles: string[] }[] = [
         type: 'trench',
         desc: "Recessed equatorial trench filled with heavy equipment.",
         greebles: [
-            "Archetype: Trench",
             "Visual Style: Inset / Recessed",
             "Greebles: Dense pipes/machinery, no panels"
+        ]
+    },
+    {
+        type: 'tower',
+        desc: "Vertical observation or command spires.",
+        greebles: [
+            "Visual Style: Side-Lit (Shadow Right)",
+            "Shapes: Taper-Top (Spire) or Rect"
         ]
     }
 ];
@@ -138,7 +129,7 @@ function render() {
             let h = 120;
             
             // Sizing logic based on type
-            if (def.type === 'sensor' || def.type === 'superstructure') {
+            if (def.type === 'sensor' || def.type === 'tower') {
                 // Tall towers
                 h *= 1.5;
                 w *= 0.6;
@@ -163,7 +154,13 @@ function render() {
             // New RNG every click
             const localRng = new RNG(Math.random() * 10000);
             
-            const comp = new ShipComponent(finalX, finalY, w, h, 10, def.type, theme, localRng);
+            // Always use 'science' archetype for consistent display in showcase
+            const arch: ShipArchetype = 'science';
+            
+            // Update button text to indicate action
+            btn.innerText = "Regenerate";
+            
+            const comp = new ShipComponent(finalX, finalY, w, h, 10, def.type, theme, localRng, arch);
             comp.generateShape(localRng);
             comp.draw(ctx, localRng);
             

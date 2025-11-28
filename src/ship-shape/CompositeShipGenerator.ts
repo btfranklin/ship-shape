@@ -1,191 +1,271 @@
 import { HSBAColor, RNG } from '../greebler/common.js';
-import { ShipComponent, ComponentType } from './ShipComponent.js';
+import { ShipComponent, ComponentType, ShipArchetype } from './ShipComponent.js';
+
+interface ShipNode {
+    component: ShipComponent;
+    children: ShipNode[];
+}
 
 export class CompositeShipGenerator {
     constructor() {}
 
-    generate(width: number, height: number, themeColor: HSBAColor, rng: RNG): ShipComponent[] {
-        const components: ShipComponent[] = [];
-        
-        // Design parameters
-        // 1.0 Aspect Ratio ships (web) are 1800x600.
-        // 3:1 aspect ratio.
+    generate(width: number, height: number, themeColor: HSBAColor, rng: RNG, shipArchetype?: ShipArchetype): ShipComponent[] {
         const centerY = height / 2;
-        const unitH = height * 0.2; // Standard block height
         
-        // SECTION 1: ENGINES (Rear / Left)
-        // A massive block at the back
-        const engineW = width * rng.range(0.05, 0.12); // Significantly shorter width
-        const engineH = height * rng.range(0.2, 0.4);  // Height remains (tall)
+        // Pick Random Archetype if not provided
+        const archetype: ShipArchetype = shipArchetype ?? rng.choice(['freight', 'science', 'industry', 'passengers', 'combat']);
+
+        // 1. Create Root (Engine Block)
+        const engineW = width * rng.range(0.1, 0.15);
+        const engineH = height * rng.range(0.25, 0.45);
         const engineX = width * 0.05;
-        const engineY = centerY - engineH/2;
-        
-        const engine = new ShipComponent(engineX, engineY, engineW, engineH, 10, 'engine', themeColor.withBrightness(-0.1), rng);
-        engine.generateShape(rng);
-        components.push(engine);
-        
-        // Engine Nozzles? (Just cylinders sticking out back? Or leave for greebles?)
-        // Let's add a "Thrust block" behind
-        const nozzleW = engineW * 0.3;
-        const nozzleH = engineH * 0.8;
-        const nozzle = new ShipComponent(engineX - nozzleW*0.8, centerY - nozzleH/2, nozzleW, nozzleH, 9, 'engine', themeColor.withBrightness(-0.2), rng);
-        nozzle.generateShape(rng); // likely rect
-        components.push(nozzle);
+        const engineY = centerY - engineH / 2;
 
-        // SECTION 2: MAIN HULL (Spine)
-        // Extends from Engine to Front
-        // Composed of 2-4 segments
-        let currentX = engineX + engineW * 0.8; // Overlap
-        const remainingW = width * 0.9 - currentX;
-        const segments = rng.intRange(2, 4);
+        const rootComp = new ShipComponent(
+            engineX, engineY, engineW, engineH, 
+            100, // High Z
+            'engine', 
+            themeColor.withBrightness(-0.1), 
+            rng,
+            archetype
+        );
+        rootComp.generateShape(rng);
+
+        const rootNode: ShipNode = { component: rootComp, children: [] };
+
+        // 2. Grow the Tree
+        // Pass limits to avoid infinite growth. Increased depth to allow space-filling.
+        this.grow(rootNode, 0, 20, width, height, themeColor, rng, archetype);
+
+        // 3. Add Special Components (Ring/Trench) as children of Root or specialized nodes?
+        // this.addSpecialDetails(rootNode, width, height, themeColor, rng, archetype);
+
+        // 4. Traverse Post-Order to build draw list (Leaves -> Trunk)
+        const drawList: ShipComponent[] = [];
+        this.traversePostOrder(rootNode, (comp) => {
+            drawList.push(comp);
+        });
         
-        for (let i = 0; i < segments; i++) {
-            const segW = (remainingW / segments) * rng.range(0.8, 1.2);
-            // Taper height as we go forward
-            const progress = i / segments;
-            const segH = (engineH * 0.8) * (1.0 - (progress * 0.5)); 
-            const segY = centerY - segH/2; // Centered vertically
-            
-            // Hull Spine is Z=10 (Base)
-            // To ensure segments layer correctly front-to-back or back-to-front?
-            // Usually rear segments are behind front segments visually? 
-            // Or front overlaps rear? Let's say Front overlaps Rear -> Higher Z.
-            const hullZ = 10 + i;
-            
-            const hull = new ShipComponent(currentX, segY, segW, segH, hullZ, 'hull', themeColor, rng);
-            hull.generateShape(rng);
-            components.push(hull);
-            
-            // Add Top Structures (Turrets / Sensors)
-            // These sit ON TOP of the hull. In side view, they are "above" Y-wise.
-            // Z-wise? They are on the centerline, so same depth as hull? 
-            // Or if the hull is sloped, they might be slightly behind or in front.
-            // Let's put them slightly BEHIND (Z=9) if they are "Far side" towers, 
-            // or slightly IN FRONT (Z=15) if they are "Near side".
-            // Let's go with Z = hullZ + 5 (In front/On top).
-            if (rng.bool(0.6)) {
-                // Decide between Low Deck or Tall Tower
-                const isTower = rng.bool(0.4);
-                
-                let topW, topH;
-                
-                if (isTower) {
-                    // Tall and narrow
-                    topW = segW * rng.range(0.15, 0.3);
-                    topH = segH * rng.range(0.8, 1.5); 
-                    
-                    // Enforce verticality for shape logic
-                    if (topW >= topH) topW = topH * 0.8;
-                } else {
-                    // Low and wide (Deck)
-                    topW = segW * rng.range(0.5, 0.8);
-                    topH = segH * rng.range(0.2, 0.4);
-                }
-                
-                const topX = currentX + rng.range(0, segW - topW);
-                const topY = segY - topH * 0.9; // Sit on top, slightly embedded (0.9)
-                
-                // If tower, use 'sensor' type for high-tech look
-                const type = isTower ? 'sensor' : 'superstructure';
-                
-                // Render order: Towers slightly BEHIND hull look better? 
-                // No, if they grow out of hull, they should be masked by hull if they are "behind".
-                // But here we want them visible.
-                // If I put Tower Z < Hull Z: Hull draws over Tower bottom. Good for integration.
-                const z = hullZ - 1; 
-                
-                const topStruct = new ShipComponent(topX, topY, topW, topH, z, type, themeColor.withBrightness(0.1), rng);
-                topStruct.generateShape(rng);
-                components.push(topStruct);
+        // 5. Explicitly Sort by Z-Index just to be safe (Painter's Algo)
+        drawList.sort((a, b) => a.zIndex - b.zIndex);
+
+        return drawList;
+    }
+
+    private grow(node: ShipNode, depth: number, maxDepth: number, totalW: number, totalH: number, theme: HSBAColor, rng: RNG, archetype: ShipArchetype) {
+        if (depth >= maxDepth) return;
+
+        const parentComp = node.component;
+        const pBounds = parentComp.bounds;
+
+        // Determine possible branches based on Parent Type
+        // Engine -> Hull (Forward)
+        // Hull -> Hull (Forward), Tower (Up), Tank (Down), Sponson (Side/Up/Down)
+        
+        let forwardChance = 0.0;
+        let upChance = 0.0;
+        let downChance = 0.0;
+
+        const currentRight = pBounds.x + pBounds.w;
+        const margin = totalW * 0.05;
+        const spaceRemaining = totalW - currentRight - margin;
+        
+        if (parentComp.type === 'engine' || parentComp.type === 'hull') {
+            // If we have significant space, grow forward
+            if (spaceRemaining > totalW * 0.1) {
+                forwardChance = 1.0;
+                // Safety break
+                if (depth >= maxDepth) forwardChance = 0.0;
+            } else {
+                forwardChance = 0.0;
             }
             
-            // Add Bottom Structures (Cargo / Bays)
-            // Hang below.
-            if (rng.bool(0.4)) {
-                const botW = segW * rng.range(0.4, 0.7);
-                const botH = segH * rng.range(0.3, 0.6);
-                const botX = currentX + rng.range(0, segW - botW);
-                const botY = segY + segH * 0.8; // Hang below
-                
-                // Tanks behind hull?
-                const z = hullZ - 1;
-                
-                const botStruct = new ShipComponent(botX, botY, botW, botH, z, 'tank', themeColor.withBrightness(-0.15), rng);
-                botStruct.generateShape(rng);
-                components.push(botStruct);
+            // Allow branching for "trunk" nodes (hulls)
+            if (parentComp.type === 'hull') {
+                upChance = 0.4;
+                downChance = 0.3;
+            }
+        } else if (parentComp.type === 'tower') {
+            upChance = 0.3; // Towers on towers
+        }
+
+        // 1. Branch Forward (Extension)
+        if (rng.bool(forwardChance)) {
+            // Next Hull Segment
+            const maxChunk = Math.min(totalW * 0.25, spaceRemaining);
+            const minChunk = totalW * 0.1;
+            
+            let w = rng.range(minChunk, maxChunk);
+            if (spaceRemaining < totalW * 0.15) {
+                w = spaceRemaining;
             }
             
-            currentX += segW * 0.85; // Overlap
+            let h = pBounds.h * rng.range(0.8, 1.2);
+            if (h > totalH * 0.45) h = totalH * 0.45;
+            if (h < totalH * 0.15) h = totalH * 0.15; 
+            
+            const overlap = pBounds.w * 0.1;
+            const x = pBounds.x + pBounds.w - overlap;
+            const y = pBounds.y + (pBounds.h - h) / 2; 
+            
+            if (x + w < totalW) {
+                const type: ComponentType = 'hull';
+                const childComp = new ShipComponent(
+                    x, y, w, h, 
+                    parentComp.zIndex - 1, 
+                    type,
+                    theme,
+                    rng,
+                    archetype
+                );
+                childComp.generateShape(rng);
+                
+                const childNode = { component: childComp, children: [] };
+                node.children.push(childNode);
+                
+                this.grow(childNode, depth + 1, maxDepth, totalW, totalH, theme, rng, archetype);
+            }
         }
-        
-        // SECTION 3: BRIDGE (Command Tower)
-        // Usually sits high on the rear-mid section
-        // Make it TALL and Commanding
-        if (rng.bool(0.9)) {
-            const bridgeW = width * rng.range(0.05, 0.08); // Narrower
-            const bridgeH = height * rng.range(0.2, 0.35); // Taller
+
+        // 2. Branch Up (Towers/Superstructure/Hulls)
+        if (rng.bool(upChance)) {
+            const r = rng.next();
+            let type: ComponentType = 'tower';
+            let variant = 'default';
+            let w = pBounds.w * rng.range(0.3, 0.6);
+            let h = pBounds.h * rng.range(0.5, 1.2);
             
-            // Position near rear
-            const bridgeX = engineX + engineW * 0.4; 
-            const bridgeY = centerY - engineH/2 - bridgeH * 0.8; // Sit on top of engine
+            if (r < 0.4) {
+                type = 'tower';
+                w = pBounds.w * rng.range(0.2, 0.4);
+                h = pBounds.h * rng.range(0.8, 1.5);
+            } else if (r < 0.7) {
+                type = 'hull';
+                variant = 'taper-top';
+                w = pBounds.w * rng.range(0.5, 0.8);
+                h = pBounds.h * rng.range(0.4, 0.7);
+            } else if (r < 0.9) {
+                type = 'sphere';
+                const s = Math.min(pBounds.w, pBounds.h) * rng.range(0.4, 0.7);
+                w = s; h = s;
+            } else {
+                type = 'hull';
+                variant = 'default'; 
+                w = pBounds.w * rng.range(0.4, 0.7);
+                h = pBounds.h * rng.range(0.3, 0.5);
+            }
+
+            const x = pBounds.x + rng.range(0, pBounds.w - w);
+            let y = pBounds.y - h * 0.8; 
+            if (type === 'sphere') {
+                y = pBounds.y - h * 0.5;
+            }
             
-            // Bridge BEHIND engine looks securely attached?
-            // Or In Front?
-            // Let's try BEHIND (Z=5) so Engine overlaps its base.
+            const childComp = new ShipComponent(
+                x, y, w, h,
+                parentComp.zIndex - 1, 
+                type,
+                theme.withBrightness(0.1),
+                rng,
+                archetype,
+                variant
+            );
+            childComp.generateShape(rng);
             
-            const bridge = new ShipComponent(bridgeX, bridgeY, bridgeW, bridgeH, 5, 'superstructure', themeColor.withBrightness(0.2), rng);
-            bridge.generateShape(rng);
-            components.push(bridge);
+            const childNode = { component: childComp, children: [] };
+            node.children.push(childNode);
+            
+            if (type === 'tower') {
+                this.grow(childNode, depth + 1, maxDepth, totalW, totalH, theme, rng, archetype);
+            }
         }
+
+        // 3. Branch Down (Tanks/Hulls)
+        if (rng.bool(downChance)) {
+            const r = rng.next();
+            let type: ComponentType = 'tank';
+            let variant = 'default';
+            let w = pBounds.w * rng.range(0.4, 0.6);
+            let h = pBounds.h * rng.range(0.4, 0.6);
+            
+            if (r < 0.5) {
+                type = 'hull';
+                variant = 'taper-bottom';
+                w = pBounds.w * rng.range(0.5, 0.8);
+                h = pBounds.h * rng.range(0.4, 0.7);
+            } else if (r < 0.8) {
+                type = 'tank';
+            } else {
+                type = 'sphere';
+                const s = Math.min(pBounds.w, pBounds.h) * rng.range(0.4, 0.6);
+                w = s; h = s;
+            }
+            
+            const x = pBounds.x + rng.range(0, pBounds.w - w);
+            let y = pBounds.y + pBounds.h - h * 0.2; 
+            if (type === 'sphere') {
+                y = pBounds.y + pBounds.h - h * 0.5;
+            }
+            
+            const childComp = new ShipComponent(
+                x, y, w, h,
+                parentComp.zIndex - 1, 
+                type,
+                theme.withBrightness(-0.1),
+                rng,
+                archetype,
+                variant
+            );
+            childComp.generateShape(rng);
+            
+            const childNode = { component: childComp, children: [] };
+            node.children.push(childNode);
+        }
+    }
+
+    private addSpecialDetails(root: ShipNode, width: number, height: number, theme: HSBAColor, rng: RNG, archetype: ShipArchetype) {
+        const centerY = height / 2;
         
-        // SECTION 4: FOREGROUND DETAILS (Near Side)
-        // Pipes, structural ribs, pods that float in front of the main hull.
-        // Z = 30+
-        // Add a "Side Pod" to a random segment
-        
-        // SPHERE (High Z, floating near front/mid)
+        // 1. Sphere (Floating near front)
         if (rng.bool(0.4)) {
-            const sphereSize = height * rng.range(0.2, 0.35);
-            // Position: Randomly along the mid-to-front section
-            const sphereX = width * rng.range(0.4, 0.8);
-            const sphereY = centerY + rng.range(-height * 0.1, height * 0.1) - sphereSize/2; // Roughly centered
+            const s = height * rng.range(0.2, 0.3);
+            const x = width * rng.range(0.5, 0.7);
+            const y = centerY - s/2 + rng.range(-50, 50);
             
-            const sphere = new ShipComponent(sphereX, sphereY, sphereSize, sphereSize, 50, 'sphere', themeColor.withBrightness(0.05), rng);
+            const sphere = new ShipComponent(x, y, s, s, 50, 'sphere', theme.withBrightness(0.05), rng, archetype);
             sphere.generateShape(rng);
-            components.push(sphere);
+            root.children.push({ component: sphere, children: [] });
         }
 
-        // RING (Centered vertically, around hull)
+        // 2. Ring (Around hull)
         if (rng.bool(0.3)) {
-            const ringH = height * rng.range(0.5, 0.8); // Tall
-            const ringW = ringH * rng.range(0.2, 0.3); // Narrow width relative to height
+            const h = height * rng.range(0.6, 0.8);
+            const w = h * 0.25;
+            const x = width * rng.range(0.3, 0.6);
+            const y = centerY - h/2;
             
-            const ringX = width * rng.range(0.3, 0.7);
-            const ringY = centerY - ringH/2;
-            
-            // Ring should be behind some foreground details but definitely distinct
-            const ring = new ShipComponent(ringX, ringY, ringW, ringH, 100, 'ring', themeColor.withBrightness(-0.2), rng);
+            const ring = new ShipComponent(x, y, w, h, 5, 'ring', theme.withBrightness(-0.2), rng, archetype);
             ring.generateShape(rng);
-            components.push(ring);
+            root.children.push({ component: ring, children: [] });
         }
-
-        // EQUATORIAL TRENCH
-        // Runs along the side/middle of the hull
+        
+        // 3. Trench (Equatorial)
         if (rng.bool(0.5)) {
-            const trenchH = height * rng.range(0.05, 0.1); // Narrow strip
-            const trenchW = width * rng.range(0.5, 0.8);
-            const trenchX = engineX + engineW; // Start after engine
-            const trenchY = centerY - trenchH/2;
+            const h = height * 0.08;
+            const w = width * 0.6;
+            const x = width * 0.15;
+            const y = centerY - h/2;
             
-            // High Z to draw on top of hull segments
-            const trench = new ShipComponent(trenchX, trenchY, trenchW, trenchH, 20, 'trench', themeColor.withBrightness(-0.3), rng);
+            const trench = new ShipComponent(x, y, w, h, 105, 'trench', theme.withBrightness(-0.3), rng, archetype);
             trench.generateShape(rng);
-            components.push(trench);
+            root.children.push({ component: trench, children: [] });
         }
-        
-        // Sort components by Z-Index so they draw correctly (Painter's Algorithm)
-        components.sort((a, b) => a.zIndex - b.zIndex);
-        
-        return components;
+    }
+
+    private traversePostOrder(node: ShipNode, callback: (c: ShipComponent) => void) {
+        // 1. Visit Children
+        node.children.forEach(child => this.traversePostOrder(child, callback));
+        // 2. Visit Self
+        callback(node.component);
     }
 }

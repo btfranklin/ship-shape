@@ -55,7 +55,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         
         let hoseChance = 0.1;
         let hoseRange = [1, 2];
-        let wireChance = 0.1;
+        let wireChance = 0.0; // Default to 0, only tech archetypes should have wires
         let wireRange = [5, 10];
         
         let cutawayChance = 0.05; // Rare by default
@@ -70,6 +70,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 equipChance = 0.1;
                 hoseChance = 0.8;
                 hoseRange = [2, 5];
+                wireChance = 0.0;
                 cutawayChance = 0.2;
                 break;
             case 'tech':
@@ -103,7 +104,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 equipRange = [2, 5];
                 equipChance = 0.5;
                 hoseChance = 0.6;
-                wireChance = 0.6;
+                wireChance = 0.0;
                 cutawayChance = 0.1;
                 break;
             case 'structure':
