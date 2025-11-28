@@ -128,9 +128,10 @@ export class CompositeShipGenerator {
                     type,
                     theme,
                     rng,
-                    archetype
+                    archetype,
+                    'default',
+                    true // isTrunk
                 );
-                childComp.isTrunk = true;
                 childComp.generateShape(rng);
                 
                 const childNode = { component: childComp, children: [] };

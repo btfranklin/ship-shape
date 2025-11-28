@@ -37,7 +37,8 @@ export class ShipComponent {
         color: HSBAColor,
         rng: RNG,
         shipArchetype: ShipArchetype,
-        variant: string = 'default'
+        variant: string = 'default',
+        isTrunk: boolean = false
     ) {
         this.bounds = { x, y, w, h };
         this.zIndex = zIndex;
@@ -45,6 +46,7 @@ export class ShipComponent {
         this.color = color;
         this.shipArchetype = shipArchetype;
         this.variant = variant;
+        this.isTrunk = isTrunk;
 
         // Select Renderer
         switch (type) {
@@ -104,10 +106,12 @@ export class ShipComponent {
                 
             case 'industry':
                 // Dirty, pipes, heavy
-                if (compType === 'hull') return 'industrial';
+                // Only use heavy industrial (hoses) on the main trunk or tanks/engines
+                if (compType === 'hull') return this.isTrunk ? 'industrial' : 'standard';
                 if (compType === 'tank') return 'industrial';
                 if (compType === 'engine') return 'industrial';
-                return 'industrial';
+                if (compType === 'tower') return 'standard'; // No hoses on towers
+                return 'standard'; // Default to standard for others
                 
             case 'combat':
                 // Armored, dense

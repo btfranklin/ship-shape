@@ -117,10 +117,7 @@ randomSeedBtn.addEventListener('click', () => {
     generate();
 });
 
-// Inputs
-[hueInput]
-    .forEach(el => el?.addEventListener('input', generate));
-
 // Init
 updateUI();
+seedInput.value = Math.floor(Math.random() * 100000).toString(); // Set a random seed on load
 generate();
