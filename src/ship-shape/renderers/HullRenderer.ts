@@ -32,6 +32,19 @@ export class HullRenderer implements ComponentRenderer {
             return;
         }
 
+        if (component.variant === 'taper-front') {
+            // Taper towards the Right (Front)
+            // Trapezoid
+            const taperY = h * rng.range(0.15, 0.3); // Symmetrical taper
+            p.moveTo(x, y); // Top Left
+            p.lineTo(x + w, y + taperY); // Top Right (Down)
+            p.lineTo(x + w, y + h - taperY); // Bottom Right (Up)
+            p.lineTo(x, y + h); // Bottom Left
+            p.closePath();
+            component.shapePath = p;
+            return;
+        }
+
         // Default: Hull specific shapes - Any combination of corners can be cropped
         // Each crop can have variable depth and angle (independent X/Y cut size)
         const cutProbability = 0.5; // 50% chance for each corner to be cut

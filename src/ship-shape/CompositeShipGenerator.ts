@@ -71,8 +71,6 @@ export class CompositeShipGenerator {
         const pBounds = parentComp.bounds;
 
         // Determine possible branches based on Parent Type
-        // Engine -> Hull (Forward)
-        // Hull -> Hull (Forward), Tower (Up), Tank (Down), Sponson (Side/Up/Down)
         
         let forwardChance = 0.0;
         let upChance = 0.0;
@@ -102,6 +100,7 @@ export class CompositeShipGenerator {
         }
 
         // 1. Branch Forward (Extension)
+        let grownForward = false;
         if (rng.bool(forwardChance)) {
             // Next Hull Segment
             const maxChunk = Math.min(totalW * 0.25, spaceRemaining);
@@ -136,9 +135,15 @@ export class CompositeShipGenerator {
                 
                 const childNode = { component: childComp, children: [] };
                 node.children.push(childNode);
+                grownForward = true;
                 
                 this.grow(childNode, depth + 1, maxDepth, totalW, totalH, theme, rng, archetype);
             }
+        }
+
+        // If we stopped growing forward, add a Nose Cap
+        if (!grownForward && (parentComp.type === 'hull' || parentComp.type === 'engine')) {
+            this.addNose(node, totalW, totalH, theme, rng, archetype);
         }
 
         // 2. Branch Up (Towers/Superstructure/Hulls)
@@ -236,6 +241,64 @@ export class CompositeShipGenerator {
             
             const childNode = { component: childComp, children: [] };
             node.children.push(childNode);
+        }
+    }
+
+    private addNose(node: ShipNode, totalW: number, totalH: number, theme: HSBAColor, rng: RNG, archetype: ShipArchetype) {
+        const parent = node.component;
+        const pBounds = parent.bounds;
+        const overlap = pBounds.w * 0.1;
+        const currentRight = pBounds.x + pBounds.w;
+        const startX = currentRight - overlap;
+        
+        // Safety Margin
+        const limit = totalW - (totalW * 0.02);
+        const maxW = limit - startX;
+        
+        if (maxW < 10) return; // No room
+
+        // Choice: Taper Hull, Large Sphere, or Small Sphere (Round Cap)
+        let choice = rng.choice(['taper', 'sphere-large', 'sphere-small']);
+        
+        // If very limited space, force taper as it handles arbitrary width best
+        if (maxW < 50) choice = 'taper';
+
+        if (choice === 'taper') {
+            // Trapezoid Hull (Merged into Trunk)
+            let w = pBounds.w * rng.range(0.5, 0.8);
+            w = Math.min(w, maxW); // Clamp width
+
+            const h = pBounds.h * 0.9; 
+            const y = pBounds.y + (pBounds.h - h)/2;
+            
+            const nose = new ShipComponent(startX, y, w, h, parent.zIndex, 'hull', theme, rng, archetype, 'taper-front', true); 
+            nose.generateShape(rng);
+            node.children.push({ component: nose, children: [] });
+            
+        } else {
+            // Spheres extend past currentRight by s/2
+            // We need currentRight + s/2 <= limit
+            // s/2 <= limit - currentRight
+            // s <= (limit - currentRight) * 2
+            const maxExtension = limit - currentRight;
+            const maxS = Math.max(10, maxExtension * 2);
+
+            let s = 0;
+            if (choice === 'sphere-large') {
+                s = pBounds.h * rng.range(0.9, 1.3);
+            } else {
+                s = pBounds.h * rng.range(0.6, 0.8);
+            }
+            
+            // Clamp Sphere Size
+            s = Math.min(s, maxS);
+
+            const y = pBounds.y + pBounds.h/2 - s/2;
+            const sphereX = currentRight - s * 0.5; // Center on edge
+            
+            const nose = new ShipComponent(sphereX, y, s, s, parent.zIndex + 1, 'sphere', theme, rng, archetype);
+            nose.generateShape(rng);
+            node.children.push({ component: nose, children: [] });
         }
     }
 
