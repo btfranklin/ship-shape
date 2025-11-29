@@ -98,7 +98,7 @@ export class ShipComponent {
 
         // Configure greebles
         const skipBaseFill = (type === 'sphere' || type === 'ring' || type === 'trench');
-        this.greebles = new CapitalShipSurfaceGreebles(w / UNIT_SCALE, h / UNIT_SCALE, color, archetype, skipBaseFill);
+        this.greebles = new CapitalShipSurfaceGreebles(w / UNIT_SCALE, h / UNIT_SCALE, color, archetype, skipBaseFill, isTrunk);
     }
 
     private determineSurfaceArchetype(shipArch: ShipArchetype, compType: ComponentType, rng: RNG): SurfaceArchetype {

@@ -10,8 +10,9 @@ interface ShipNode {
 export class CompositeShipGenerator {
     constructor() {}
 
-    generate(width: number, height: number, themeColor: HSBAColor, rng: RNG, shipArchetype?: ShipArchetype): (ShipComponent | UnifiedTrunkComponent)[] {
+    generate(width: number, height: number, themeColor: HSBAColor, rng: RNG, shipArchetype?: ShipArchetype, referenceHeight?: number): (ShipComponent | UnifiedTrunkComponent)[] {
         const centerY = height / 2;
+        const scaleH = referenceHeight ?? height;
         
         // Pick Random Archetype if not provided
         const archetype: ShipArchetype = shipArchetype ?? rng.choice(['freight', 'science', 'industry', 'passengers', 'combat']);
@@ -40,7 +41,7 @@ export class CompositeShipGenerator {
         }
 
         const engineW = width * rng.range(wMultMin, wMultMax);
-        const engineH = height * rng.range(0.25, 0.45);
+        const engineH = scaleH * rng.range(0.25, 0.45);
         const engineX = width * 0.05;
         const engineY = centerY - engineH / 2;
 
@@ -62,7 +63,8 @@ export class CompositeShipGenerator {
 
         // 2. Grow the Tree
         // Pass limits to avoid infinite growth. Increased depth to allow space-filling.
-        this.grow(rootNode, 0, 20, width, height, themeColor, rng, archetype);
+        // Use scaleH for logic limits
+        this.grow(rootNode, 0, 20, width, scaleH, themeColor, rng, archetype);
 
         // Post-process engine to fit first hull segment if it exists and is a standard cylindrical engine
         const firstHullNode = rootNode.children.find(child => child.component.type === 'hull' && child.component.isTrunk);
@@ -113,6 +115,49 @@ export class CompositeShipGenerator {
         if (hulls.length > 0) {
             const trunk = new UnifiedTrunkComponent(hulls, rng);
             finalComponents.push(trunk);
+        }
+
+        // 5b. Post-Process: Add Rings (Science/Passengers only)
+        if (archetype === 'science' || archetype === 'passengers') {
+            const trunkHulls = drawList.filter(c => c.type === 'hull' && c.isTrunk);
+            
+            // Probability: 60% None, 30% One, 10% Two
+            const rRing = rng.next();
+            let ringCount = 0;
+            if (rRing < 0.6) ringCount = 0;
+            else if (rRing < 0.9) ringCount = 1;
+            else ringCount = 2;
+
+            if (ringCount > 0 && trunkHulls.length > 0) {
+                // Pick unique indices
+                const indices = new Set<number>();
+                while (indices.size < ringCount && indices.size < trunkHulls.length) {
+                    indices.add(Math.floor(rng.range(0, trunkHulls.length)));
+                }
+
+                indices.forEach(idx => {
+                    const targetHull = trunkHulls[idx];
+                    
+                    // Ring Dimensions
+                    const ringH = targetHull.bounds.h * 2.2;
+                    const ringW = ringH * 0.15;
+                    
+                    // Center on Hull
+                    const ringX = targetHull.bounds.x + targetHull.bounds.w / 2 - ringW / 2;
+                    const ringY = targetHull.bounds.y + targetHull.bounds.h / 2 - ringH / 2;
+
+                    const ringComp = new ShipComponent(
+                        ringX, ringY, ringW, ringH,
+                        1000, // Always render last (closest)
+                        'ring',
+                        themeColor.withBrightness(-0.2),
+                        rng,
+                        archetype
+                    );
+                    ringComp.generateShape(rng);
+                    finalComponents.push(ringComp);
+                });
+            }
         }
 
         // 6. Sort by Z-Index

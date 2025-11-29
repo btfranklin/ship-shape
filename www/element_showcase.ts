@@ -2,7 +2,14 @@ import { HSBAColor, RNG } from '../src/greebler/common.js';
 import { ShipComponent, ComponentType, ShipArchetype } from '../src/ship-shape/ShipComponent.js';
 
 // Definition of Types
-const types: { type: ComponentType, desc: string, greebles: string[] }[] = [
+interface TypeDef {
+    type: ComponentType;
+    desc: string;
+    greebles: string[];
+    allowedArchetypes?: ShipArchetype[];
+}
+
+const types: TypeDef[] = [
     {
         type: 'engine',
         desc: "Propulsion units. Blocky or tapered rear sections.",
@@ -33,14 +40,16 @@ const types: { type: ComponentType, desc: string, greebles: string[] }[] = [
         greebles: [
             "Greebles: Minimal. Mostly smooth plating.",
             "Shapes: Chamfer (Capsule-like)"
-        ]
+        ],
+        allowedArchetypes: ['freight', 'industry']
     },
     {
         type: 'weapon',
         desc: "Turrets or heavy batteries.",
         greebles: [
             "Greebles: Heavy pipes, vents, reinforcement",
-        ]
+        ],
+        allowedArchetypes: ['combat']
     },
     {
         type: 'sphere',
@@ -56,7 +65,8 @@ const types: { type: ComponentType, desc: string, greebles: string[] }[] = [
         greebles: [
             "Visual Style: Cylindrical Gradient (Harsh shadows)",
             "Greebles: Panels only, with multiply blending"
-        ]
+        ],
+        allowedArchetypes: ['science', 'passengers']
     },
     {
         type: 'trench',
@@ -85,6 +95,11 @@ function render() {
     const selectedArchetype = archetypeSelect.value as ShipArchetype;
     
     types.forEach(def => {
+        // Filter based on allowed archetypes
+        if (def.allowedArchetypes && !def.allowedArchetypes.includes(selectedArchetype)) {
+            return;
+        }
+
         const row = document.createElement('div');
         row.className = 'element-row';
         

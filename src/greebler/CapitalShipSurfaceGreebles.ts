@@ -16,7 +16,8 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         public yUnits: number, 
         public themeColor: HSBAColor,
         public forcedArchetype?: SurfaceArchetype,
-        public skipBaseFill: boolean = false
+        public skipBaseFill: boolean = false,
+        public isTrunk: boolean = false
     ) {}
 
     draw(context: CanvasRenderingContext2D, rng: RNG): void {
@@ -141,7 +142,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         
         // 3. Cutaway Sections (Damage/Exposed Innards) - INSET LAYER
         // Draws "into" the hull, so should be before raised elements.
-        if (rng.bool(cutawayChance)) {
+        if (this.isTrunk && rng.bool(cutawayChance)) {
             const cutaways = new CutawaySectionGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(1, 2));
             cutaways.draw(context, rng);
         }

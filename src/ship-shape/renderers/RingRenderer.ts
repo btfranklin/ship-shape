@@ -6,12 +6,24 @@ export class RingRenderer implements ComponentRenderer {
     generateShape(component: ShipComponent, rng: RNG): void {
         const p = new Path2D();
         const { x, y, w, h } = component.bounds;
-        // Vertical stadium / pill shape
-        const r = w / 2;
-        p.arc(x + w/2, y + r, r, Math.PI, 0); // Top cap
-        p.lineTo(x + w, y + h - r);
-        p.arc(x + w/2, y + h - r, r, 0, Math.PI); // Bottom cap
-        p.lineTo(x, y + r);
+        
+        // Flattened Pill Shape
+        // Matches curvature of 0.2*w control point -> 0.1*w visual peak
+        const capHeight = w * 0.1;
+        const cpOffset = w * 0.2;
+
+        p.moveTo(x, y + capHeight); // Top-Left of straight side
+        // Top Cap (Curve Up)
+        // Control point is above the baseline by cpOffset.
+        // Baseline is y+capHeight. CP Y = y + capHeight - cpOffset.
+        // Peak Y = y + capHeight - 0.5*cpOffset = y + 0.1w - 0.1w = y. Perfect.
+        p.quadraticCurveTo(x + w/2, y + capHeight - cpOffset, x + w, y + capHeight);
+        
+        p.lineTo(x + w, y + h - capHeight); // Right side down
+        
+        // Bottom Cap (Curve Down)
+        p.quadraticCurveTo(x + w/2, y + h - capHeight + cpOffset, x, y + h - capHeight);
+        
         p.closePath();
         component.shapePath = p;
     }
@@ -33,18 +45,55 @@ export class RingRenderer implements ComponentRenderer {
         ctx.fillStyle = grad;
         ctx.fill(component.shapePath);
 
-        // 2. Draw Greebles (Clipped)
+        // 2. Draw Segmented Pattern
         ctx.save();
         ctx.clip(component.shapePath);
-        ctx.translate(component.bounds.x, component.bounds.y);
-        ctx.scale(UNIT_SCALE, UNIT_SCALE);
-        component.greebles.draw(ctx, rng);
+        
+        const { x, y, w, h } = component.bounds;
+        
+        const capHeight = w * 0.1;
+        const centerY = y + h / 2;
+        const effectiveRadius = (h - 2 * capHeight) / 2; // Radius of the straight section distribution
+        
+        // Draw Segments
+        const segmentCount = 12;
+        const angleStep = Math.PI / segmentCount;
+        
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = base.withBrightness(-0.3).toRGBAString(); // Divider color
+        
+        // Iterate angles from -PI/2 (top) to PI/2 (bottom)
+        for (let i = 1; i < segmentCount; i++) {
+            const angle = -Math.PI / 2 + i * angleStep;
+            
+            // Y position of the *endpoints* (on the straight sides)
+            const yOffset = effectiveRadius * Math.sin(angle);
+            const drawY = centerY + yOffset;
+            
+            // Curvature Control Point Offset
+            // Matches generateShape: 0.2 * w at max
+            const curveAmount = w * 0.2 * Math.sin(angle); 
+
+            ctx.beginPath();
+            ctx.moveTo(x, drawY);
+            ctx.quadraticCurveTo(x + w / 2, drawY + curveAmount, x + w, drawY);
+            ctx.stroke();
+            
+            // Highlight
+            const segHighlight = base.withBrightness(0.1).withAlpha(0.3).toRGBAString();
+            ctx.beginPath();
+            ctx.moveTo(x, drawY - 2);
+            ctx.quadraticCurveTo(x + w / 2, drawY + curveAmount - 2, x + w, drawY - 2);
+            ctx.strokeStyle = segHighlight;
+            ctx.stroke();
+        }
+
         ctx.restore();
         
         // 3. Inner Highlight/Bevel
         ctx.save();
         ctx.clip(component.shapePath);
-        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
         ctx.lineWidth = 4;
         ctx.stroke(component.shapePath);
         ctx.restore();

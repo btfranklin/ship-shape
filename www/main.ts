@@ -8,7 +8,7 @@ console.log('Greebler Playground Loaded');
 
 // Constants
 const WIDTH = 1800;
-const HEIGHT = 600; // Larger for web
+const HEIGHT = 1200; // Larger for web
 const canvas = document.getElementById('appCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 const archetypeDisplay = document.getElementById('archetypeDisplay') as HTMLDivElement;
@@ -110,7 +110,9 @@ function renderFullShip(rng: RNG, theme: HSBAColor) {
 
     archetypeDisplay.innerText = "Archetype: " + arch.toUpperCase();
     
-    const components = generator.generate(WIDTH, HEIGHT, theme, rng, arch);
+    // Use 600 as the reference height for ship scaling, regardless of actual canvas height (800)
+    // This keeps the ship size consistent and centered.
+    const components = generator.generate(WIDTH, HEIGHT, theme, rng, arch, 600);
     
     // Draw components (sorted by Z-Index inside generator)
     for (const comp of components) {
