@@ -104,6 +104,18 @@ export class StorageRenderer implements ComponentRenderer {
             ctx.stroke();
         }
 
+        // --- Drop Shadow ---
+        if (component.shapePath) {
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 5;
+            ctx.shadowOffsetY = 5;
+            ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+            ctx.fill(component.shapePath);
+            ctx.restore();
+        }
+
         // --- Storage Body ---
         ctx.save();
         
