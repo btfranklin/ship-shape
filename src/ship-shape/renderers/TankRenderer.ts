@@ -96,7 +96,7 @@ export class TankRenderer implements ComponentRenderer {
             
             // Add a border to strut
             ctx.strokeStyle = '#000';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 1;
             ctx.strokeRect(strutX, supportTop, strutW, supportH);
             
             ctx.restore();
@@ -150,8 +150,9 @@ export class TankRenderer implements ComponentRenderer {
         // In `element_showcase`, we create `new RNG` every click.
         // In `main.ts`, we assume it's stable.
         
-        const numBands = rng.intRange(1, 3);
-        ctx.lineWidth = 2;
+        // Random number of bands (1 to 3)
+        // Use customData if available (for grouped consistency), otherwise RNG
+        const numBands = component.customData.bands ?? rng.intRange(1, 3);
         
         if (isHorizontal) {
             const spacing = w / (numBands + 1);
@@ -198,7 +199,7 @@ export class TankRenderer implements ComponentRenderer {
 
         // --- Outline ---
         if (component.shapePath) {
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 1;
             ctx.strokeStyle = '#000';
             ctx.stroke(component.shapePath);
         }

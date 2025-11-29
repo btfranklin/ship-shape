@@ -30,6 +30,7 @@ export class ShipComponent {
     public leftEdge: { minY: number, maxY: number } | null = null;
     public facing: 'forward' | 'backward' = 'forward';
     public shipCenterY?: number;
+    public customData: Record<string, any> = {};
     
     private renderer: ComponentRenderer;
 
