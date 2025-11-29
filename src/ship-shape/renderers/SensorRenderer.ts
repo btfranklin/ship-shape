@@ -225,6 +225,7 @@ export class SensorRenderer implements ComponentRenderer {
                     }
                 } else if (type === 'box') {
                     const poleEnd = startX + totalLen * 0.7;
+                    ctx.strokeStyle = techColor.toRGBAString(); // Fix: Ensure stroke style is set
                     ctx.beginPath();
                     ctx.moveTo(startX, posY);
                     ctx.lineTo(poleEnd, posY);
@@ -360,6 +361,7 @@ export class SensorRenderer implements ComponentRenderer {
                     }
                 } else if (type === 'box') {
                     const poleEnd = startY + totalAntennaHeight * 0.7 * direction;
+                    ctx.strokeStyle = techColor.toRGBAString(); // Fix: Ensure stroke style is set
                     ctx.beginPath();
                     ctx.moveTo(posX, startY);
                     ctx.lineTo(posX, poleEnd);
