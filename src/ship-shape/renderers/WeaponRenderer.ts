@@ -113,6 +113,39 @@ export class WeaponRenderer implements ComponentRenderer {
             ctx.translate(-cx, -cy);
         }
 
+        // 0. Draw Connection Base (if side view and center provided)
+        if (!isTopView && component.shipCenterY !== undefined) {
+             const centerY = component.shipCenterY;
+             // Use hull color for the connection base
+             const connColor = baseColor.toRGBAString();
+             ctx.fillStyle = connColor;
+             
+             // Match width to the turret base (inset 0.1 on each side = 0.8 width)
+             const connX = x + w * 0.1; 
+             const connW = w * 0.8;
+             
+             let connY = 0;
+             let connH = 0;
+             
+             if (isBottom) {
+                 // Turret is below center. Base is at y. Connect up to centerY.
+                 connY = centerY;
+                 connH = y - centerY;
+             } else {
+                 // Turret is above center. Base is at y+h. Connect down to centerY.
+                 connY = y + h;
+                 connH = centerY - (y + h);
+             }
+             
+             // Only draw if there's a gap to fill (plus a bit of overlap to be safe)
+             // Always draw, as gaps are hard to predict due to complex hull shapes
+             // Add overlap
+             if (isBottom) { connH += 2; } // Overlap into turret base
+             else { connY -= 2; connH += 2; } // Overlap into turret base
+             
+             ctx.fillRect(connX, connY, connW, connH);
+        }
+
         // 1. Draw Barrels (First, so they are behind the turret body if needed, 
         //    but wait, if side view, barrels stick out front. If top view, same.
         //    Usually barrels are attached to the body.

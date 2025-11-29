@@ -56,7 +56,8 @@ export class CompositeShipGenerator {
             'default',
             false,
             false,
-            engineStyle
+            engineStyle,
+            centerY
         );
         rootComp.generateShape(rng);
 
@@ -65,7 +66,7 @@ export class CompositeShipGenerator {
         // 2. Grow the Tree
         // Pass limits to avoid infinite growth. Increased depth to allow space-filling.
         // Use scaleH for logic limits
-        this.grow(rootNode, 0, 20, width, scaleH, themeColor, rng, archetype);
+        this.grow(rootNode, 0, 20, width, scaleH, themeColor, rng, archetype, centerY);
 
         // Post-process engine to fit first hull segment if it exists and is a standard cylindrical engine
         const firstHullNode = rootNode.children.find(child => child.component.type === 'hull' && child.component.isTrunk);
@@ -153,7 +154,12 @@ export class CompositeShipGenerator {
                         'ring',
                         themeColor.withBrightness(-0.2),
                         rng,
-                        archetype
+                        archetype,
+                        'default',
+                        false,
+                        false,
+                        undefined,
+                        centerY
                     );
                     ringComp.generateShape(rng);
                     finalComponents.push(ringComp);
@@ -167,7 +173,7 @@ export class CompositeShipGenerator {
         return finalComponents;
     }
 
-    private grow(node: ShipNode, depth: number, maxDepth: number, totalW: number, totalH: number, theme: HSBAColor, rng: RNG, archetype: ShipArchetype) {
+    private grow(node: ShipNode, depth: number, maxDepth: number, totalW: number, totalH: number, theme: HSBAColor, rng: RNG, archetype: ShipArchetype, shipCenterY: number) {
         if (depth >= maxDepth) return;
 
         const parentComp = node.component;
@@ -232,7 +238,10 @@ export class CompositeShipGenerator {
                     rng,
                     archetype,
                     'default',
-                    true // isTrunk
+                    true, // isTrunk
+                    false,
+                    undefined,
+                    shipCenterY
                 );
                 childComp.generateShape(rng);
                 
@@ -240,13 +249,13 @@ export class CompositeShipGenerator {
                 node.children.push(childNode);
                 grownForward = true;
                 
-                this.grow(childNode, depth + 1, maxDepth, totalW, totalH, theme, rng, archetype);
+                this.grow(childNode, depth + 1, maxDepth, totalW, totalH, theme, rng, archetype, shipCenterY);
             }
         }
 
         // If we stopped growing forward, add a Nose Cap
         if (!grownForward && (parentComp.type === 'hull' || parentComp.type === 'engine')) {
-            this.addNose(node, totalW, totalH, theme, rng, archetype);
+            this.addNose(node, totalW, totalH, theme, rng, archetype, shipCenterY);
         }
 
         // 2. Branch Up (Towers/Superstructure/Hulls/Sensors/Weapons)
@@ -311,7 +320,11 @@ export class CompositeShipGenerator {
                 theme.withBrightness(0.1),
                 rng,
                 archetype,
-                variant
+                variant,
+                false,
+                false,
+                undefined,
+                shipCenterY
             );
             
             if (type === 'weapon' && x < totalW / 3) {
@@ -324,7 +337,7 @@ export class CompositeShipGenerator {
             node.children.push(childNode);
             
             if (type === 'tower') {
-                this.grow(childNode, depth + 1, maxDepth, totalW, totalH, theme, rng, archetype);
+                this.grow(childNode, depth + 1, maxDepth, totalW, totalH, theme, rng, archetype, shipCenterY);
             }
         }
 
@@ -384,7 +397,9 @@ export class CompositeShipGenerator {
                 archetype,
                 variant,
                 false, // isTrunk
-                true   // invertLighting
+                true,   // invertLighting
+                undefined,
+                shipCenterY
             );
             
             if (type === 'weapon' && x < totalW / 3) {
@@ -417,7 +432,11 @@ export class CompositeShipGenerator {
                 theme.withBrightness(-0.15),
                 rng,
                 archetype,
-                'top-view'
+                'top-view',
+                false,
+                false,
+                undefined,
+                shipCenterY
             );
             
             if (x < totalW / 3) {
@@ -429,7 +448,7 @@ export class CompositeShipGenerator {
         }
     }
 
-    private addNose(node: ShipNode, totalW: number, totalH: number, theme: HSBAColor, rng: RNG, archetype: ShipArchetype) {
+    private addNose(node: ShipNode, totalW: number, totalH: number, theme: HSBAColor, rng: RNG, archetype: ShipArchetype, shipCenterY: number) {
         const parent = node.component;
         const pBounds = parent.bounds;
         const overlap = pBounds.w * 0.1;
@@ -463,7 +482,7 @@ export class CompositeShipGenerator {
             const h = pBounds.h * 0.9; 
             const y = pBounds.y + (pBounds.h - h)/2;
             
-            const nose = new ShipComponent(startX, y, w, h, parent.zIndex - 1, 'hull', theme, rng, archetype, 'taper-front', true); 
+            const nose = new ShipComponent(startX, y, w, h, parent.zIndex - 1, 'hull', theme, rng, archetype, 'taper-front', true, false, undefined, shipCenterY); 
             nose.generateShape(rng);
             node.children.push({ component: nose, children: [] });
             
@@ -476,7 +495,7 @@ export class CompositeShipGenerator {
             const y = pBounds.y + (pBounds.h - h)/2;
             const x = startX; // Attach to end
             
-            const nose = new ShipComponent(x, y, w, h, parent.zIndex - 1, 'sensor', theme, rng, archetype, 'front');
+            const nose = new ShipComponent(x, y, w, h, parent.zIndex - 1, 'sensor', theme, rng, archetype, 'front', false, false, undefined, shipCenterY);
             nose.generateShape(rng);
             node.children.push({ component: nose, children: [] });
 
@@ -501,7 +520,7 @@ export class CompositeShipGenerator {
             const y = pBounds.y + pBounds.h/2 - s/2;
             const sphereX = currentRight - s * 0.5; // Center on edge
             
-            const nose = new ShipComponent(sphereX, y, s, s, parent.zIndex - 1, 'sphere', theme, rng, archetype);
+            const nose = new ShipComponent(sphereX, y, s, s, parent.zIndex - 1, 'sphere', theme, rng, archetype, 'default', false, false, undefined, shipCenterY);
             nose.generateShape(rng);
             node.children.push({ component: nose, children: [] });
         }
