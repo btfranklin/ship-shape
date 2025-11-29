@@ -578,12 +578,34 @@ export class CompositeShipGenerator {
                     const isVertical = rng.bool(); 
                     let storageW, storageH;
                     
+                    // Variant Selection
+                    let variant = 'default';
+                    if (archetype === 'freight') {
+                        variant = rng.choice(['goods', 'goods', 'liquid', 'default']);
+                    } else if (archetype === 'industry') {
+                        variant = rng.choice(['goods', 'liquid', 'default']);
+                    } else {
+                        variant = rng.choice(['default', 'liquid']);
+                    }
+
                     if (isVertical) {
                          storageH = minH * rng.range(0.5, 0.8);
                          storageW = storageH * rng.range(0.3, 0.5);
                     } else {
                          storageH = minH * rng.range(0.2, 0.4);
                          storageW = storageH * rng.range(1.5, 2.5);
+                    }
+                    
+                    // If goods, enforce rectangular aspect ratios?
+                    if (variant === 'goods') {
+                        // Containers are usually 2:1 or 4:1
+                        if (isVertical) {
+                            // Stacked containers?
+                            // Just ensure they aren't too thin
+                            storageW = Math.max(storageW, storageH * 0.4);
+                        } else {
+                            storageW = Math.max(storageW, storageH * 2.0);
+                        }
                     }
                     
                     const gap = storageW * 0.1;
@@ -600,7 +622,7 @@ export class CompositeShipGenerator {
                         500, 
                         theme.withBrightness(0.05), 
                         rng, archetype, 
-                        (isVertical ? 'default' : 'liquid'), 
+                        variant, 
                         false, 
                         shipCenterY
                     );

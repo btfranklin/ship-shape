@@ -47,7 +47,7 @@ const types: TypeDef[] = [
     },
     {
         type: 'storage',
-        desc: "Storage Container (Horizontal Capsule).",
+        desc: "Gas Storage (Standard Capsule).",
         greebles: [
             "Shape: Pill/Capsule",
             "Shading: Cylindrical Gradient (Vertical)"
@@ -57,7 +57,7 @@ const types: TypeDef[] = [
     {
         type: 'storage',
         variant: 'liquid',
-        desc: "Liquid Storage (Horizontal Capsule, flatter ends).",
+        desc: "Liquid Storage (Flatter ends).",
         greebles: [
             "Shape: Flattened Capsule",
             "Shading: Cylindrical Gradient (Vertical)"
@@ -66,8 +66,28 @@ const types: TypeDef[] = [
     },
     {
         type: 'storage',
+        variant: 'goods',
+        desc: "Goods Container (Rectangular).",
+        greebles: [
+            "Shape: Box/Crate",
+            "Shading: Corrugated Metal"
+        ],
+        allowedArchetypes: ['freight', 'industry']
+    },
+    {
+        type: 'storage',
+        variant: 'goods vertical', // Combine variants for showcase sizing
+        desc: "Goods Container (Vertical Rectangular).",
+        greebles: [
+            "Shape: Tall Box/Crate",
+            "Shading: Corrugated Metal"
+        ],
+        allowedArchetypes: ['freight', 'industry']
+    },
+    {
+        type: 'storage',
         variant: 'vertical',
-        desc: "Storage Container (Vertical Capsule).",
+        desc: "Gas Storage (Vertical).",
         greebles: [
             "Shape: Pill/Capsule",
             "Shading: Cylindrical Gradient (Horizontal)"
@@ -232,6 +252,12 @@ function render() {
             } else if (def.type === 'storage') {
                 if (def.variant && def.variant.includes('vertical')) {
                     w = 80; h = 160;
+                } else if (def.variant && def.variant.includes('goods')) {
+                    if (def.variant.includes('vertical')) {
+                         w = 80; h = 160; // Tall Boxy
+                    } else {
+                         w = 160; h = 80; // Wide Boxy
+                    }
                 } else {
                     w = 180; h = 90;
                 }
