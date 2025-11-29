@@ -248,7 +248,7 @@ export class CompositeShipGenerator {
             this.addNose(node, totalW, totalH, theme, rng, archetype);
         }
 
-        // 2. Branch Up (Towers/Superstructure/Hulls/Sensors)
+        // 2. Branch Up (Towers/Superstructure/Hulls/Sensors/Weapons)
         if (rng.bool(upChance)) {
             const r = rng.next();
             let type: ComponentType = 'tower';
@@ -257,12 +257,19 @@ export class CompositeShipGenerator {
             let h = pBounds.h * rng.range(0.5, 1.2);
             
             // Probability Weights
-            let sensorThreshold = (archetype === 'science' || archetype === 'combat') ? 0.3 : 0.05;
-            let towerThreshold = sensorThreshold + 0.3; // 30% towers
+            let weaponThreshold = (archetype === 'combat') ? 0.3 : 0.0;
+            let sensorThreshold = weaponThreshold + ((archetype === 'science' || archetype === 'combat') ? (archetype === 'combat' ? 0.2 : 0.3) : 0.05);
+            let towerThreshold = sensorThreshold + 0.3; 
             let taperThreshold = towerThreshold + 0.2;
             let sphereThreshold = taperThreshold + 0.1;
             
-            if (r < sensorThreshold) {
+            if (r < weaponThreshold) {
+                type = 'weapon';
+                // Fixed size: 2:1 aspect ratio, range 60-80 width
+                w = rng.range(60, 80);
+                if (w > pBounds.w) w = pBounds.w; // Clamp to parent width
+                h = w * 0.5;
+            } else if (r < sensorThreshold) {
                 type = 'sensor';
                 w = pBounds.w * rng.range(0.3, 0.6);
                 h = pBounds.h * rng.range(0.3, 0.6);
@@ -292,6 +299,8 @@ export class CompositeShipGenerator {
                 y = pBounds.y - h * 0.5;
             } else if (type === 'sensor') {
                  y = pBounds.y - h * 0.9; // Sit mostly on top
+            } else if (type === 'weapon') {
+                 y = pBounds.y - h * 0.9; // Sit mostly on top
             }
             
             const childComp = new ShipComponent(
@@ -303,6 +312,11 @@ export class CompositeShipGenerator {
                 archetype,
                 variant
             );
+            
+            if (type === 'weapon' && x < totalW / 3) {
+                childComp.facing = 'backward';
+            }
+
             childComp.generateShape(rng);
             
             const childNode = { component: childComp, children: [] };
@@ -313,7 +327,7 @@ export class CompositeShipGenerator {
             }
         }
 
-        // 3. Branch Down (Tanks/Hulls/Sensors)
+        // 3. Branch Down (Tanks/Hulls/Sensors/Weapons)
         if (rng.bool(downChance)) {
             const r = rng.next();
             let type: ComponentType = 'tank';
@@ -322,11 +336,18 @@ export class CompositeShipGenerator {
             let h = pBounds.h * rng.range(0.4, 0.6);
             
             // Probability Weights
-            let sensorThreshold = (archetype === 'science' || archetype === 'combat') ? 0.3 : 0.05;
+            let weaponThreshold = (archetype === 'combat') ? 0.3 : 0.0;
+            let sensorThreshold = weaponThreshold + ((archetype === 'science' || archetype === 'combat') ? (archetype === 'combat' ? 0.2 : 0.3) : 0.05);
             let taperThreshold = sensorThreshold + 0.3;
             let tankThreshold = taperThreshold + 0.3;
 
-            if (r < sensorThreshold) {
+            if (r < weaponThreshold) {
+                type = 'weapon';
+                // Fixed size: 2:1 aspect ratio, range 60-80 width
+                w = rng.range(60, 80);
+                if (w > pBounds.w) w = pBounds.w;
+                h = w * 0.5;
+            } else if (r < sensorThreshold) {
                 type = 'sensor';
                 w = pBounds.w * rng.range(0.3, 0.6);
                 h = pBounds.h * rng.range(0.3, 0.6);
@@ -349,6 +370,8 @@ export class CompositeShipGenerator {
                 y = pBounds.y + pBounds.h - h * 0.5;
             } else if (type === 'sensor') {
                 y = pBounds.y + pBounds.h - h * 0.1; // Hang slightly lower
+            } else if (type === 'weapon') {
+                y = pBounds.y + pBounds.h - h * 0.1; // Hang slightly lower
             }
             
             const childComp = new ShipComponent(
@@ -362,10 +385,46 @@ export class CompositeShipGenerator {
                 false, // isTrunk
                 true   // invertLighting
             );
+            
+            if (type === 'weapon' && x < totalW / 3) {
+                childComp.facing = 'backward';
+            }
+
             childComp.generateShape(rng);
             
             const childNode = { component: childComp, children: [] };
             node.children.push(childNode);
+        }
+
+        // 4. Face Attachments (Weapons) - Combat Only
+        if (archetype === 'combat' && parentComp.type !== 'engine' && rng.bool(0.4)) {
+            // Side-mounted turret (Top-down view)
+            // Fixed size: Square, range 60-80
+            let s = rng.range(60, 80);
+            // Ensure it fits inside parent
+            s = Math.min(s, pBounds.w * 0.9, pBounds.h * 0.9);
+            
+            const w = s;
+            const h = s;
+            const x = pBounds.x + (pBounds.w - w) / 2;
+            const y = pBounds.y + (pBounds.h - h) / 2;
+            
+            const weapon = new ShipComponent(
+                x, y, w, h,
+                parentComp.zIndex + 5, // Sit on top of hull
+                'weapon',
+                theme.withBrightness(-0.15),
+                rng,
+                archetype,
+                'top-view'
+            );
+            
+            if (x < totalW / 3) {
+                weapon.facing = 'backward';
+            }
+
+            weapon.generateShape(rng);
+            node.children.push({ component: weapon, children: [] });
         }
     }
 

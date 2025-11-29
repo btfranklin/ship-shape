@@ -8,6 +8,7 @@ import { RingRenderer } from './renderers/RingRenderer.js';
 import { HullRenderer } from './renderers/HullRenderer.js';
 import { TowerRenderer } from './renderers/TowerRenderer.js';
 import { SensorRenderer } from './renderers/SensorRenderer.js';
+import { WeaponRenderer } from './renderers/WeaponRenderer.js';
 
 export type ComponentType = 'hull' | 'engine' | 'weapon' | 'sensor' | 'tank' | 'sphere' | 'ring' | 'trench' | 'tower';
 export type ShipArchetype = 'freight' | 'science' | 'industry' | 'passengers' | 'combat';
@@ -27,6 +28,7 @@ export class ShipComponent {
     public isTrunk: boolean = false;
     public invertLighting: boolean = false;
     public leftEdge: { minY: number, maxY: number } | null = null;
+    public facing: 'forward' | 'backward' = 'forward';
     
     private renderer: ComponentRenderer;
 
@@ -73,6 +75,9 @@ export class ShipComponent {
                 break;
             case 'sensor':
                 this.renderer = new SensorRenderer();
+                break;
+            case 'weapon':
+                this.renderer = new WeaponRenderer();
                 break;
             default:
                 this.renderer = new StandardComponentRenderer();
