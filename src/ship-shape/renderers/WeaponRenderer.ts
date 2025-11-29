@@ -116,9 +116,6 @@ export class WeaponRenderer implements ComponentRenderer {
         // 0. Draw Connection Base (if side view and center provided)
         if (!isTopView && component.shipCenterY !== undefined) {
              const centerY = component.shipCenterY;
-             // Use hull color for the connection base
-             const connColor = baseColor.toRGBAString();
-             ctx.fillStyle = connColor;
              
              // Match width to the turret base (inset 0.1 on each side = 0.8 width)
              const connX = x + w * 0.1; 
@@ -143,6 +140,13 @@ export class WeaponRenderer implements ComponentRenderer {
              if (isBottom) { connH += 2; } // Overlap into turret base
              else { connY -= 2; connH += 2; } // Overlap into turret base
              
+             // Apply gradient shading similar to turret body, but horizontal for cylindrical look
+             const connGrad = ctx.createLinearGradient(connX, connY, connX + connW, connY);
+             connGrad.addColorStop(0, baseColor.withBrightness(0.1).toRGBAString());
+             connGrad.addColorStop(0.5, baseColor.toRGBAString());
+             connGrad.addColorStop(1, baseColor.withBrightness(-0.2).toRGBAString());
+             
+             ctx.fillStyle = connGrad;
              ctx.fillRect(connX, connY, connW, connH);
         }
 

@@ -50,6 +50,42 @@ export class SensorRenderer implements ComponentRenderer {
         const isBottom = component.invertLighting;
         const isFront = component.variant === 'front';
 
+        // 0. Draw Support Connection (if center provided and not front)
+        if (component.shipCenterY !== undefined && !isFront) {
+             const centerY = component.shipCenterY;
+             
+             // Match full width of the component as the base is the widest part
+             const suppX = x;
+             const suppW = w;
+             let suppY = 0;
+             let suppH = 0;
+             
+             if (isBottom) {
+                 // Sensor is below center. Base is at y. Connect up to centerY.
+                 suppY = centerY;
+                 suppH = y - centerY;
+                 // Add overlap
+                 suppH += 2;
+             } else {
+                 // Sensor is above center. Base is at y+h. Connect down to centerY.
+                 suppY = y + h;
+                 suppH = centerY - (y + h);
+                 // Add overlap
+                 suppY -= 2;
+                 suppH += 2;
+             }
+             
+             // Apply gradient shading to match the base
+             const suppGrad = ctx.createLinearGradient(suppX, 0, suppX + suppW, 0);
+             const bc = component.color;
+             suppGrad.addColorStop(0, bc.withBrightness(0.1).toRGBAString());
+             suppGrad.addColorStop(0.5, bc.withBrightness(-0.1).toRGBAString());
+             suppGrad.addColorStop(1, bc.withBrightness(-0.3).toRGBAString());
+             
+             ctx.fillStyle = suppGrad;
+             ctx.fillRect(suppX, suppY, suppW, suppH);
+        }
+
         // 1. Draw Base
         const baseColor = component.color;
         let grad;
