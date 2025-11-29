@@ -11,13 +11,13 @@ export class SensorRenderer implements ComponentRenderer {
         const isFront = component.variant === 'front';
         
         if (isFront) {
-            // Base at Left
+            // Base at Left (attached to ship), Taper towards Right (forward)
             const baseW = w * 0.25;
             const taper = h * 0.1;
-            p.moveTo(x, y + taper);
-            p.lineTo(x + baseW, y); // Top Right (in)
-            p.lineTo(x + baseW, y + h); // Bottom Right (in)
-            p.lineTo(x, y + h - taper); // Bottom Left
+            p.moveTo(x, y); // Top Left (Full Height)
+            p.lineTo(x + baseW, y + taper); // Top Right (Tapered)
+            p.lineTo(x + baseW, y + h - taper); // Bottom Right (Tapered)
+            p.lineTo(x, y + h); // Bottom Left (Full Height)
             p.closePath();
         } else {
             const baseH = h * 0.25;

@@ -493,7 +493,9 @@ export class CompositeShipGenerator {
             w = Math.min(w, maxW);
             
             const y = pBounds.y + (pBounds.h - h)/2;
-            const x = startX; // Attach to end
+            // Adjust overlap for sensors to make them less embedded
+            const sensorOverlap = pBounds.w * 0.05; // Smaller overlap
+            const x = currentRight - sensorOverlap; // Attach to end, but less deeply
             
             const nose = new ShipComponent(x, y, w, h, parent.zIndex - 1, 'sensor', theme, rng, archetype, 'front', false, false, undefined, shipCenterY);
             nose.generateShape(rng);
