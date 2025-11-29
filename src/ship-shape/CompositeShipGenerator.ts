@@ -248,7 +248,7 @@ export class CompositeShipGenerator {
             this.addNose(node, totalW, totalH, theme, rng, archetype);
         }
 
-        // 2. Branch Up (Towers/Superstructure/Hulls)
+        // 2. Branch Up (Towers/Superstructure/Hulls/Sensors)
         if (rng.bool(upChance)) {
             const r = rng.next();
             let type: ComponentType = 'tower';
@@ -256,16 +256,26 @@ export class CompositeShipGenerator {
             let w = pBounds.w * rng.range(0.3, 0.6);
             let h = pBounds.h * rng.range(0.5, 1.2);
             
-            if (r < 0.4) {
+            // Probability Weights
+            let sensorThreshold = (archetype === 'science' || archetype === 'combat') ? 0.3 : 0.05;
+            let towerThreshold = sensorThreshold + 0.3; // 30% towers
+            let taperThreshold = towerThreshold + 0.2;
+            let sphereThreshold = taperThreshold + 0.1;
+            
+            if (r < sensorThreshold) {
+                type = 'sensor';
+                w = pBounds.w * rng.range(0.3, 0.6);
+                h = pBounds.h * rng.range(0.3, 0.6);
+            } else if (r < towerThreshold) {
                 type = 'tower';
                 w = pBounds.w * rng.range(0.2, 0.4);
                 h = pBounds.h * rng.range(0.8, 1.5);
-            } else if (r < 0.7) {
+            } else if (r < taperThreshold) {
                 type = 'hull';
                 variant = 'taper-top';
                 w = pBounds.w * rng.range(0.5, 0.8);
                 h = pBounds.h * rng.range(0.4, 0.7);
-            } else if (r < 0.9) {
+            } else if (r < sphereThreshold) {
                 type = 'sphere';
                 const s = Math.min(pBounds.w, pBounds.h) * rng.range(0.4, 0.7);
                 w = s; h = s;
@@ -280,6 +290,8 @@ export class CompositeShipGenerator {
             let y = pBounds.y - h * 0.8; 
             if (type === 'sphere') {
                 y = pBounds.y - h * 0.5;
+            } else if (type === 'sensor') {
+                 y = pBounds.y - h * 0.9; // Sit mostly on top
             }
             
             const childComp = new ShipComponent(
@@ -301,7 +313,7 @@ export class CompositeShipGenerator {
             }
         }
 
-        // 3. Branch Down (Tanks/Hulls)
+        // 3. Branch Down (Tanks/Hulls/Sensors)
         if (rng.bool(downChance)) {
             const r = rng.next();
             let type: ComponentType = 'tank';
@@ -309,12 +321,21 @@ export class CompositeShipGenerator {
             let w = pBounds.w * rng.range(0.4, 0.6);
             let h = pBounds.h * rng.range(0.4, 0.6);
             
-            if (r < 0.5) {
+            // Probability Weights
+            let sensorThreshold = (archetype === 'science' || archetype === 'combat') ? 0.3 : 0.05;
+            let taperThreshold = sensorThreshold + 0.3;
+            let tankThreshold = taperThreshold + 0.3;
+
+            if (r < sensorThreshold) {
+                type = 'sensor';
+                w = pBounds.w * rng.range(0.3, 0.6);
+                h = pBounds.h * rng.range(0.3, 0.6);
+            } else if (r < taperThreshold) {
                 type = 'hull';
                 variant = 'taper-bottom';
                 w = pBounds.w * rng.range(0.5, 0.8);
                 h = pBounds.h * rng.range(0.4, 0.7);
-            } else if (r < 0.8) {
+            } else if (r < tankThreshold) {
                 type = 'tank';
             } else {
                 type = 'sphere';
@@ -326,6 +347,8 @@ export class CompositeShipGenerator {
             let y = pBounds.y + pBounds.h - h * 0.2; 
             if (type === 'sphere') {
                 y = pBounds.y + pBounds.h - h * 0.5;
+            } else if (type === 'sensor') {
+                y = pBounds.y + pBounds.h - h * 0.1; // Hang slightly lower
             }
             
             const childComp = new ShipComponent(

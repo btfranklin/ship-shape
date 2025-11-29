@@ -7,6 +7,7 @@ import { SphereRenderer } from './renderers/SphereRenderer.js';
 import { RingRenderer } from './renderers/RingRenderer.js';
 import { HullRenderer } from './renderers/HullRenderer.js';
 import { TowerRenderer } from './renderers/TowerRenderer.js';
+import { SensorRenderer } from './renderers/SensorRenderer.js';
 
 export type ComponentType = 'hull' | 'engine' | 'weapon' | 'sensor' | 'tank' | 'sphere' | 'ring' | 'trench' | 'tower';
 export type ShipArchetype = 'freight' | 'science' | 'industry' | 'passengers' | 'combat';
@@ -69,6 +70,9 @@ export class ShipComponent {
                 break;
             case 'tower':
                 this.renderer = new TowerRenderer();
+                break;
+            case 'sensor':
+                this.renderer = new SensorRenderer();
                 break;
             default:
                 this.renderer = new StandardComponentRenderer();
