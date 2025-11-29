@@ -210,7 +210,6 @@ function render() {
             // Update button text to indicate action
             btn.innerText = "Regenerate";
             
-            const centerY = 100; // Center of 200px canvas
             // Randomly invert lighting for side items to show top/bottom mounting
             const invert = localRng.bool(); 
             
@@ -225,7 +224,7 @@ function render() {
                 false, // isTrunk
                 invert, // invertLighting
                 undefined, // engineStyle
-                centerY // shipCenterY
+                undefined // shipCenterY - Disable support/connection drawing for showcase
             );
             
             // For front sensor, ensure it's not inverted? Or it doesn't matter?
