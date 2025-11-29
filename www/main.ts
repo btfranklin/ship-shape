@@ -20,12 +20,43 @@ const generateBtn = document.getElementById('generateBtn') as HTMLButtonElement;
 const modeSelect = document.getElementById('modeSelect') as HTMLSelectElement;
 const archetypeSelect = document.getElementById('archetypeSelect') as HTMLSelectElement;
 const hueInput = document.getElementById('hueInput') as HTMLInputElement;
+const rainbowCheck = document.getElementById('rainbowCheck') as HTMLInputElement;
 
 // State
 let mode = 'full';
 
 function updateUI() {
     mode = modeSelect.value;
+}
+
+function drawChaoticBackground(ctx: CanvasRenderingContext2D, w: number, h: number) {
+    ctx.save();
+    // Fill black base
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, w, h);
+    
+    // Draw chaotic rainbow swirls
+    // Use a local RNG for consistent background pattern
+    const rng = new RNG(9999);
+    
+    ctx.globalCompositeOperation = 'lighter'; // Additive blending
+    
+    for (let i = 0; i < 150; i++) {
+        const x = rng.range(0, w);
+        const y = rng.range(0, h);
+        const radius = rng.range(100, 400);
+        const hue = rng.range(0, 360);
+        
+        const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+        grad.addColorStop(0, `hsla(${hue}, 100%, 50%, 0.5)`);
+        grad.addColorStop(1, `hsla(${hue + 60}, 100%, 20%, 0)`);
+        
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.restore();
 }
 
 function generate() {
@@ -37,6 +68,12 @@ function generate() {
         canvas.width = WIDTH;
         canvas.height = HEIGHT;
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
+        
+        // Draw Rainbow Background if enabled
+        if (rainbowCheck && rainbowCheck.checked) {
+            drawChaoticBackground(ctx, WIDTH, HEIGHT);
+        }
+        
         archetypeDisplay.innerText = ""; // Clear prev
 
         const theme = new HSBAColor(hue, 0.1, 0.6); // Blue-ish grey default
@@ -134,6 +171,9 @@ function renderFullShip(rng: RNG, theme: HSBAColor) {
 modeSelect.addEventListener('change', () => { updateUI(); generate(); });
 archetypeSelect.addEventListener('change', () => { generate(); });
 generateBtn.addEventListener('click', generate);
+if (rainbowCheck) {
+    rainbowCheck.addEventListener('change', generate);
+}
 randomSeedBtn.addEventListener('click', () => {
     seedInput.value = Math.floor(Math.random() * 100000).toString();
     generate();

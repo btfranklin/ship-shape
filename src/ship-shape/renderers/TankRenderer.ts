@@ -71,35 +71,56 @@ export class TankRenderer implements ComponentRenderer {
         const { x, y, w, h } = component.bounds;
         const isHorizontal = w > h;
 
-        // --- Support Structure (Strut) ---
+        // --- Support Structure (Scaffolding) ---
         if (component.shipCenterY !== undefined) {
             const centerY = y + h / 2;
             const supportTop = Math.min(centerY, component.shipCenterY);
             const supportH = Math.abs(centerY - component.shipCenterY);
             
-            // Strut width - generally narrower than the tank
-            const strutW = isHorizontal ? w * 0.4 : w * 0.5;
+            // Scaffolding parameters
+            const strutW = w * 0.8; // Make scaffolding 80% the width of the tank
             const strutX = x + (w - strutW) / 2;
+            const blockSize = strutW; 
+            const numBlocks = Math.ceil(supportH / blockSize);
 
             ctx.save();
             
-            // Strut Shading (Cylindrical Gradient vertical)
-            const grad = ctx.createLinearGradient(strutX, 0, strutX + strutW, 0);
-            grad.addColorStop(0, '#0a0a0a');
-            grad.addColorStop(0.2, '#2a2a2a');
-            grad.addColorStop(0.5, '#444');
-            grad.addColorStop(0.8, '#2a2a2a');
-            grad.addColorStop(1, '#0a0a0a');
+            // Clip to draw area
+            ctx.beginPath();
+            ctx.rect(strutX, supportTop, strutW, supportH);
+            ctx.clip();
             
-            ctx.fillStyle = grad;
-            ctx.fillRect(strutX, supportTop, strutW, supportH);
+            // Draw Blocks
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 3;
             
-            // Add a border to strut
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(strutX, supportTop, strutW, supportH);
+            ctx.beginPath();
+            for (let i = 0; i < numBlocks; i++) {
+                const by = supportTop + i * blockSize;
+                // X
+                ctx.moveTo(strutX, by);
+                ctx.lineTo(strutX + strutW, by + blockSize);
+                
+                ctx.moveTo(strutX + strutW, by);
+                ctx.lineTo(strutX, by + blockSize);
+                
+                // Horizontal divider
+                ctx.moveTo(strutX, by + blockSize);
+                ctx.lineTo(strutX + strutW, by + blockSize);
+            }
+            ctx.stroke();
             
-            ctx.restore();
+            ctx.restore(); // Remove clip for side rails
+
+            // Side Rails (Unclipped)
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(strutX, supportTop);
+            ctx.lineTo(strutX, supportTop + supportH);
+            ctx.moveTo(strutX + strutW, supportTop);
+            ctx.lineTo(strutX + strutW, supportTop + supportH);
+            ctx.stroke();
         }
 
         // --- Tank Body ---
