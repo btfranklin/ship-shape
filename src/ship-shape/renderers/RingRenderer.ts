@@ -1,6 +1,8 @@
-import { RNG, UNIT_SCALE } from '../../greebler/common.js';
+import { RNG } from '../../greebler/common.js';
+import { UNIT_SCALE } from '../../greebler/constants.js';
 import { ShipComponent } from '../ShipComponent.js';
 import { ComponentRenderer } from './ComponentRenderer.js';
+import { CapitalShipSurfaceGreebles } from '../../greebler/CapitalShipSurfaceGreebles.js';
 
 export class RingRenderer implements ComponentRenderer {
     generateShape(component: ShipComponent, rng: RNG): void {
