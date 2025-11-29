@@ -1,6 +1,7 @@
 import { HSBAColor, RNG, UNIT_SCALE } from '../greebler/common.js';
 import { ShipComponent } from './ShipComponent.js';
 import { CapitalShipSurfaceGreebles } from '../greebler/CapitalShipSurfaceGreebles.js';
+import { ShipArchetype } from './shipTypes.js';
 
 export class UnifiedTrunkComponent {
         public bounds: { x: number, y: number, w: number, h: number };
@@ -38,13 +39,14 @@ export class UnifiedTrunkComponent {
             this.zIndex = maxZ;
     
             // 2. Create Unified Greebles
-            const rootArchetype = components[0].greebles.forcedArchetype;
+            const shipArchetype = components[0].shipArchetype;
             
             this.greebles = new CapitalShipSurfaceGreebles(
                 this.bounds.w / UNIT_SCALE, 
                 this.bounds.h / UNIT_SCALE, 
                 this.color, 
-                rootArchetype
+                shipArchetype,
+                'hull'
             );
     
             // 3. Setup Trench (if tall enough)
@@ -62,6 +64,7 @@ export class UnifiedTrunkComponent {
                     this.bounds.w / UNIT_SCALE,
                     trenchHeightUnits,
                     this.color,
+                    shipArchetype,
                     'trench'
                 );
             }

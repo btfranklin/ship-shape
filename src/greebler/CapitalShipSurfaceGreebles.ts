@@ -7,18 +7,61 @@ import { EquipmentGreebles, EquipmentTrenchGreebles } from './EquipmentGreebles.
 import { HoseGreebles } from './HoseGreebles.js';
 import { WireGreebles } from './WireGreebles.js';
 import { CutawaySectionGreebles } from './CutawaySectionGreebles.js';
+import { ShipArchetype, ComponentType } from '../ship-shape/shipTypes.js';
 
-export type SurfaceArchetype = 'standard' | 'industrial' | 'tech' | 'clean' | 'dense' | 'structure' | 'trench';
+type GreebleStyle = 'standard' | 'industrial' | 'tech' | 'clean' | 'dense' | 'structure' | 'trench';
 
 export class CapitalShipSurfaceGreebles implements Drawable {
     constructor(
         public xUnits: number, 
         public yUnits: number, 
         public themeColor: HSBAColor,
-        public forcedArchetype?: SurfaceArchetype,
+        public shipArchetype: ShipArchetype,
+        public componentType: ComponentType,
         public skipBaseFill: boolean = false,
         public isTrunk: boolean = false
     ) {}
+
+    private determineStyle(shipArch: ShipArchetype, compType: ComponentType, rng: RNG): GreebleStyle {
+        // Hard overrides
+        if (compType === 'trench') return 'trench';
+        if (compType === 'ring') return 'structure';
+        if (compType === 'sphere') return 'structure'; 
+        
+        // Bias based on Ship Archetype
+        switch (shipArch) {
+            case 'science':
+                if (compType === 'engine') return rng.bool(0.5) ? 'clean' : 'tech';
+                if (compType === 'sensor') return 'tech';
+                if (compType === 'hull') return rng.bool(0.7) ? 'clean' : 'standard';
+                return 'clean';
+                
+            case 'industry':
+                if (compType === 'hull') return this.isTrunk ? 'industrial' : 'standard';
+                if (compType === 'tank') return 'industrial';
+                if (compType === 'engine') return 'industrial';
+                if (compType === 'tower') return 'standard'; 
+                return 'standard'; 
+                
+            case 'combat':
+                if (compType === 'hull') return rng.bool(0.6) ? 'dense' : 'standard'; 
+                if (compType === 'weapon') return 'dense';
+                if (compType === 'tower') return 'standard';
+                return 'standard';
+                
+            case 'freight':
+                if (compType === 'tank') return 'clean'; // Containers
+                if (compType === 'hull') return 'standard';
+                return 'standard';
+                
+            case 'passengers':
+                if (compType === 'hull') return 'clean';
+                return 'clean';
+                
+            default:
+                return 'standard';
+        }
+    }
 
     draw(context: CanvasRenderingContext2D, rng: RNG): void {
         context.save();
@@ -43,10 +86,10 @@ export class CapitalShipSurfaceGreebles implements Drawable {
             }
         }
 
-        // Pick Archetype
-        const archetype: SurfaceArchetype = this.forcedArchetype ?? rng.choice(['standard', 'standard', 'industrial', 'tech', 'clean', 'dense']);
+        // Pick Archetype (Style)
+        const style: GreebleStyle = this.determineStyle(this.shipArchetype, this.componentType, rng);
         
-        let panelCount = 8;
+        let panelDensity = 8;
         let pipeRange = [2, 5];
         let pipeChance = 0.7;
         let lightRange = [1, 3];
@@ -56,14 +99,14 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         
         let hoseChance = 0.1;
         let hoseRange = [1, 2];
-        let wireChance = 0.0; // Default to 0, only tech archetypes should have wires
+        let wireChance = 0.0; // Default to 0, only tech styles should have wires
         let wireRange = [5, 10];
         
         let cutawayChance = 0.05; // Rare by default
 
-        switch (archetype) {
+        switch (style) {
             case 'industrial':
-                panelCount = 15;
+                panelDensity = 15;
                 pipeRange = [6, 12];
                 pipeChance = 1.0;
                 lightRange = [0, 1];
@@ -75,7 +118,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 cutawayChance = 0.2;
                 break;
             case 'tech':
-                panelCount = 5;
+                panelDensity = 5;
                 pipeRange = [1, 3];
                 pipeChance = 0.5;
                 lightRange = [2, 5];
@@ -87,7 +130,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 cutawayChance = 0.1;
                 break;
             case 'clean':
-                panelCount = 4;
+                panelDensity = 4;
                 pipeChance = 0.1;
                 lightRange = [1, 2];
                 lightChance = 0.4;
@@ -97,7 +140,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 cutawayChance = 0.0;
                 break;
             case 'dense':
-                panelCount = 20;
+                panelDensity = 20;
                 pipeRange = [3, 8];
                 pipeChance = 0.9;
                 lightRange = [1, 4];
@@ -109,7 +152,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 cutawayChance = 0.1;
                 break;
             case 'structure':
-                panelCount = 6;
+                panelDensity = 6;
                 pipeChance = 0.0;
                 lightChance = 0.0;
                 equipChance = 0.0;
@@ -118,7 +161,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 cutawayChance = 0.0;
                 break;
             case 'trench':
-                panelCount = 0;
+                panelDensity = 0;
                 pipeChance = 0.0;
                 lightChance = 0.0;
                 equipChance = 0.0;
@@ -129,14 +172,18 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         }
 
         // 2. Panels OR Trench - BASE LAYER
-        if (archetype === 'trench') {
+        if (style === 'trench') {
             // EquipmentTrenchGreebles has a hardcoded internal scale of 0.1. 
             // To make it fill the component height (this.yUnits), we must pass a width scaled up by 10.
             const trenchWidth = this.yUnits * 10;
             const trench = new EquipmentTrenchGreebles(this.xUnits, this.yUnits, this.themeColor, this.yUnits / 2, trenchWidth);
             trench.draw(context, rng);
         } else {
-            const panels = new PanelGreebles(this.xUnits, this.yUnits, this.themeColor, panelCount, archetype === 'industrial' || archetype === 'dense', this.skipBaseFill);
+            const area = Math.max(0.5, this.xUnits * this.yUnits); // Ensure tiny components don't break
+            const panelCount = Math.floor(Math.max(1, area * panelDensity));
+            const showRivets = style === 'industrial' || style === 'dense' || (style === 'standard' && rng.bool(0.5));
+            
+            const panels = new PanelGreebles(this.xUnits, this.yUnits, this.themeColor, panelCount, showRivets, this.skipBaseFill);
             panels.draw(context, rng);
         }
         

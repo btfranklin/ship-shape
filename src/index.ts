@@ -34,7 +34,7 @@ function generateShip() {
     const darkTheme = theme.withBrightness(-0.2);
     
     // A. Top Half
-    const topSurf = new CapitalShipSurfaceGreebles(aspect, centerY, theme);
+    const topSurf = new CapitalShipSurfaceGreebles(aspect, centerY, theme, 'science', 'hull');
     topSurf.draw(texCtx, rng);
     
     const topWin = new CapitalShipWindowsGreebles(aspect, centerY, theme, 8);
@@ -43,7 +43,7 @@ function generateShip() {
     // B. Bottom Half
     texCtx.save();
     texCtx.translate(0, centerY);
-    const botSurf = new CapitalShipSurfaceGreebles(aspect, 0.5, darkTheme);
+    const botSurf = new CapitalShipSurfaceGreebles(aspect, 0.5, darkTheme, 'science', 'hull');
     botSurf.draw(texCtx, rng);
     
     const botWin = new CapitalShipWindowsGreebles(aspect, 0.5, darkTheme, 6);

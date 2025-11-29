@@ -1,6 +1,7 @@
 import { HSBAColor, RNG } from '../greebler/common.js';
-import { ShipComponent, ComponentType, ShipArchetype } from './ShipComponent.js';
+import { ShipComponent } from './ShipComponent.js';
 import { UnifiedTrunkComponent } from './UnifiedTrunkComponent.js';
+import { ShipArchetype, ComponentType } from './shipTypes.js';
 
 interface ShipNode {
     component: ShipComponent;
