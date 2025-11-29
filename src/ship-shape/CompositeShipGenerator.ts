@@ -442,10 +442,17 @@ export class CompositeShipGenerator {
         if (maxW < 10) return; // No room
 
         // Choice: Taper Hull, Large Sphere, or Small Sphere (Round Cap)
-        let choice = rng.choice(['taper', 'sphere-large', 'sphere-small']);
+        // If Science/Combat, also allow Sensor Array
+        let noseChoices = ['taper', 'sphere-large', 'sphere-small'];
+        if (archetype === 'science' || archetype === 'combat') {
+            noseChoices.push('sensor');
+            noseChoices.push('sensor'); // Weight it a bit higher
+        }
+
+        let choice = rng.choice(noseChoices);
         
         // If very limited space, force taper as it handles arbitrary width best
-        if (maxW < 50) choice = 'taper';
+        if (maxW < 50 && choice !== 'sensor') choice = 'taper'; // Sensors can be small? Let's allow small sensors
 
         if (choice === 'taper') {
             // Trapezoid Hull (Merged into Trunk)
@@ -459,6 +466,19 @@ export class CompositeShipGenerator {
             nose.generateShape(rng);
             node.children.push({ component: nose, children: [] });
             
+        } else if (choice === 'sensor') {
+            const h = pBounds.h * rng.range(0.5, 0.8);
+            // Length sticking out
+            let w = pBounds.h * rng.range(0.4, 0.8); 
+            w = Math.min(w, maxW);
+            
+            const y = pBounds.y + (pBounds.h - h)/2;
+            const x = startX; // Attach to end
+            
+            const nose = new ShipComponent(x, y, w, h, parent.zIndex - 1, 'sensor', theme, rng, archetype, 'front');
+            nose.generateShape(rng);
+            node.children.push({ component: nose, children: [] });
+
         } else {
             // Spheres extend past currentRight by s/2
             // We need currentRight + s/2 <= limit
