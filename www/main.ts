@@ -1,7 +1,7 @@
 import { HSBAColor, RNG, CapitalShipSurfaceGreebles, CapitalShipWindowsGreebles, EquipmentTrenchGreebles } from '../src/greebler/index.js';
 import { ShipShapeGenerator, CompositeShipGenerator } from '../src/ship-shape/index.js';
 import { PanelGreebles, PipeGreebles, LightPanelGreebles } from '../src/greebler/index.js';
-import { ShipArchetype } from '../src/ship-shape/ShipComponent.js';
+import { ShipArchetype } from '../src/ship-shape/shipTypes.js';
 import { UnifiedTrunkComponent } from '../src/ship-shape/UnifiedTrunkComponent.js';
 
 console.log('Greebler Playground Loaded');
@@ -62,7 +62,7 @@ function renderSurface(rng: RNG, theme: HSBAColor) {
     ctx.scale(HEIGHT, HEIGHT); // 1.0 = Height
     
     // Draw a standard industrial surface
-    const surf = new CapitalShipSurfaceGreebles(aspect, 1.0, theme, 'industrial');
+    const surf = new CapitalShipSurfaceGreebles(aspect, 1.0, theme, 'industry', 'hull');
     surf.draw(ctx, rng);
     
     ctx.restore();
@@ -71,8 +71,18 @@ function renderSurface(rng: RNG, theme: HSBAColor) {
 function renderShape(rng: RNG) {
     const generator = new CompositeShipGenerator();
     const theme = new HSBAColor(0,0,0); // Dummy
-    // Archetype doesn't affect shape currently, just pass random or undefined
-    const components = generator.generate(WIDTH, HEIGHT, theme, rng);
+    
+    // Pick archetype to match renderFullShip logic/RNG usage
+    let archVal = archetypeSelect.value;
+    let arch: ShipArchetype;
+
+    if (archVal === 'random') {
+        arch = rng.choice(['freight', 'science', 'industry', 'passengers', 'combat']);
+    } else {
+        arch = archVal as ShipArchetype;
+    }
+
+    const components = generator.generate(WIDTH, HEIGHT, theme, rng, arch, 600);
     
     ctx.strokeStyle = '#0f0';
     ctx.lineWidth = 2;
