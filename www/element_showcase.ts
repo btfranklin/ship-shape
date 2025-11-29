@@ -47,10 +47,40 @@ const types: TypeDef[] = [
     },
     {
         type: 'tank',
-        desc: "Fuel or cargo storage pods.",
+        desc: "Fuel/Cargo Pods (Horizontal Capsule).",
         greebles: [
-            "Greebles: Minimal. Mostly smooth plating.",
-            "Shapes: Chamfer (Capsule-like)"
+            "Shape: Pill/Capsule",
+            "Shading: Cylindrical Gradient (Vertical)"
+        ],
+        allowedArchetypes: ['freight', 'industry']
+    },
+    {
+        type: 'tank',
+        variant: 'liquid',
+        desc: "Liquid Tanks (Horizontal Capsule, flatter ends).",
+        greebles: [
+            "Shape: Flattened Capsule",
+            "Shading: Cylindrical Gradient (Vertical)"
+        ],
+        allowedArchetypes: ['freight', 'industry']
+    },
+    {
+        type: 'tank',
+        variant: 'vertical',
+        desc: "Fuel/Cargo Pods (Vertical Capsule).",
+        greebles: [
+            "Shape: Pill/Capsule",
+            "Shading: Cylindrical Gradient (Horizontal)"
+        ],
+        allowedArchetypes: ['freight', 'industry']
+    },
+    {
+        type: 'tank',
+        variant: 'liquid vertical', // Combine variants for showcase sizing
+        desc: "Liquid Tanks (Vertical Capsule, flatter ends).",
+        greebles: [
+            "Shape: Flattened Capsule",
+            "Shading: Cylindrical Gradient (Horizontal)"
         ],
         allowedArchetypes: ['freight', 'industry']
     },
@@ -198,6 +228,12 @@ function render() {
                 } else {
                     // Side view turret
                     w = 120; h = 60;
+                }
+            } else if (def.type === 'tank') {
+                if (def.variant && def.variant.includes('vertical')) {
+                    w = 80; h = 160;
+                } else {
+                    w = 180; h = 90;
                 }
             }
             

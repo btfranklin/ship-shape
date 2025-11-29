@@ -10,6 +10,7 @@ import { HullRenderer } from './renderers/HullRenderer.js';
 import { TowerRenderer } from './renderers/TowerRenderer.js';
 import { SensorRenderer } from './renderers/SensorRenderer.js';
 import { WeaponRenderer } from './renderers/WeaponRenderer.js';
+import { TankRenderer } from './renderers/TankRenderer.js';
 import { ShipArchetype, ComponentType } from './shipTypes.js';
 
 export class ShipComponent {
@@ -80,6 +81,9 @@ export class ShipComponent {
                 break;
             case 'weapon':
                 this.renderer = new WeaponRenderer();
+                break;
+            case 'tank':
+                this.renderer = new TankRenderer();
                 break;
             default:
                 this.renderer = new StandardComponentRenderer();
