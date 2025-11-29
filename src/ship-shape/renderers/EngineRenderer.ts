@@ -50,7 +50,7 @@ export class EngineRenderer implements ComponentRenderer {
         if (component.engineStyle === 'radiator') {
             this.drawRadiatorEngine(ctx, component);
         } else if (component.engineStyle === 'energy') {
-            this.drawEnergyEngine(ctx, component);
+            this.drawEnergyEngine(ctx, component, rng);
         } else {
             this.drawStandardEngine(ctx, component);
         }
@@ -65,133 +65,287 @@ export class EngineRenderer implements ComponentRenderer {
 
     private drawRadiatorEngine(ctx: CanvasRenderingContext2D, component: ShipComponent) {
         if (!component.shapePath) return;
-        // Dark Heatsink
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fill(component.shapePath);
+        const { x, y, w, h } = component.bounds;
 
-        // Glowing Slats
-        const glowColor = component.color.withSaturation(1.0).withBrightness(0.5).toRGBAString(); // Hot!
-        ctx.fillStyle = glowColor;
-        ctx.shadowColor = glowColor;
-        ctx.shadowBlur = 5;
-
-        const slatCount = Math.floor(component.bounds.h / 15);
-        const slatH = 4;
-        for (let i = 1; i < slatCount; i++) {
-            const sy = component.bounds.y + (component.bounds.h / slatCount) * i;
-            // Draw slat inside
-            ctx.fillRect(component.bounds.x + 5, sy, component.bounds.w - 10, slatH);
-        }
-    }
-
-    private drawEnergyEngine(ctx: CanvasRenderingContext2D, component: ShipComponent) {
-        if (!component.shapePath) return;
-        // 1. Draw Housing (Chassis)
-        // Dark metallic block to hold the core
-        const housingGrad = ctx.createLinearGradient(component.bounds.x, component.bounds.y, component.bounds.x, component.bounds.y + component.bounds.h);
-        housingGrad.addColorStop(0, '#2a2a2a');
-        housingGrad.addColorStop(0.5, '#444');
-        housingGrad.addColorStop(1, '#2a2a2a');
-
+        // 1. Housing (Volumetric Metallic Gradient)
+        const housingGrad = ctx.createLinearGradient(x, y, x, y + h);
+        housingGrad.addColorStop(0, '#222');
+        housingGrad.addColorStop(0.2, '#555');
+        housingGrad.addColorStop(0.5, '#333');
+        housingGrad.addColorStop(0.8, '#222');
+        housingGrad.addColorStop(1, '#111');
         ctx.fillStyle = housingGrad;
         ctx.fill(component.shapePath);
 
-        // 2. Inset for Core
-        const inset = Math.min(component.bounds.w, component.bounds.h) * 0.15;
-        const innerX = component.bounds.x + inset;
-        const innerY = component.bounds.y + inset;
-        const innerW = component.bounds.w - inset * 2;
-        const innerH = component.bounds.h - inset * 2;
+        // 2. Inset for Radiator Core (Asymmetrical: Open on Left)
+        const margin = Math.min(w, h) * 0.1;
+        const ix = x; // Start at left edge (Open)
+        const iy = y + margin;
+        const iw = w - margin; // Stop before right edge
+        const ih = h - margin * 2;
 
-        // Dark background for core area
-        ctx.fillStyle = '#050505';
-        ctx.fillRect(innerX, innerY, innerW, innerH);
+        // Background
+        ctx.fillStyle = '#000';
+        ctx.fillRect(ix, iy, iw, ih);
 
-        // 3. Glowing Core Gradient
-        const cx = innerX + innerW / 2;
-        const cy = innerY + innerH / 2;
-        const r = Math.min(innerW, innerH) * 0.7;
+        // 3. Glowing Slats
+        // Heat Gradient: HOT (Left) -> COOL (Right)
+        const baseHeat = component.color.withSaturation(0.9).withBrightness(0.8); 
+        const coreHeat = component.color.withSaturation(0.3).withBrightness(1.0); 
 
-        const grad = ctx.createRadialGradient(cx, cy, r * 0.2, cx, cy, r);
-        // component.energyGlowHue is private? 
-        // Wait, I need to access energyGlowHue. It is private in ShipComponent.
-        // I should make it public or accessible.
-        // I'll check ShipComponent again.
-        // It is `private energyGlowHue: number = 0.0;`.
-        // I need to fix this in ShipComponent.ts first or just cast to any for now, or add getter.
-        // I'll add getter or make public in ShipComponent.ts step.
-        // For now I'll assume it is public.
-        const energyColor = new HSBAColor((component as any).energyGlowHue, 1.0, 1.0);
-        grad.addColorStop(0, energyColor.withBrightness(1.0).toRGBAString()); // White hot
-        grad.addColorStop(0.4, energyColor.toRGBAString());
-        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        const slatCount = Math.floor(ih / 8);
+        const slatH = Math.max(3, ih / slatCount * 0.6);
 
-        ctx.fillStyle = grad;
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.fillRect(innerX, innerY, innerW, innerH);
-        ctx.globalCompositeOperation = 'source-over';
+        ctx.shadowBlur = 4; 
+        
+        for (let i = 0; i < slatCount; i++) {
+            const sy = iy + (ih / slatCount) * i + (ih/slatCount - slatH)/2;
+            
+            // Gradient: Hot Left -> Cold Right
+            const slatGrad = ctx.createLinearGradient(ix, sy, ix + iw, sy);
+            slatGrad.addColorStop(0, coreHeat.toRGBAString());       // White hot output
+            slatGrad.addColorStop(0.3, baseHeat.toRGBAString());
+            slatGrad.addColorStop(1, baseHeat.withBrightness(0.2).toRGBAString()); // Darker at back
 
-        // 4. Containment Brackets (Over the core, attached to housing)
-        ctx.fillStyle = '#333'; // Darker metal
-        ctx.strokeStyle = '#111';
+            ctx.fillStyle = slatGrad;
+            ctx.shadowColor = baseHeat.toRGBAString();
+            
+            ctx.fillRect(ix, sy, iw - 4, slatH);
+        }
+        ctx.shadowBlur = 0;
+
+        // Inner Shadow Top/Bottom
+        const depthGrad = ctx.createLinearGradient(ix, iy, ix, iy + ih);
+        depthGrad.addColorStop(0, 'rgba(0,0,0,0.8)');
+        depthGrad.addColorStop(0.15, 'rgba(0,0,0,0)');
+        depthGrad.addColorStop(0.85, 'rgba(0,0,0,0)');
+        depthGrad.addColorStop(1, 'rgba(0,0,0,0.8)');
+        ctx.fillStyle = depthGrad;
+        ctx.fillRect(ix, iy, iw, ih);
+
+        // 4. Rim Highlight (Top, Bottom, Right) - No Left
+        ctx.strokeStyle = '#666';
         ctx.lineWidth = 1;
-
-        const clampH = innerH * 0.25;
-        const clampW = innerW * 0.5;
-
-        // Top Clamp (extending down from housing top)
         ctx.beginPath();
-        ctx.moveTo(cx - clampW / 2, innerY);
-        ctx.lineTo(cx + clampW / 2, innerY);
-        ctx.lineTo(cx + clampW / 3, innerY + clampH);
-        ctx.lineTo(cx - clampW / 3, innerY + clampH);
-        ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(ix, iy);
+        ctx.lineTo(ix + iw, iy); // Top
+        ctx.lineTo(ix + iw, iy + ih); // Right
+        ctx.lineTo(ix, iy + ih); // Bottom
         ctx.stroke();
 
-        // Bottom Clamp
-        ctx.beginPath();
-        ctx.moveTo(cx - clampW / 2, innerY + innerH);
-        ctx.lineTo(cx + clampW / 2, innerY + innerH);
-        ctx.lineTo(cx + clampW / 3, innerY + innerH - clampH);
-        ctx.lineTo(cx - clampW / 3, innerY + innerH - clampH);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
+        // 5. Bolts/Rivets (Right side corners only)
+        ctx.fillStyle = '#111';
+        const boltSize = margin * 0.4;
+        const bx = margin / 2;
+        const by = margin / 2;
+        
+        // Only Right-Top and Right-Bottom have housing corners suitable for bolts
+        const bolts = [
+            { bx: x + w - bx, by: y + by },       // TR
+            { bx: x + w - bx, by: y + h - by },   // BR
+        ];
 
-        // Rivet details on clamps
-        ctx.fillStyle = '#555';
         ctx.beginPath();
-        ctx.arc(cx, innerY + clampH / 2, 2, 0, Math.PI * 2);
+        for (const b of bolts) {
+            ctx.moveTo(b.bx + boltSize, b.by);
+            ctx.arc(b.bx, b.by, boltSize, 0, Math.PI*2);
+        }
         ctx.fill();
+        
+        ctx.fillStyle = '#666';
         ctx.beginPath();
-        ctx.arc(cx, innerY + innerH - clampH / 2, 2, 0, Math.PI * 2);
+        for (const b of bolts) {
+            ctx.moveTo(b.bx - 1 + boltSize*0.3, b.by - 1);
+            ctx.arc(b.bx - 1, b.by - 1, boltSize*0.3, 0, Math.PI*2);
+        }
         ctx.fill();
+    }
+
+    private drawEnergyEngine(ctx: CanvasRenderingContext2D, component: ShipComponent, rng: RNG) {
+        if (!component.shapePath) return;
+        const { x, y, w, h } = component.bounds;
+
+        // 1. Housing
+        const housingGrad = ctx.createLinearGradient(x, y, x, y + h);
+        housingGrad.addColorStop(0, '#222');
+        housingGrad.addColorStop(0.2, '#555');
+        housingGrad.addColorStop(0.5, '#1a1a1a');
+        housingGrad.addColorStop(0.8, '#555');
+        housingGrad.addColorStop(1, '#222');
+        ctx.fillStyle = housingGrad;
+        ctx.fill(component.shapePath);
+
+        // 2. Inset / Channel (Open Left)
+        const marginY = h * 0.15; 
+        const marginX = w * 0.05; // Only for right side now
+        
+        const ix = x; // Start Left
+        const iy = y + marginY;
+        const iw = w - marginX; // Stop before right cap
+        const ih = h - marginY * 2;
+
+        ctx.fillStyle = '#000';
+        ctx.fillRect(ix, iy, iw, ih);
+
+        // 3. Plasma Stream
+        const energyColor = new HSBAColor((component as any).energyGlowHue, 1.0, 1.0);
+        
+        // Stream Gradient (Hot Left -> Stable Right)
+        const streamGrad = ctx.createLinearGradient(ix, iy, ix + iw, iy);
+        streamGrad.addColorStop(0, '#fff'); // White hot nozzle
+        streamGrad.addColorStop(0.1, energyColor.withBrightness(1.0).toRGBAString());
+        streamGrad.addColorStop(0.5, energyColor.withBrightness(0.8).toRGBAString());
+        streamGrad.addColorStop(1, energyColor.withBrightness(0.4).toRGBAString()); // Fade out back
+
+        ctx.fillStyle = streamGrad;
+        ctx.shadowColor = energyColor.toRGBAString();
+        ctx.shadowBlur = 15;
+        ctx.fillRect(ix, iy + ih*0.1, iw, ih*0.8);
+        ctx.shadowBlur = 0;
+
+        // Nozzle Flare
+        const nozzleGrad = ctx.createRadialGradient(ix, iy + ih/2, 0, ix, iy + ih/2, ih);
+        nozzleGrad.addColorStop(0, energyColor.withBrightness(1.0).withAlpha(0.8).toRGBAString());
+        nozzleGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = nozzleGrad;
+        ctx.fillRect(ix - ih/2, iy, ih, ih); // Draw flare slightly outside
+
+        // 4. Greebles
+        const segW = 15; 
+        const numSegs = Math.floor(iw / segW);
+        
+        ctx.fillStyle = '#333';
+        ctx.strokeStyle = '#111';
+        
+        for (let i = 0; i < numSegs; i++) {
+            const cx = ix + i * segW;
+            if (cx < ix + 10) continue; // Skip very front nozzle area
+
+            if (rng.bool(0.4)) {
+                const type = rng.choice(['ring', 'claw', 'box']);
+                const width = segW * rng.range(0.8, 1.5);
+                
+                if (type === 'ring') {
+                    const ringGrad = ctx.createLinearGradient(cx, iy, cx+width, iy);
+                    ringGrad.addColorStop(0, '#111'); ringGrad.addColorStop(0.5, '#444'); ringGrad.addColorStop(1, '#111');
+                    ctx.fillStyle = ringGrad;
+                    ctx.fillRect(cx, iy - 2, width, ih + 4);
+                } else if (type === 'claw') {
+                    const clawH = ih * rng.range(0.2, 0.35);
+                    ctx.fillStyle = '#2a2a2a';
+                    // Top
+                    ctx.beginPath();
+                    ctx.moveTo(cx, iy); ctx.lineTo(cx + width, iy);
+                    ctx.lineTo(cx + width*0.8, iy + clawH); ctx.lineTo(cx + width*0.2, iy + clawH);
+                    ctx.fill();
+                    // Bot
+                    ctx.beginPath();
+                    ctx.moveTo(cx, iy + ih); ctx.lineTo(cx + width, iy + ih);
+                    ctx.lineTo(cx + width*0.8, iy + ih - clawH); ctx.lineTo(cx + width*0.2, iy + ih - clawH);
+                    ctx.fill();
+                } else {
+                    const boxH = marginY * 0.9;
+                    ctx.fillStyle = '#444';
+                    if (rng.bool(0.5)) ctx.fillRect(cx, y + marginY - boxH, width, boxH);
+                    if (rng.bool(0.5)) ctx.fillRect(cx, y + h - marginY, width, boxH);
+                }
+            }
+        }
+        
+        // 5. Cables
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 2;
+        const cableY1 = iy + ih * 0.25;
+        const cableY2 = iy + ih * 0.75;
+        
+        ctx.beginPath(); ctx.moveTo(ix, cableY1); ctx.lineTo(ix+iw, cableY1); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ix, cableY2); ctx.lineTo(ix+iw, cableY2); ctx.stroke();
+        
+        // End Cap (Right Only)
+        ctx.fillStyle = '#333';
+        ctx.fillRect(ix+iw-5, iy, 5, ih);
     }
 
     private drawStandardEngine(ctx: CanvasRenderingContext2D, component: ShipComponent) {
         if (!component.shapePath) return;
-        // Standard Cylinder
-        const grad = ctx.createLinearGradient(component.bounds.x, component.bounds.y, component.bounds.x, component.bounds.y + component.bounds.h);
+        const { x, y, w, h } = component.bounds;
+        
+        // 1. Base Cylinder (Body)
+        const grad = ctx.createLinearGradient(x, y, x, y + h);
         const base = component.color;
-        grad.addColorStop(0, base.withBrightness(-0.4).toRGBAString());
-        grad.addColorStop(0.2, base.withBrightness(-0.1).toRGBAString());
-        grad.addColorStop(0.5, base.withBrightness(0.2).toRGBAString()); // Highlight
+        // Top/Bottom dark, Middle highlight (Cylinder volume)
+        grad.addColorStop(0, base.withBrightness(-0.5).toRGBAString());
+        grad.addColorStop(0.3, base.withBrightness(-0.1).toRGBAString());
+        grad.addColorStop(0.5, base.withBrightness(0.3).toRGBAString()); // Specular highlight
         grad.addColorStop(0.8, base.withBrightness(-0.1).toRGBAString());
-        grad.addColorStop(1, base.withBrightness(-0.4).toRGBAString());
+        grad.addColorStop(1, base.withBrightness(-0.5).toRGBAString());
         ctx.fillStyle = grad;
         ctx.fill(component.shapePath);
 
-        // Rings
-        ctx.strokeStyle = base.withBrightness(-0.5).toRGBAString();
-        ctx.lineWidth = 2;
-        const ringCount = Math.floor(component.bounds.w / 40) || 2;
-        for (let i = 1; i < ringCount; i++) {
-            const rx = component.bounds.x + (component.bounds.w / ringCount) * i;
-            ctx.beginPath();
-            ctx.moveTo(rx, component.bounds.y);
-            ctx.lineTo(rx, component.bounds.y + component.bounds.h);
-            ctx.stroke();
+        // 2. Nozzle (Left side exhaust)
+        const nozzleW = Math.max(4, w * 0.15); // At least 4px or 15%
+        const nozzleGrad = ctx.createLinearGradient(x, y, x, y + h);
+        nozzleGrad.addColorStop(0, '#222');
+        nozzleGrad.addColorStop(0.4, '#444');
+        nozzleGrad.addColorStop(0.6, '#444');
+        nozzleGrad.addColorStop(1, '#222');
+        
+        ctx.fillStyle = nozzleGrad;
+        ctx.fillRect(x, y, nozzleW, h);
+        
+        // Nozzle Heat Glow (Left edge fade)
+        const exhaustGrad = ctx.createLinearGradient(x, y, x + nozzleW, y);
+        exhaustGrad.addColorStop(0, 'rgba(255, 220, 150, 0.9)'); // Hot tip
+        exhaustGrad.addColorStop(0.3, 'rgba(255, 100, 50, 0.4)');
+        exhaustGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = exhaustGrad;
+        ctx.fillRect(x, y + 1, nozzleW, h - 2);
+        
+        // Nozzle Rim Detail
+        ctx.fillStyle = '#111';
+        ctx.fillRect(x + nozzleW - 1, y, 1, h); // Seam between nozzle and body
+
+        // 3. Progressive Coils (Right to Left)
+        // Start from Right (Ship attachment) and move Left (Exhaust)
+        const startX = x + w - 2; 
+        const stopX = x + nozzleW; 
+        
+        let currentX = startX;
+        // Initial spacing depends on width, but kept tight at the back
+        let spacing = Math.max(2, w * 0.04); 
+        const spacingGrowth = 1.25; // How fast they spread out
+
+        while (currentX > stopX + spacing) {
+            // Coil Width increases slightly with spacing?
+            const coilW = Math.max(2, spacing * 0.35); 
+            const cx = currentX - coilW;
+            
+            if (cx < stopX) break;
+
+            // Coil Gradient (Raised metallic ring)
+            const coilGrad = ctx.createLinearGradient(cx, y, cx, y + h);
+            coilGrad.addColorStop(0, '#111');
+            coilGrad.addColorStop(0.4, '#666'); // Upper shine
+            coilGrad.addColorStop(0.5, '#aaa'); // Center highlight
+            coilGrad.addColorStop(0.6, '#666'); 
+            coilGrad.addColorStop(1, '#111');
+            
+            ctx.fillStyle = coilGrad;
+            // Extend slightly outside bounds (y-1, h+2) to look like it wraps around
+            ctx.fillRect(cx, y - 1, coilW, h + 2); 
+            
+            // Shadow on the left of the coil (casting shadow onto cylinder body)
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(cx - 1, y, 1, h); 
+
+            // Update Position
+            currentX -= spacing;
+            spacing *= spacingGrowth;
         }
+        
+        // 4. End Cap (Right / Ship Connection)
+        ctx.fillStyle = '#333';
+        const capW = Math.max(2, w * 0.02);
+        ctx.fillRect(x + w - capW, y, capW, h);
     }
 }

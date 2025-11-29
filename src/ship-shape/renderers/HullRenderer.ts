@@ -69,6 +69,13 @@ export class HullRenderer implements ComponentRenderer {
         const cutBR = getCut(); // Bottom-Right
         const cutBL = getCut(); // Bottom-Left
 
+        // Capture Left Edge Limits for Engine Alignment
+        let leftMinY = y;
+        let leftMaxY = y + h;
+        if (cutTL) leftMinY += cutTL.cy;
+        if (cutBL) leftMaxY -= cutBL.cy;
+        component.leftEdge = { minY: leftMinY, maxY: leftMaxY };
+
         // Start from Top-Left corner
         if (cutTL) {
             p.moveTo(x, y + cutTL.cy);

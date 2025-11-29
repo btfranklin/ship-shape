@@ -25,6 +25,7 @@ export class ShipComponent {
     public shipArchetype: ShipArchetype;
     public isTrunk: boolean = false;
     public invertLighting: boolean = false;
+    public leftEdge: { minY: number, maxY: number } | null = null;
     
     private renderer: ComponentRenderer;
 
@@ -40,7 +41,8 @@ export class ShipComponent {
         shipArchetype: ShipArchetype,
         variant: string = 'default',
         isTrunk: boolean = false,
-        invertLighting: boolean = false
+        invertLighting: boolean = false,
+        forcedEngineStyle?: 'standard' | 'radiator' | 'energy'
     ) {
         this.bounds = { x, y, w, h };
         this.zIndex = zIndex;
@@ -75,12 +77,19 @@ export class ShipComponent {
 
         // Engine Specific Logic
         if (type === 'engine') {
-            const r = rng.next();
-            if (r < 0.4) this.engineStyle = 'standard';
-            else if (r < 0.7) this.engineStyle = 'radiator';
-            else {
-                this.engineStyle = 'energy';
-                this.energyGlowHue = rng.range(0.0, 1.0);
+            if (forcedEngineStyle) {
+                this.engineStyle = forcedEngineStyle;
+                if (this.engineStyle === 'energy') {
+                    this.energyGlowHue = rng.range(0.0, 1.0);
+                }
+            } else {
+                const r = rng.next();
+                if (r < 0.4) this.engineStyle = 'standard';
+                else if (r < 0.7) this.engineStyle = 'radiator';
+                else {
+                    this.engineStyle = 'energy';
+                    this.energyGlowHue = rng.range(0.0, 1.0);
+                }
             }
         }
 
