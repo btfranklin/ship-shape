@@ -113,6 +113,18 @@ export class WeaponRenderer implements ComponentRenderer {
             ctx.translate(-cx, -cy);
         }
 
+        // Apply random rotation for top-view turrets
+        if (isTopView) {
+            ctx.save(); // Save context before component rotation
+            const rotDegrees = rng.range(-20, 20);
+            const rotRadians = rotDegrees * (Math.PI / 180);
+            const cx = x + w / 2;
+            const cy = y + h / 2;
+            ctx.translate(cx, cy);
+            ctx.rotate(rotRadians);
+            ctx.translate(-cx, -cy);
+        }
+
         // 0. Draw Connection Base (if side view and center provided)
         if (!isTopView && component.shipCenterY !== undefined) {
              const centerY = component.shipCenterY;
@@ -235,6 +247,9 @@ export class WeaponRenderer implements ComponentRenderer {
         ctx.restore();
         
         // Restore flipping context if applied
+        if (isTopView) {
+            ctx.restore(); // Restore context after component rotation
+        }
         ctx.restore();
     }
 }
