@@ -20,7 +20,7 @@ export class StandardComponentRenderer implements ComponentRenderer {
             case 'sensor':
                 shapeType = rng.choice(['taper-top', 'rect', 'cut-corner']);
                 break;
-            case 'tank':
+            case 'storage':
                 shapeType = 'chamfer';
                 break;
             case 'weapon':

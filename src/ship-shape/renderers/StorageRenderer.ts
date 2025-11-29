@@ -2,7 +2,7 @@ import { ShipComponent } from '../ShipComponent.js';
 import { ComponentRenderer } from './ComponentRenderer.js';
 import { HSBAColor, RNG } from '../../greebler/common.js';
 
-export class TankRenderer implements ComponentRenderer {
+export class StorageRenderer implements ComponentRenderer {
     generateShape(component: ShipComponent, rng: RNG): void {
         const path = new Path2D();
         const { x, y, w, h } = component.bounds;
@@ -78,7 +78,7 @@ export class TankRenderer implements ComponentRenderer {
             const supportH = Math.abs(centerY - component.shipCenterY);
             
             // Scaffolding parameters
-            const strutW = w * 0.8; // Make scaffolding 80% the width of the tank
+            const strutW = w * 0.8; // Make scaffolding 80% the width of the storage unit
             const strutX = x + (w - strutW) / 2;
             const blockSize = strutW; 
             const numBlocks = Math.ceil(supportH / blockSize);
@@ -123,7 +123,7 @@ export class TankRenderer implements ComponentRenderer {
             ctx.stroke();
         }
 
-        // --- Tank Body ---
+        // --- Storage Body ---
         ctx.save();
         
         if (component.shapePath) {
@@ -165,7 +165,7 @@ export class TankRenderer implements ComponentRenderer {
         // But `rng` passed in `draw` might change per frame if we aren't careful. 
         // Usually `draw` rng is frame-based or seeded? 
         // In this codebase, `draw` gets an RNG. Ideally, visual features should be fixed.
-        // However, since `TankRenderer` doesn't store state, we rely on the passed RNG.
+        // However, since `StorageRenderer` doesn't store state, we rely on the passed RNG.
         // If the caller passes a different RNG every frame, the bands will jitter. 
         // But usually `ShipComponent` holds state or we assume `draw` is one-shot or stable RNG.
         // In `element_showcase`, we create `new RNG` every click.

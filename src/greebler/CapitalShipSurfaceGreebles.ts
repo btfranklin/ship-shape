@@ -38,7 +38,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 
             case 'industry':
                 if (compType === 'hull') return this.isTrunk ? 'industrial' : 'standard';
-                if (compType === 'tank') return 'industrial';
+                if (compType === 'storage') return 'industrial';
                 if (compType === 'engine') return 'industrial';
                 if (compType === 'tower') return 'standard'; 
                 return 'standard'; 
@@ -50,7 +50,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 return 'standard';
                 
             case 'freight':
-                if (compType === 'tank') return 'clean'; // Containers
+                if (compType === 'storage') return 'clean'; // Containers
                 if (compType === 'hull') return 'standard';
                 return 'standard';
                 

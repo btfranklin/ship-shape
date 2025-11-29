@@ -89,8 +89,8 @@ export class CompositeShipGenerator {
             }
         }
 
-        // 3. Add Global Tank Details (Spanning multiple sections)
-        this.addGlobalTanks(rootNode, themeColor, rng, archetype, centerY);
+        // 3. Add Global Storage Details (Spanning multiple sections)
+        this.addGlobalStorage(rootNode, themeColor, rng, archetype, centerY);
 
         // 4. Traverse Post-Order
         const drawList: ShipComponent[] = [];
@@ -109,7 +109,7 @@ export class CompositeShipGenerator {
             finalComponents.push(trunk);
         }
 
-        // 5b. Post-Process: Add Rings
+        // 6. Post-Process: Add Rings
         if (archetype === 'science' || archetype === 'passengers') {
             const trunkHulls = drawList.filter(c => c.type === 'hull' && c.isTrunk);
             const rRing = rng.next();
@@ -150,7 +150,7 @@ export class CompositeShipGenerator {
             }
         }
 
-        // 6. Sort by Z-Index
+        // 7. Sort by Z-Index
         finalComponents.sort((a, b) => a.zIndex - b.zIndex);
 
         return finalComponents;
@@ -234,7 +234,7 @@ export class CompositeShipGenerator {
             this.addNose(node, totalW, totalH, theme, rng, archetype, shipCenterY);
         }
 
-        // 2. Branch Up (Towers/Sensors/Weapons - NO TANKS)
+        // 2. Branch Up (Towers/Sensors/Weapons)
         if (rng.bool(upChance)) {
             const r = rng.next();
             let type: ComponentType = 'tower';
@@ -321,7 +321,7 @@ export class CompositeShipGenerator {
             }
         }
 
-        // 3. Branch Down (Sensors/Weapons - NO TANKS)
+        // 3. Branch Down (Sensors/Weapons)
         if (rng.bool(downChance)) {
             const r = rng.next();
             let type: ComponentType = 'sphere';
@@ -372,7 +372,7 @@ export class CompositeShipGenerator {
             
             const childComp = new ShipComponent(
                 x, y, w, h,
-                parentComp.zIndex - 1,
+                parentComp.zIndex - 1, // Underslung/Inset details
                 type,
                 theme.withBrightness(-0.1),
                 rng,
@@ -531,7 +531,7 @@ export class CompositeShipGenerator {
         }
     }
 
-    private addGlobalTanks(root: ShipNode, theme: HSBAColor, rng: RNG, archetype: ShipArchetype, shipCenterY: number) {
+    private addGlobalStorage(root: ShipNode, theme: HSBAColor, rng: RNG, archetype: ShipArchetype, shipCenterY: number) {
         const trunkHulls: ShipComponent[] = [];
         const collect = (node: ShipNode) => {
             if (node.component.type === 'hull' && node.component.isTrunk) {
@@ -576,27 +576,27 @@ export class CompositeShipGenerator {
                 
                 if (isFace) {
                     const isVertical = rng.bool(); 
-                    let tankW, tankH;
+                    let storageW, storageH;
                     
                     if (isVertical) {
-                         tankH = minH * rng.range(0.5, 0.8);
-                         tankW = tankH * rng.range(0.3, 0.5);
+                         storageH = minH * rng.range(0.5, 0.8);
+                         storageW = storageH * rng.range(0.3, 0.5);
                     } else {
-                         tankH = minH * rng.range(0.2, 0.4);
-                         tankW = tankH * rng.range(1.5, 2.5);
+                         storageH = minH * rng.range(0.2, 0.4);
+                         storageW = storageH * rng.range(1.5, 2.5);
                     }
                     
-                    const gap = tankW * 0.1;
-                    let count = Math.floor((spanW + gap) / (tankW + gap));
+                    const gap = storageW * 0.1;
+                    let count = Math.floor((spanW + gap) / (storageW + gap));
                     
                     count = Math.min(count, 6);
                     if (count < 1) count = 1;
                     
-                    const groupW = count * tankW + (count - 1) * gap;
+                    const groupW = count * storageW + (count - 1) * gap;
                     const startX = spanX + (spanW - groupW) / 2;
-                    const y = shipCenterY - tankH / 2;
+                    const y = shipCenterY - storageH / 2;
 
-                    this.createTankLoop(root, count, startX, y, tankW, tankH, gap, 
+                    this.createStorageLoop(root, count, startX, y, storageW, storageH, gap, 
                         500, 
                         theme.withBrightness(0.05), 
                         rng, archetype, 
@@ -608,25 +608,25 @@ export class CompositeShipGenerator {
                 } else {
                     const isTop = rng.bool();
                     
-                    const tankH = rng.range(20, 40);
-                    const tankW = tankH * rng.range(2.0, 4.0);
+                    const storageH = rng.range(20, 40);
+                    const storageW = storageH * rng.range(2.0, 4.0);
                     
-                    const gap = tankW * 0.05;
-                    let count = Math.floor((spanW + gap) / (tankW + gap));
+                    const gap = storageW * 0.05;
+                    let count = Math.floor((spanW + gap) / (storageW + gap));
                     count = Math.min(count, 4);
                     if (count < 1) count = 1;
                     
-                    const groupW = count * tankW + (count - 1) * gap;
+                    const groupW = count * storageW + (count - 1) * gap;
                     const startX = spanX + (spanW - groupW) / 2;
                     
                     let y;
                     if (isTop) {
-                        y = minY - tankH * 0.7; 
+                        y = minY - storageH * 0.7; 
                     } else {
-                        y = maxY - tankH * 0.3;
+                        y = maxY - storageH * 0.3;
                     }
                     
-                    this.createTankLoop(root, count, startX, y, tankW, tankH, gap,
+                    this.createStorageLoop(root, count, startX, y, storageW, storageH, gap,
                         10, 
                         theme.withBrightness(-0.1),
                         rng, archetype,
@@ -643,17 +643,17 @@ export class CompositeShipGenerator {
         }
     }
 
-    private createTankLoop(root: ShipNode, count: number, startX: number, y: number, w: number, h: number, gap: number, zIndex: number, color: HSBAColor, rng: RNG, archetype: ShipArchetype, variant: string, isEdge: boolean, shipCenterY: number) {
+    private createStorageLoop(root: ShipNode, count: number, startX: number, y: number, w: number, h: number, gap: number, zIndex: number, color: HSBAColor, rng: RNG, archetype: ShipArchetype, variant: string, isEdge: boolean, shipCenterY: number) {
         const sharedBands = rng.intRange(1, 3);
-        let firstTankGreebles: CapitalShipSurfaceGreebles | undefined;
+        let firstStorageGreebles: CapitalShipSurfaceGreebles | undefined;
         
         for (let i = 0; i < count; i++) {
             const cx = startX + i * (w + gap);
             
-            const tank = new ShipComponent(
+            const storage = new ShipComponent(
                 cx, y, w, h,
                 zIndex,
-                'tank',
+                'storage',
                 color,
                 rng,
                 archetype,
@@ -664,13 +664,13 @@ export class CompositeShipGenerator {
                 isEdge ? shipCenterY : undefined
             );
 
-            tank.customData.bands = sharedBands;
+            storage.customData.bands = sharedBands;
             
-            if (i === 0) firstTankGreebles = tank.greebles;
-            else if (firstTankGreebles) tank.greebles = firstTankGreebles;
+            if (i === 0) firstStorageGreebles = storage.greebles;
+            else if (firstStorageGreebles) storage.greebles = firstStorageGreebles;
             
-            tank.generateShape(rng);
-            root.children.push({ component: tank, children: [] });
+            storage.generateShape(rng);
+            root.children.push({ component: storage, children: [] });
         }
     }
 

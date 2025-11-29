@@ -46,8 +46,8 @@ const types: TypeDef[] = [
         ]
     },
     {
-        type: 'tank',
-        desc: "Fuel/Cargo Pods (Horizontal Capsule).",
+        type: 'storage',
+        desc: "Storage Container (Horizontal Capsule).",
         greebles: [
             "Shape: Pill/Capsule",
             "Shading: Cylindrical Gradient (Vertical)"
@@ -55,9 +55,9 @@ const types: TypeDef[] = [
         allowedArchetypes: ['freight', 'industry']
     },
     {
-        type: 'tank',
+        type: 'storage',
         variant: 'liquid',
-        desc: "Liquid Tanks (Horizontal Capsule, flatter ends).",
+        desc: "Liquid Storage (Horizontal Capsule, flatter ends).",
         greebles: [
             "Shape: Flattened Capsule",
             "Shading: Cylindrical Gradient (Vertical)"
@@ -65,9 +65,9 @@ const types: TypeDef[] = [
         allowedArchetypes: ['freight', 'industry']
     },
     {
-        type: 'tank',
+        type: 'storage',
         variant: 'vertical',
-        desc: "Fuel/Cargo Pods (Vertical Capsule).",
+        desc: "Storage Container (Vertical Capsule).",
         greebles: [
             "Shape: Pill/Capsule",
             "Shading: Cylindrical Gradient (Horizontal)"
@@ -75,9 +75,9 @@ const types: TypeDef[] = [
         allowedArchetypes: ['freight', 'industry']
     },
     {
-        type: 'tank',
+        type: 'storage',
         variant: 'liquid vertical', // Combine variants for showcase sizing
-        desc: "Liquid Tanks (Vertical Capsule, flatter ends).",
+        desc: "Liquid Storage (Vertical Capsule, flatter ends).",
         greebles: [
             "Shape: Flattened Capsule",
             "Shading: Cylindrical Gradient (Horizontal)"
@@ -229,7 +229,7 @@ function render() {
                     // Side view turret
                     w = 120; h = 60;
                 }
-            } else if (def.type === 'tank') {
+            } else if (def.type === 'storage') {
                 if (def.variant && def.variant.includes('vertical')) {
                     w = 80; h = 160;
                 } else {
