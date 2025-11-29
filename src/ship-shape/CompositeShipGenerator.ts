@@ -427,7 +427,7 @@ export class CompositeShipGenerator {
             
             const weapon = new ShipComponent(
                 x, y, w, h,
-                parentComp.zIndex + 5, // Sit on top of hull
+                500, // Sit on top of hull (UnifiedTrunk can be high Z, so boost this)
                 'weapon',
                 theme.withBrightness(-0.15),
                 rng,
