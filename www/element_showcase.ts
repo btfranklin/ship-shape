@@ -1,9 +1,11 @@
 import { HSBAColor, RNG } from '../src/greebler/common.js';
-import { ShipComponent, ComponentType, ShipArchetype } from '../src/ship-shape/ShipComponent.js';
+import { ShipComponent } from '../src/ship-shape/ShipComponent.js';
+import { ComponentType, ShipArchetype } from '../src/ship-shape/shipTypes.js';
 
 // Definition of Types
 interface TypeDef {
     type: ComponentType;
+    variant?: string;
     desc: string;
     greebles: string[];
     allowedArchetypes?: ShipArchetype[];
@@ -28,10 +30,19 @@ const types: TypeDef[] = [
     },
     {
         type: 'sensor',
-        desc: "Dedicated sensor arrays and comms spires.",
+        desc: "Standard Sensor Platforms (Top/Bottom Mount).",
         greebles: [
             "Greebles: Dense small details, exposed wiring",
             "Shapes: Taper-Top (Pyramid/Spire) or Cut-Corner"
+        ]
+    },
+    {
+        type: 'sensor',
+        variant: 'front',
+        desc: "Nose-mounted Sensor Arrays.",
+        greebles: [
+            "Geometry: Tapered forward",
+            "Features: Forward-facing antennas"
         ]
     },
     {
@@ -45,9 +56,19 @@ const types: TypeDef[] = [
     },
     {
         type: 'weapon',
-        desc: "Turrets or heavy batteries.",
+        desc: "Side-View Turrets (Top/Bottom Mount).",
         greebles: [
-            "Greebles: Heavy pipes, vents, reinforcement",
+            "Features: Rotatable barrels, connection base",
+        ],
+        allowedArchetypes: ['combat']
+    },
+    {
+        type: 'weapon',
+        variant: 'top-view',
+        desc: "Top-View Turrets (Face Mount).",
+        greebles: [
+            "Features: Hex/Octagon shapes, centered barrels",
+            "Placement: On top of hull sections"
         ],
         allowedArchetypes: ['combat']
     },
@@ -107,7 +128,7 @@ function render() {
         const info = document.createElement('div');
         info.className = 'element-info';
         info.innerHTML = `
-            <h2>${def.type.toUpperCase()}</h2>
+            <h2>${def.type.toUpperCase()} ${def.variant ? '(' + def.variant + ')' : ''}</h2>
             <span class="archetype">${def.desc}</span>
             <ul class="greeble-list">
                 ${def.greebles.map(g => `<li>${g}</li>`).join('')}
@@ -146,7 +167,15 @@ function render() {
             let h = 120;
             
             // Sizing logic based on type
-            if (def.type === 'sensor' || def.type === 'tower') {
+            if (def.type === 'sensor') {
+                if (def.variant === 'front') {
+                    w = 100;
+                    h = 80;
+                } else {
+                    h *= 1.5;
+                    w *= 0.6;
+                }
+            } else if (def.type === 'tower') {
                 // Tall towers
                 h *= 1.5;
                 w *= 0.6;
@@ -163,6 +192,13 @@ function render() {
                 // Wide and short
                 w = 280;
                 h = 40;
+            } else if (def.type === 'weapon') {
+                if (def.variant === 'top-view') {
+                    w = 100; h = 100;
+                } else {
+                    // Side view turret
+                    w = 120; h = 60;
+                }
             }
             
             const finalX = (300 - w)/2;
@@ -174,7 +210,27 @@ function render() {
             // Update button text to indicate action
             btn.innerText = "Regenerate";
             
-            const comp = new ShipComponent(finalX, finalY, w, h, 10, def.type, theme, localRng, selectedArchetype);
+            const centerY = 100; // Center of 200px canvas
+            // Randomly invert lighting for side items to show top/bottom mounting
+            const invert = localRng.bool(); 
+            
+            const comp = new ShipComponent(
+                finalX, finalY, w, h, 
+                10, 
+                def.type, 
+                theme, 
+                localRng, 
+                selectedArchetype,
+                def.variant || 'default',
+                false, // isTrunk
+                invert, // invertLighting
+                undefined, // engineStyle
+                centerY // shipCenterY
+            );
+            
+            // For front sensor, ensure it's not inverted? Or it doesn't matter?
+            // Renderer handles it.
+            
             comp.generateShape(localRng);
             comp.draw(ctx, localRng);
             
