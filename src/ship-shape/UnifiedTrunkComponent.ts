@@ -47,7 +47,8 @@ export class UnifiedTrunkComponent {
                 this.bounds.h / UNIT_SCALE, 
                 this.color, 
                 shipArchetype,
-                'hull'
+                'hull',
+                true // This is a trunk component
             );
     
             // 3. Setup Trench (if tall enough)
@@ -99,7 +100,7 @@ export class UnifiedTrunkComponent {
                 const grad = ctx.createLinearGradient(
                     this.bounds.x, 
                     this.bounds.y, 
-                    this.bounds.x + this.bounds.w, 
+                    this.bounds.x, 
                     this.bounds.y + this.bounds.h
                 );
                 grad.addColorStop(0, this.color.withBrightness(0.1).toRGBAString());
