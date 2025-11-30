@@ -103,16 +103,7 @@ const demos: DemoConfig[] = [
             g.draw(ctx, rng);
         }
     },
-    {
-        title: "Heavy Machinery",
-        desc: "Dense equipment blocks.",
-        render: (ctx, rng, theme) => {
-            ctx.fillStyle = theme.toRGBAString();
-            ctx.fillRect(0,0,1,1);
-            const g = new EquipmentGreebles(1, 1, theme, 20);
-            g.draw(ctx, rng);
-        }
-    },
+
     {
         title: "Hose Connectors",
         desc: "Heavy duty fluid transfer hoses.",
