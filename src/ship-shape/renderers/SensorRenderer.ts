@@ -9,6 +9,7 @@ export class SensorRenderer implements ComponentRenderer {
         
         const isBottom = component.invertLighting;
         const isFront = component.variant === 'front';
+        const isBack = component.variant === 'back';
         
         if (isFront) {
             // Base at Left (attached to ship), Taper towards Right (forward)
@@ -18,6 +19,17 @@ export class SensorRenderer implements ComponentRenderer {
             p.lineTo(x + baseW, y + taper); // Top Right (Tapered)
             p.lineTo(x + baseW, y + h - taper); // Bottom Right (Tapered)
             p.lineTo(x, y + h); // Bottom Left (Full Height)
+            p.closePath();
+        } else if (isBack) {
+            // Base at Right (attached to ship), Taper towards Left (backward)
+            const baseW = w * 0.25;
+            const taper = h * 0.1;
+            const baseX = x + w;
+            
+            p.moveTo(baseX, y); // Top Right (Full Height)
+            p.lineTo(baseX - baseW, y + taper); // Top Left (Tapered)
+            p.lineTo(baseX - baseW, y + h - taper); // Bottom Left (Tapered)
+            p.lineTo(baseX, y + h); // Bottom Right (Full Height)
             p.closePath();
         } else {
             const baseH = h * 0.25;
@@ -49,9 +61,44 @@ export class SensorRenderer implements ComponentRenderer {
         const { x, y, w, h } = component.bounds;
         const isBottom = component.invertLighting;
         const isFront = component.variant === 'front';
+        const isBack = component.variant === 'back';
 
-        // 0. Draw Support Connection (if center provided and not front)
-        if (component.shipCenterY !== undefined && !isFront) {
+        // 0. Draw Support Connection
+        if ((isFront || isBack) && component.shipCenterX !== undefined) {
+             const centerX = component.shipCenterX;
+             let suppX = 0;
+             let suppW = 0;
+             const suppY = y;
+             const suppH = h;
+             
+             if (isFront) {
+                 // Sensor at right. Base at x. Center is to the left.
+                 // Support from centerX to x.
+                 suppX = centerX;
+                 suppW = x - centerX;
+                 // Overlap
+                 suppW += 2; 
+             } else { // isBack
+                 // Sensor at left. Base at x+w. Center is to the right.
+                 // Support from x+w to centerX.
+                 suppX = x + w;
+                 suppW = centerX - (x + w);
+                 // Overlap
+                 suppX -= 2;
+                 suppW += 2;
+             }
+             
+             // Draw Gradient (Top-Down to match beam profile)
+             const suppGrad = ctx.createLinearGradient(0, suppY, 0, suppY + suppH);
+             const bc = component.color;
+             suppGrad.addColorStop(0, bc.withBrightness(0.1).toRGBAString());
+             suppGrad.addColorStop(0.5, bc.withBrightness(-0.1).toRGBAString());
+             suppGrad.addColorStop(1, bc.withBrightness(-0.3).toRGBAString());
+             
+             ctx.fillStyle = suppGrad;
+             ctx.fillRect(suppX, suppY, suppW, suppH);
+        }
+        else if (component.shipCenterY !== undefined && !isFront && !isBack) {
              const centerY = component.shipCenterY;
              
              // Match full width of the component as the base is the widest part
@@ -91,6 +138,8 @@ export class SensorRenderer implements ComponentRenderer {
         let grad;
         if (isFront) {
              grad = ctx.createLinearGradient(x, y, x + w * 0.25, y); // Left to Right
+        } else if (isBack) {
+             grad = ctx.createLinearGradient(x + w, y, x + w * 0.75, y); // Right to Left
         } else {
              grad = ctx.createLinearGradient(x, y, x + w, y); // Top to Bottom (or Left-Right gradient for horizontal bar?)
              // Original code was (x,y) to (x+w, y) which is Left-Right gradient on the horizontal bar.
@@ -117,9 +166,12 @@ export class SensorRenderer implements ComponentRenderer {
         // Shared Loop Logic?
         // No, simpler to branch the drawing coordinates.
         
-        if (isFront) {
+        if (isFront || isBack) {
              const baseW = w * 0.25;
-             const startX = x + baseW;
+             const direction = isFront ? 1 : -1;
+             // Start X is the outer edge of the base
+             const startX = isFront ? x + baseW : x + w - baseW;
+             // Antenna Length: Remaining width
              const antennaL = w - baseW;
              
              for (let i = 0; i < antennaCount; i++) {
@@ -138,38 +190,41 @@ export class SensorRenderer implements ComponentRenderer {
                         const thickLen = totalLen * rng.range(0.3, 0.7);
                         const thickW = rng.range(4, 8);
                         const thinLen = totalLen - thickLen;
-                        const thickEndX = startX + thickLen;
+                        // Ensure thickEndX accounts for direction
+                        const thickEndX = startX + thickLen * direction;
                         
                         ctx.fillStyle = baseColor.toRGBAString();
-                        ctx.fillRect(startX, posY - thickW/2, thickLen, thickW);
+                        // Rect coords must be top-left, so if direction is -1, we need to adjust
+                        const rectX = direction === 1 ? startX : startX - thickLen;
+                        ctx.fillRect(rectX, posY - thickW/2, thickLen, thickW);
                         ctx.strokeStyle = baseColor.withBrightness(-0.3).toRGBAString();
-                        ctx.strokeRect(startX, posY - thickW/2, thickLen, thickW);
+                        ctx.strokeRect(rectX, posY - thickW/2, thickLen, thickW);
                         
                         if (thinLen > 0) {
                             ctx.strokeStyle = techColor.toRGBAString();
                             ctx.beginPath();
                             ctx.moveTo(thickEndX, posY);
-                            ctx.lineTo(thickEndX + thinLen, posY);
+                            ctx.lineTo(thickEndX + thinLen * direction, posY);
                             ctx.stroke();
                         }
                         // Tip
                          ctx.fillStyle = 'red';
                          ctx.beginPath();
-                         ctx.arc(startX + totalLen, posY, 2, 0, Math.PI * 2);
+                         ctx.arc(startX + totalLen * direction, posY, 2, 0, Math.PI * 2);
                          ctx.fill();
                     } else {
                         ctx.strokeStyle = techColor.toRGBAString();
                         ctx.beginPath();
                         ctx.moveTo(startX, posY);
-                        ctx.lineTo(startX + totalLen, posY);
+                        ctx.lineTo(startX + totalLen * direction, posY);
                         ctx.stroke();
                          ctx.fillStyle = 'red';
                          ctx.beginPath();
-                         ctx.arc(startX + totalLen, posY, 2, 0, Math.PI * 2);
+                         ctx.arc(startX + totalLen * direction, posY, 2, 0, Math.PI * 2);
                          ctx.fill();
                     }
                 } else if (type === 'dish') {
-                     const poleEnd = startX + totalLen * 0.6;
+                     const poleEnd = startX + totalLen * 0.6 * direction;
                      ctx.strokeStyle = techColor.toRGBAString();
                      ctx.beginPath();
                      ctx.moveTo(startX, posY);
@@ -180,35 +235,41 @@ export class SensorRenderer implements ComponentRenderer {
                      const dishH = dishW * 0.6;
                      ctx.save();
                      ctx.translate(poleEnd, posY);
-                     ctx.rotate(rng.range(-0.5, 0.5) - Math.PI/2); // Rotate to face right (Dish cup opens to right?)
-                     // Original was vertical. Arc from 0 to PI.
-                     // 0 is Right (0 rad). PI is Left (180 rad).
-                     // To face Right (open right), we want arc from -PI/2 to PI/2?
-                     // Original: Arc(0,0, r, 0, PI). shape is Half Circle.
-                     // If False (CounterClockwise), it draws bottom half.
-                     // If True (Clockwise), it draws top half.
-                     // We want to open to the Right. The "Back" of the dish is Left.
-                     // So we want the arc curve to be on the Left.
-                     // Arc centered at 0,0.
-                     // If we draw 0 to PI (CW), we get Bottom Half (0 to 180).
-                     // We want a "C" shape. PI/2 to 3PI/2.
+                     // Rotation: 0 is Right. PI is Left.
+                     // If Front (dir=1), we want to open Right. Code was rotate(-PI/2 to PI/2).
+                     // If Back (dir=-1), we want to open Left. 
+                     const baseRot = isFront ? -Math.PI/2 : Math.PI/2;
+                     ctx.rotate(baseRot + rng.range(-0.5, 0.5)); 
                      
                      ctx.fillStyle = baseColor.withBrightness(-0.2).toRGBAString();
                      ctx.beginPath();
-                     ctx.arc(0, 0, dishW/2, Math.PI/2, 3*Math.PI/2, false); 
+                     // Draw "C" shape. 
+                     // If Front (-PI/2 base), Arc(0,0,r, PI/2, 3PI/2)? 
+                     // Previous code for Front: rotate(rng - PI/2). arc(PI/2, 3PI/2).
+                     // Wait, previous code was: rotate(rng - PI/2). arc(PI/2, 3PI/2).
+                     // Effectively pointing Right.
+                     
+                     // Let's simplify. 
+                     // We draw a cup facing UP relative to current rotation.
+                     // Then we rotate it to face Left or Right.
+                     // Arc(0,0, r, 0, PI). (Bottom half).
+                     // If we rotate -PI/2 (Left turn), the Bottom Half faces Right. Correct.
+                     // If we rotate +PI/2 (Right turn), the Bottom Half faces Left. Correct.
+                     
+                     ctx.arc(0, 0, dishW/2, 0, Math.PI, false); 
                      ctx.fill();
                      ctx.strokeStyle = baseColor.withBrightness(-0.4).toRGBAString();
                      ctx.stroke();
                      
-                     // Spire
+                     // Spire (sticking out of the cup)
                      ctx.strokeStyle = techColor.toRGBAString();
                      ctx.beginPath();
                      ctx.moveTo(0,0);
-                     ctx.lineTo(dishH * 1.5, 0); // Stick out right
+                     ctx.lineTo(0, dishH * 1.5); // Stick "down" (which is Right or Left after rotation)
                      ctx.stroke();
                      ctx.restore();
                 } else if (type === 'array') {
-                    const endX = startX + totalLen;
+                    const endX = startX + totalLen * direction;
                     ctx.strokeStyle = techColor.toRGBAString();
                     ctx.beginPath();
                     ctx.moveTo(startX, posY);
@@ -216,42 +277,29 @@ export class SensorRenderer implements ComponentRenderer {
                     ctx.stroke();
                     const bars = rng.intRange(3, 6);
                     for(let b=0; b<bars; b++) {
-                         const barX = startX + (totalLen * 0.4 + totalLen * 0.6 * (b/bars));
-                         const barH = rng.range(5, 10); // Height now
+                         const progress = 0.4 + 0.6 * (b/bars);
+                         const barX = startX + (totalLen * progress * direction);
+                         const barH = rng.range(5, 10); 
                          ctx.beginPath();
                          ctx.moveTo(barX, posY - barH/2);
                          ctx.lineTo(barX, posY + barH/2);
                          ctx.stroke();
                     }
                 } else if (type === 'box') {
-                    const poleEnd = startX + totalLen * 0.7;
-                    ctx.strokeStyle = techColor.toRGBAString(); // Fix: Ensure stroke style is set
+                    const poleEnd = startX + totalLen * 0.7 * direction;
+                    ctx.strokeStyle = techColor.toRGBAString(); 
                     ctx.beginPath();
                     ctx.moveTo(startX, posY);
                     ctx.lineTo(poleEnd, posY);
                     ctx.stroke();
                     
-                    const boxW = rng.range(10, 20); // Size
-                    const boxH = totalLen * rng.range(0.15, 0.25); // Size
-                    
-                    ctx.fillStyle = baseColor.withBrightness(-0.2).toRGBAString();
-                    const bx = poleEnd; // Start at pole end
-                    const by = posY - boxH/2;
-                    
-                    ctx.fillRect(bx, by, boxW, boxH); // boxW is Length here?
-                    // Let's keep boxW as the "thickness" and boxH as "length"?
-                    // In vertical: boxW was Width (perpendicular to pole). boxH was Height (parallel).
-                    // Here: boxW should be Height (perpendicular). boxH should be Length (parallel).
-                    // Variable names are confusing.
-                    // boxW (rng 10-20) -> Perpendicular size.
-                    // boxH -> Parallel size.
-                    
                     const perpSize = rng.range(10, 20);
                     const paraSize = totalLen * rng.range(0.15, 0.25);
                     
-                    const rectX = poleEnd;
+                    const rectX = direction === 1 ? poleEnd : poleEnd - paraSize;
                     const rectY = posY - perpSize/2;
                     
+                    ctx.fillStyle = baseColor.withBrightness(-0.2).toRGBAString();
                     ctx.fillRect(rectX, rectY, paraSize, perpSize);
                     ctx.strokeStyle = baseColor.withBrightness(-0.4).toRGBAString();
                     ctx.strokeRect(rectX, rectY, paraSize, perpSize);

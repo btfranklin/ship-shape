@@ -546,12 +546,11 @@ export class CompositeShipGenerator {
 
         let i = 0;
         while (i < trunkHulls.length) {
-            let chance = 0.1;
+            let chance = 0.0;
             if (archetype === 'freight') chance = 0.5;
             else if (archetype === 'industry') chance = 0.4;
-            else if (archetype === 'science') chance = 0.2;
 
-            if (rng.bool(chance)) {
+            if (chance > 0 && rng.bool(chance)) {
                 const spanCount = rng.intRange(1, Math.min(4, trunkHulls.length - i));
                 
                 const startHull = trunkHulls[i];
@@ -578,15 +577,8 @@ export class CompositeShipGenerator {
                     const isVertical = rng.bool(); 
                     let storageW, storageH;
                     
-                    // Variant Selection
-                    let variant = 'default';
-                    if (archetype === 'freight') {
-                        variant = rng.choice(['goods', 'goods', 'liquid', 'default']);
-                    } else if (archetype === 'industry') {
-                        variant = rng.choice(['goods', 'liquid', 'default']);
-                    } else {
-                        variant = rng.choice(['default', 'liquid']);
-                    }
+                    // Variant Selection - Equal probability for Freight and Industry
+                    const variant = rng.choice(['goods', 'liquid', 'default']);
 
                     if (isVertical) {
                          storageH = minH * rng.range(0.5, 0.8);

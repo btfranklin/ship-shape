@@ -30,6 +30,7 @@ export class ShipComponent {
     public leftEdge: { minY: number, maxY: number } | null = null;
     public facing: 'forward' | 'backward' = 'forward';
     public shipCenterY?: number;
+    public shipCenterX?: number;
     public customData: Record<string, any> = {};
     
     private renderer: ComponentRenderer;
@@ -48,7 +49,8 @@ export class ShipComponent {
         isTrunk: boolean = false,
         invertLighting: boolean = false,
         forcedEngineStyle?: 'standard' | 'radiator' | 'energy',
-        shipCenterY?: number
+        shipCenterY?: number,
+        shipCenterX?: number
     ) {
         this.bounds = { x, y, w, h };
         this.zIndex = zIndex;
@@ -59,6 +61,7 @@ export class ShipComponent {
         this.isTrunk = isTrunk;
         this.invertLighting = invertLighting;
         this.shipCenterY = shipCenterY;
+        this.shipCenterX = shipCenterX;
 
         // Select Renderer
         switch (type) {
