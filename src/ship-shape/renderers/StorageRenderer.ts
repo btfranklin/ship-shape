@@ -1,9 +1,10 @@
 import { ShipComponent } from '../ShipComponent.js';
 import { ComponentRenderer } from './ComponentRenderer.js';
-import { HSBAColor, RNG } from '../../greebler/common.js';
+import { HSBAColor, RNG, getPath2D } from '../../greebler/common.js';
 
 export class StorageRenderer implements ComponentRenderer {
     generateShape(component: ShipComponent, rng: RNG): void {
+        const Path2D = getPath2D();
         const path = new Path2D();
         const { x, y, w, h } = component.bounds;
         
@@ -175,36 +176,39 @@ export class StorageRenderer implements ComponentRenderer {
             // Density of ribs
             const ribSpacing = 8; 
             const ribCount = Math.floor((isHorizontal ? insetW : insetH) / ribSpacing);
-            const spacing = (isHorizontal ? insetW : insetH) / ribCount;
-            
-            ctx.lineWidth = 2;
-            
-            for (let i = 0; i <= ribCount; i++) {
-                const pos = (isHorizontal ? insetX : insetY) + i * spacing;
+            if (ribCount > 0) {
+                const spacing = (isHorizontal ? insetW : insetH) / ribCount;
                 
-                // Rib Shadow
-                ctx.strokeStyle = color.withBrightness(-0.6).toCSS();
-                ctx.beginPath();
-                if (isHorizontal) {
-                    ctx.moveTo(pos, insetY); ctx.lineTo(pos, insetY + insetH);
-                } else {
-                    ctx.moveTo(insetX, pos); ctx.lineTo(insetX + insetW, pos);
-                }
-                ctx.stroke();
+                ctx.lineWidth = 2;
                 
-                // Rib Highlight (Brighter for contrast against flat background)
-                ctx.strokeStyle = color.withBrightness(0.1).toCSS();
-                ctx.beginPath();
-                if (isHorizontal) {
-                    ctx.moveTo(pos + 1, insetY); ctx.lineTo(pos + 1, insetY + insetH);
-                } else {
-                    ctx.moveTo(insetX, pos + 1); ctx.lineTo(insetX + insetW, pos + 1);
+                for (let i = 0; i <= ribCount; i++) {
+                    const pos = (isHorizontal ? insetX : insetY) + i * spacing;
+                    
+                    // Rib Shadow
+                    ctx.strokeStyle = color.withBrightness(-0.6).toCSS();
+                    ctx.beginPath();
+                    if (isHorizontal) {
+                        ctx.moveTo(pos, insetY); ctx.lineTo(pos, insetY + insetH);
+                    } else {
+                        ctx.moveTo(insetX, pos); ctx.lineTo(insetX + insetW, pos);
+                    }
+                    ctx.stroke();
+                    
+                    // Rib Highlight (Brighter for contrast against flat background)
+                    ctx.strokeStyle = color.withBrightness(0.1).toCSS();
+                    ctx.beginPath();
+                    if (isHorizontal) {
+                        ctx.moveTo(pos + 1, insetY); ctx.lineTo(pos + 1, insetY + insetH);
+                    } else {
+                        ctx.moveTo(insetX, pos + 1); ctx.lineTo(insetX + insetW, pos + 1);
+                    }
+                    ctx.stroke();
                 }
-                ctx.stroke();
             }
             
             // 4. Structural Overlay (X-Bars and Divider)
             // Double-stroke technique: Thick dark line (border) + Thinner lighter line (fill)
+            const Path2D = getPath2D();
             const structurePath = new Path2D();
             
             if (isHorizontal) {

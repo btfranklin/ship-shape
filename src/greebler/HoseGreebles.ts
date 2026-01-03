@@ -1,4 +1,4 @@
-import { HSBAColor, RNG } from './common.js';
+import { HSBAColor, RNG, getPath2D } from './common.js';
 import type { Drawable } from './common.js';
 
 export class HoseGreebles implements Drawable {
@@ -61,6 +61,7 @@ export class HoseGreebles implements Drawable {
     }
 
     private generateHose(rng: RNG): { path: Path2D, endPoints: {x:number, y:number}[] } {
+        const Path2D = getPath2D();
         let margin = -0.3;
         if (!this.allowOffSide) {
             // Safe margin, proportional for small units

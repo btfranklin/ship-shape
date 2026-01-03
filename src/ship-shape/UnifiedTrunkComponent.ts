@@ -1,8 +1,7 @@
-import { HSBAColor, RNG } from '../greebler/common.js';
+import { HSBAColor, RNG, getPath2D } from '../greebler/common.js';
 import { UNIT_SCALE } from '../greebler/constants.js';
 import { ShipComponent } from './ShipComponent.js';
 import { CapitalShipSurfaceGreebles } from '../greebler/CapitalShipSurfaceGreebles.js';
-import { ShipArchetype } from './shipTypes.js';
 
 export class UnifiedTrunkComponent {
         public bounds: { x: number, y: number, w: number, h: number };
@@ -48,7 +47,8 @@ export class UnifiedTrunkComponent {
                 this.color, 
                 shipArchetype,
                 'hull',
-                true // This is a trunk component
+                true,
+                true
             );
     
             // 3. Setup Trench (if tall enough)
@@ -67,13 +67,16 @@ export class UnifiedTrunkComponent {
                     trenchHeightUnits,
                     this.color,
                     shipArchetype,
-                    'trench'
+                    'trench',
+                    true,
+                    true
                 );
             }
         }
     
     draw(ctx: CanvasRenderingContext2D, rng: RNG) {
         // 1. Create Unified Path
+        const Path2D = getPath2D();
         const unifiedPath = new Path2D();
         for (const c of this.components) {
             if (c.shapePath) {

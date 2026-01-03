@@ -1,4 +1,4 @@
-import { HSBAColor, RNG } from './common.js';
+import { HSBAColor, RNG, getPath2D } from './common.js';
 import type { Drawable } from './common.js';
 
 export class WireGreebles implements Drawable {
@@ -81,6 +81,7 @@ export class WireGreebles implements Drawable {
     }
 
     private generateWire(cluster: {start:{x:number, y:number}, end:{x:number, y:number}}, rng: RNG): { path: Path2D, endPoints: {x:number, y:number}[] } {
+        const Path2D = getPath2D();
         const jitter = 0.05;
         const start = { 
             x: cluster.start.x + rng.range(-jitter, jitter), 

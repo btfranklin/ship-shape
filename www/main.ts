@@ -61,7 +61,11 @@ function drawChaoticBackground(ctx: CanvasRenderingContext2D, w: number, h: numb
 
 function generate() {
     try {
-        const seed = parseInt(seedInput.value);
+        const seedValue = Number.parseInt(seedInput.value, 10);
+        const seed = Number.isFinite(seedValue) ? seedValue : Date.now();
+        if (!Number.isFinite(seedValue)) {
+            seedInput.value = seed.toString();
+        }
         const rng = new RNG(seed);
         const hue = parseInt(hueInput.value) / 360;
         

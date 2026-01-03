@@ -1,9 +1,10 @@
-import { RNG, HSBAColor } from '../../greebler/common.js';
+import { RNG, HSBAColor, getPath2D } from '../../greebler/common.js';
 import { ShipComponent } from '../ShipComponent.js';
 import { ComponentRenderer } from './ComponentRenderer.js';
 
 export class WeaponRenderer implements ComponentRenderer {
     generateShape(component: ShipComponent, rng: RNG): void {
+        const Path2D = getPath2D();
         const p = new Path2D();
         const { x, y, w, h } = component.bounds;
         
@@ -253,4 +254,3 @@ export class WeaponRenderer implements ComponentRenderer {
         ctx.restore();
     }
 }
-

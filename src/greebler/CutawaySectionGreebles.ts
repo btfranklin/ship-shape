@@ -1,4 +1,4 @@
-import { HSBAColor, RNG } from './common.js';
+import { HSBAColor, RNG, getPath2D } from './common.js';
 import type { Drawable } from './common.js';
 import { EquipmentGreebles } from './EquipmentGreebles.js';
 import { PipeGreebles } from './PipeGreebles.js';
@@ -16,6 +16,7 @@ export class CutawaySectionGreebles implements Drawable {
         context.save();
         context.lineWidth = 0.002; // Slightly thicker outline for the breach
         context.strokeStyle = 'black';
+        const Path2D = getPath2D();
 
         const innardsFillColor = this.themeColor.withBrightness(-0.2);
 
@@ -81,6 +82,7 @@ export class CutawaySectionGreebles implements Drawable {
     }
 
     private generateClippingPath(rect: {x:number, y:number, w:number, h:number}, rng: RNG): Path2D {
+        const Path2D = getPath2D();
         const path = new Path2D();
         
         let xPos = rect.x;

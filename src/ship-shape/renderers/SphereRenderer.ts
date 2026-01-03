@@ -1,11 +1,11 @@
-import { RNG } from '../../greebler/common.js';
+import { RNG, getPath2D } from '../../greebler/common.js';
 import { UNIT_SCALE } from '../../greebler/constants.js';
 import { ShipComponent } from '../ShipComponent.js';
 import { ComponentRenderer } from './ComponentRenderer.js';
-import { CapitalShipSurfaceGreebles } from '../../greebler/CapitalShipSurfaceGreebles.js';
 
 export class SphereRenderer implements ComponentRenderer {
     generateShape(component: ShipComponent, rng: RNG): void {
+        const Path2D = getPath2D();
         const p = new Path2D();
         const { x, y, w, h } = component.bounds;
         // Assume w = diameter

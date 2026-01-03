@@ -22,14 +22,8 @@ export class HSBAColor {
 
     toCSS(): string {
         // Convert HSV (HSB) to HSL for CSS
-        let l = (2 - this.s) * this.b / 2;
-        let s_hsl = l && l < 1 ? this.s * this.b / (l < 0.5 ? l * 2 : 2 - l * 2) : this.s;
-        
-        // Re-calculate HSL from HSB manually to be safe
         const h = this.h * 360;
-        const s = this.s * 100;
-        const v = this.b * 100;
-        
+
         // HSB to HSL
         const l_calc = (2 - this.s) * this.b / 2;
         let s_calc = l_calc && l_calc < 1 ? (this.s * this.b) / (l_calc < 0.5 ? l_calc * 2 : 2 - l_calc * 2) : this.s;
@@ -109,4 +103,19 @@ export class RNG {
 
 export interface Drawable {
     draw(context: CanvasRenderingContext2D, rng: RNG): void;
+}
+
+let cachedPath2D: typeof Path2D | undefined;
+
+export function setPath2D(Path2DImpl: typeof Path2D): void {
+    cachedPath2D = Path2DImpl;
+}
+
+export function getPath2D(): typeof Path2D {
+    if (cachedPath2D) return cachedPath2D;
+    if (typeof Path2D !== 'undefined') return Path2D;
+    if (typeof (globalThis as { Path2D?: typeof Path2D }).Path2D !== 'undefined') {
+        return globalThis.Path2D as typeof Path2D;
+    }
+    throw new Error('Path2D is not available. In Node, call setPath2D(canvas.Path2D) before rendering.');
 }

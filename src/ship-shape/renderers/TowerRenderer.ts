@@ -1,12 +1,12 @@
-import { RNG } from '../../greebler/common.js';
+import { RNG, getPath2D } from '../../greebler/common.js';
 import { UNIT_SCALE } from '../../greebler/constants.js';
 import { ShipComponent } from '../ShipComponent.js';
 import { ComponentRenderer } from './ComponentRenderer.js';
-import { CapitalShipSurfaceGreebles } from '../../greebler/CapitalShipSurfaceGreebles.js';
 import { SensorRenderer } from './SensorRenderer.js';
 
 export class TowerRenderer implements ComponentRenderer {
     generateShape(component: ShipComponent, rng: RNG): void {
+        const Path2D = getPath2D();
         const p = new Path2D();
         const { x, y, w, h } = component.bounds;
         
@@ -52,6 +52,7 @@ export class TowerRenderer implements ComponentRenderer {
         const hasBackSensor = rng.bool(0.1);
         
         if (hasFrontSensor || hasBackSensor) {
+            const Path2D = getPath2D();
             const sensorRenderer = new SensorRenderer();
             const sensorH = component.bounds.w * rng.range(0.3, 0.5); 
             const sensorW = component.bounds.w * 0.6; 

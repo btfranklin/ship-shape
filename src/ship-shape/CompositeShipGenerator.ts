@@ -495,42 +495,6 @@ export class CompositeShipGenerator {
         }
     }
 
-    private addSpecialDetails(root: ShipNode, width: number, height: number, theme: HSBAColor, rng: RNG, archetype: ShipArchetype) {
-        const centerY = height / 2;
-        
-        if (rng.bool(0.4)) {
-            const s = height * rng.range(0.2, 0.3);
-            const x = width * rng.range(0.5, 0.7);
-            const y = centerY - s/2 + rng.range(-50, 50);
-            
-            const sphere = new ShipComponent(x, y, s, s, 50, 'sphere', theme.withBrightness(0.05), rng, archetype);
-            sphere.generateShape(rng);
-            root.children.push({ component: sphere, children: [] });
-        }
-
-        if (rng.bool(0.3)) {
-            const h = height * rng.range(0.6, 0.8);
-            const w = h * 0.25;
-            const x = width * rng.range(0.3, 0.6);
-            const y = centerY - h/2;
-            
-            const ring = new ShipComponent(x, y, w, h, 5, 'ring', theme.withBrightness(-0.2), rng, archetype);
-            ring.generateShape(rng);
-            root.children.push({ component: ring, children: [] });
-        }
-        
-        if (rng.bool(0.5)) {
-            const h = height * 0.08;
-            const w = width * 0.6;
-            const x = width * 0.15;
-            const y = centerY - h/2;
-            
-            const trench = new ShipComponent(x, y, w, h, 105, 'trench', theme.withBrightness(-0.3), rng, archetype);
-            trench.generateShape(rng);
-            root.children.push({ component: trench, children: [] });
-        }
-    }
-
     private addGlobalStorage(root: ShipNode, theme: HSBAColor, rng: RNG, archetype: ShipArchetype, shipCenterY: number) {
         const trunkHulls: ShipComponent[] = [];
         const collect = (node: ShipNode) => {

@@ -48,7 +48,6 @@ export class CapitalShipWindowsGreebles implements Drawable {
             
             // Glow Configuration
             // We use a radial gradient for smooth falloff (Round Bloom)
-            context.globalCompositeOperation = 'lighter'; 
             
             for (let c = 0; c < cols; c++) {
                 for (let r = 0; r < rows; r++) {
