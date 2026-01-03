@@ -5,7 +5,6 @@ import { PipeGreebles } from './PipeGreebles.js';
 import { LightPanelGreebles } from './LightPanelGreebles.js';
 import { EquipmentGreebles, EquipmentTrenchGreebles } from './EquipmentGreebles.js';
 import { HoseGreebles } from './HoseGreebles.js';
-import { WireGreebles } from './WireGreebles.js';
 import { CutawaySectionGreebles } from './CutawaySectionGreebles.js';
 import { ShipArchetype, ComponentType } from '../ship-shape/shipTypes.js';
 
@@ -33,6 +32,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
             case 'science':
                 if (compType === 'engine') return rng.bool(0.5) ? 'clean' : 'tech';
                 if (compType === 'sensor') return 'tech';
+                if (compType === 'tower') return rng.bool(0.4) ? 'tech' : 'clean';
                 if (compType === 'hull') return rng.bool(0.7) ? 'clean' : 'standard';
                 return 'clean';
                 
@@ -40,7 +40,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 if (compType === 'hull') return this.isTrunk ? 'industrial' : 'standard';
                 if (compType === 'storage') return 'industrial';
                 if (compType === 'engine') return 'industrial';
-                if (compType === 'tower') return 'standard'; 
+                if (compType === 'tower') return rng.bool(0.25) ? 'tech' : 'standard';
                 return 'standard'; 
                 
             case 'combat':
@@ -54,7 +54,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 if (compType === 'hull') return 'standard';
                 return 'standard';
                 
-            case 'passengers':
+            case 'passenger':
                 if (compType === 'hull') return 'clean';
                 return 'clean';
                 
@@ -99,8 +99,6 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         
         let hoseChance = 0.1;
         let hoseRange = [1, 2];
-        let wireChance = 0.0; // Default to 0, only tech styles should have wires
-        let wireRange = [5, 10];
         
         let cutawayChance = 0.05; // Rare by default
 
@@ -114,7 +112,6 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 equipChance = 0.1;
                 hoseChance = 0.8;
                 hoseRange = [2, 5];
-                wireChance = 0.0;
                 cutawayChance = 0.2;
                 break;
             case 'tech':
@@ -125,8 +122,6 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 lightChance = 0.8;
                 equipRange = [5, 10];
                 equipChance = 0.9;
-                wireChance = 0.8;
-                wireRange = [10, 20];
                 cutawayChance = 0.1;
                 break;
             case 'clean':
@@ -136,7 +131,6 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 lightChance = 0.4;
                 equipChance = 0.0;
                 hoseChance = 0.0;
-                wireChance = 0.0;
                 cutawayChance = 0.0;
                 break;
             case 'dense':
@@ -148,7 +142,6 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 equipRange = [2, 5];
                 equipChance = 0.5;
                 hoseChance = 0.6;
-                wireChance = 0.0;
                 cutawayChance = 0.1;
                 break;
             case 'structure':
@@ -157,7 +150,6 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 lightChance = 0.0;
                 equipChance = 0.0;
                 hoseChance = 0.0;
-                wireChance = 0.0;
                 cutawayChance = 0.0;
                 break;
             case 'trench':
@@ -166,7 +158,6 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 lightChance = 0.0;
                 equipChance = 0.0;
                 hoseChance = 0.0;
-                wireChance = 0.0;
                 cutawayChance = 0.0;
                 break;
         }
@@ -218,12 +209,6 @@ export class CapitalShipSurfaceGreebles implements Drawable {
             hoses.draw(context, rng);
         }
         
-        // 8. Wires (Messy cables) - RAISED LAYER 3 (Topmost messy stuff)
-        if (rng.bool(wireChance)) {
-            const wires = new WireGreebles(this.xUnits, this.yUnits, rng.intRange(wireRange[0], wireRange[1]), undefined, rng.intRange(1, 3), false);
-            wires.draw(context, rng);
-        }
-
         context.restore();
     }
 }

@@ -17,7 +17,7 @@ export class CompositeShipGenerator {
         const scaleH = referenceHeight ?? height;
         
         // Pick Random Archetype if not provided
-        const archetype: ShipArchetype = shipArchetype ?? rng.choice(['freight', 'science', 'industry', 'passengers', 'combat']);
+        const archetype: ShipArchetype = shipArchetype ?? rng.choice(['freight', 'science', 'industry', 'passenger', 'combat']);
 
         // 1. Create Root (Engine Block)
         let engineStyle: 'standard' | 'radiator' | 'energy' = 'standard';
@@ -110,7 +110,7 @@ export class CompositeShipGenerator {
         }
 
         // 6. Post-Process: Add Rings
-        if (archetype === 'science' || archetype === 'passengers') {
+        if (archetype === 'science' || archetype === 'passenger') {
             const trunkHulls = drawList.filter(c => c.type === 'hull' && c.isTrunk);
             const rRing = rng.next();
             let ringCount = 0;

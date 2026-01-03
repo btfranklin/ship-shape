@@ -71,8 +71,28 @@ export class HoseGreebles implements Drawable {
         const minX = margin, maxX = this.xUnits - margin;
         const minY = margin, maxY = this.yUnits - margin;
 
-        const start = { x: rng.range(minX, maxX), y: rng.range(minY, maxY) };
-        const end = { x: rng.range(minX, maxX), y: rng.range(minY, maxY) };
+        const spanLimit = Math.min(maxX - minX, maxY - minY);
+        const maxSpan = Math.min(0.45, spanLimit * 0.9);
+        const minSpan = Math.min(0.12, maxSpan * 0.6);
+
+        let start = { x: rng.range(minX, maxX), y: rng.range(minY, maxY) };
+        let end = { x: rng.range(minX, maxX), y: rng.range(minY, maxY) };
+        const tries = 12;
+
+        for (let i = 0; i < tries; i++) {
+            start = { x: rng.range(minX, maxX), y: rng.range(minY, maxY) };
+            const angle = rng.range(0, Math.PI * 2);
+            const span = rng.range(minSpan, maxSpan);
+            end = { x: start.x + Math.cos(angle) * span, y: start.y + Math.sin(angle) * span };
+            if (end.x >= minX && end.x <= maxX && end.y >= minY && end.y <= maxY) {
+                break;
+            }
+        }
+
+        end = {
+            x: Math.max(minX, Math.min(maxX, end.x)),
+            y: Math.max(minY, Math.min(maxY, end.y))
+        };
 
         const path = new Path2D();
         path.moveTo(start.x, start.y);

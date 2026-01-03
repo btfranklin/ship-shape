@@ -15,7 +15,7 @@ const ARCHETYPES: ShipArchetype[] = [
   'freight',
   'science',
   'industry',
-  'passengers',
+  'passenger',
   'combat',
 ];
 

@@ -33,10 +33,7 @@ export class WireGreebles implements Drawable {
         
         const clusters = [];
         for (let i = 0; i < this.endPointPairCount; i++) {
-            clusters.push({
-                start: { x: rng.range(minX, maxX), y: rng.range(minY, maxY) },
-                end: { x: rng.range(minX, maxX), y: rng.range(minY, maxY) }
-            });
+            clusters.push(this.generateCluster(rng, minX, maxX, minY, maxY));
         }
 
         // 2. Generate Wires
@@ -82,7 +79,8 @@ export class WireGreebles implements Drawable {
 
     private generateWire(cluster: {start:{x:number, y:number}, end:{x:number, y:number}}, rng: RNG): { path: Path2D, endPoints: {x:number, y:number}[] } {
         const Path2D = getPath2D();
-        const jitter = 0.05;
+        const baseDist = Math.hypot(cluster.end.x - cluster.start.x, cluster.end.y - cluster.start.y);
+        const jitter = Math.min(0.03, baseDist * 0.25);
         const start = { 
             x: cluster.start.x + rng.range(-jitter, jitter), 
             y: cluster.start.y + rng.range(-jitter, jitter) 
@@ -105,5 +103,37 @@ export class WireGreebles implements Drawable {
         path.quadraticCurveTo(cp.x, cp.y, end.x, end.y);
 
         return { path, endPoints: [start, end] };
+    }
+
+    private generateCluster(
+        rng: RNG,
+        minX: number,
+        maxX: number,
+        minY: number,
+        maxY: number
+    ): {start:{x:number, y:number}, end:{x:number, y:number}} {
+        const spanLimit = Math.min(maxX - minX, maxY - minY);
+        const maxSpan = Math.min(0.45, spanLimit * 0.9);
+        const minSpan = Math.min(0.12, maxSpan * 0.6);
+        const tries = 12;
+
+        for (let i = 0; i < tries; i++) {
+            const start = { x: rng.range(minX, maxX), y: rng.range(minY, maxY) };
+            const angle = rng.range(0, Math.PI * 2);
+            const span = rng.range(minSpan, maxSpan);
+            const end = { x: start.x + Math.cos(angle) * span, y: start.y + Math.sin(angle) * span };
+            if (end.x >= minX && end.x <= maxX && end.y >= minY && end.y <= maxY) {
+                return { start, end };
+            }
+        }
+
+        const start = { x: rng.range(minX, maxX), y: rng.range(minY, maxY) };
+        const angle = rng.range(0, Math.PI * 2);
+        const span = rng.range(minSpan, maxSpan);
+        const end = {
+            x: Math.max(minX, Math.min(maxX, start.x + Math.cos(angle) * span)),
+            y: Math.max(minY, Math.min(maxY, start.y + Math.sin(angle) * span))
+        };
+        return { start, end };
     }
 }

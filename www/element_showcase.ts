@@ -137,7 +137,7 @@ const types: TypeDef[] = [
             "Visual Style: Cylindrical Gradient (Harsh shadows)",
             "Greebles: Panels only, with multiply blending"
         ],
-        allowedArchetypes: ['science', 'passengers']
+        allowedArchetypes: ['science', 'passenger']
     },
     {
         type: 'trench',

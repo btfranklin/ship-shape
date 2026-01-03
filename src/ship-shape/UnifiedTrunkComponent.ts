@@ -52,7 +52,7 @@ export class UnifiedTrunkComponent {
             );
     
             // 3. Setup Trench (if tall enough)
-            if (this.bounds.h > 150 && shipArchetype !== 'passengers' && rng.bool(0.1)) {
+            if (this.bounds.h > 150 && shipArchetype !== 'passenger' && rng.bool(0.1)) {
                 this.hasTrench = true;
                 const trenchHeightPx = rng.range(30, 60);
                 const trenchHeightUnits = trenchHeightPx / UNIT_SCALE;

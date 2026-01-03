@@ -118,7 +118,7 @@ function renderShape(rng: RNG) {
     let arch: ShipArchetype;
 
     if (archVal === 'random') {
-        arch = rng.choice(['freight', 'science', 'industry', 'passengers', 'combat']);
+        arch = rng.choice(['freight', 'science', 'industry', 'passenger', 'combat']);
     } else {
         arch = archVal as ShipArchetype;
     }
@@ -154,7 +154,7 @@ function renderFullShip(rng: RNG, theme: HSBAColor) {
     let arch: ShipArchetype;
 
     if (archVal === 'random') {
-        arch = rng.choice(['freight', 'science', 'industry', 'passengers', 'combat']);
+        arch = rng.choice(['freight', 'science', 'industry', 'passenger', 'combat']);
     } else {
         arch = archVal as ShipArchetype;
     }
