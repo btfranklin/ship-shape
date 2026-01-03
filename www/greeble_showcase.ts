@@ -3,10 +3,11 @@ import { PanelGreebles } from '../src/greebler/PanelGreebles.js';
 import { PipeGreebles } from '../src/greebler/PipeGreebles.js';
 import { LightPanelGreebles } from '../src/greebler/LightPanelGreebles.js';
 import { CapitalShipWindowsGreebles } from '../src/greebler/CapitalShipWindowsGreebles.js';
-import { EquipmentGreebles } from '../src/greebler/EquipmentGreebles.js';
+import { EquipmentGreebles, EquipmentTrenchGreebles } from '../src/greebler/EquipmentGreebles.js';
 import { HoseGreebles } from '../src/greebler/HoseGreebles.js';
 import { WireGreebles } from '../src/greebler/WireGreebles.js';
 import { CutawaySectionGreebles } from '../src/greebler/CutawaySectionGreebles.js';
+import { ElectronicsPanelGreebles } from '../src/greebler/ElectronicsPanelGreebles.js';
 
 const grid = document.getElementById('grid') as HTMLDivElement;
 const refreshBtn = document.getElementById('refreshBtn') as HTMLButtonElement;
@@ -100,6 +101,26 @@ const demos: DemoConfig[] = [
             ctx.fillStyle = theme.toRGBAString();
             ctx.fillRect(0,0,1,1);
             const g = new EquipmentGreebles(1, 1, theme, 8);
+            g.draw(ctx, rng);
+        }
+    },
+    {
+        title: "Electronics Panels",
+        desc: "Tech boxes with wiring clusters.",
+        render: (ctx, rng, theme) => {
+            ctx.fillStyle = theme.toRGBAString();
+            ctx.fillRect(0,0,1,1);
+            const g = new ElectronicsPanelGreebles(1, 1, theme, 2);
+            g.draw(ctx, rng);
+        }
+    },
+    {
+        title: "Equipment Trench",
+        desc: "Inset maintenance trench with shadowed recess.",
+        render: (ctx, rng, theme) => {
+            ctx.fillStyle = theme.toRGBAString();
+            ctx.fillRect(0,0,1,1);
+            const g = new EquipmentTrenchGreebles(1, 1, theme, 0.3, 0.3);
             g.draw(ctx, rng);
         }
     },

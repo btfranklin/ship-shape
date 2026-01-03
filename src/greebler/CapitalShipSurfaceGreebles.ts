@@ -219,9 +219,9 @@ export class CapitalShipSurfaceGreebles implements Drawable {
             (this.componentType === 'hull' || this.componentType === 'tower');
         const hasWindows = allowsWindows && rng.bool(windowChance);
         const windowColor =
-            this.shipArchetype === 'industry'
-                ? CapitalShipWindowsGreebles.AMBER_LIGHT
-                : CapitalShipWindowsGreebles.BLUE_LIGHT;
+            this.shipArchetype === 'passenger' || this.shipArchetype === 'science'
+                ? CapitalShipWindowsGreebles.BLUE_LIGHT
+                : CapitalShipWindowsGreebles.AMBER_LIGHT;
         const nextSeed = () => rng.intRange(1, 0x7fffffff);
 
         const allowsTrench =

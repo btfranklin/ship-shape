@@ -24,7 +24,8 @@ const types: TypeDef[] = [
         type: 'hull',
         desc: "Main structural spine blocks. Rectangular or trapezoidal.",
         greebles: [
-            "Greebles: Balanced mix of Panels, Pipes, and small Vents",
+            "Style-driven: Clean adds windows + light panels, no pipes/hoses",
+            "Extras: Electronics panels on Science/Industry/Freight",
             "Shapes: Rect, Chamfer, Cut-Corner (Original & Flipped)"
         ]
     },
@@ -32,7 +33,8 @@ const types: TypeDef[] = [
         type: 'sensor',
         desc: "Standard Sensor Platforms (Top/Bottom Mount).",
         greebles: [
-            "Greebles: Dense small details, exposed wiring",
+            "Greebles: Dense details, lights, and equipment",
+            "Science sensors skew tech-heavy",
             "Shapes: Taper-Top (Pyramid/Spire) or Cut-Corner"
         ]
     },
@@ -143,8 +145,8 @@ const types: TypeDef[] = [
         type: 'trench',
         desc: "Recessed equatorial trench filled with heavy equipment.",
         greebles: [
-            "Visual Style: Inset / Recessed",
-            "Greebles: Dense pipes/machinery, no panels"
+            "Visual Style: Inset / recessed with panel-like shadowing",
+            "Greebles: Dense equipment clutter, no panels"
         ]
     },
     {
@@ -152,6 +154,7 @@ const types: TypeDef[] = [
         desc: "Vertical observation or command spires.",
         greebles: [
             "Visual Style: Side-Lit (Shadow Right)",
+            "Clean towers can include windows; tech towers possible on Science/Industry",
             "Shapes: Taper-Top (Spire) or Rect"
         ]
     }
