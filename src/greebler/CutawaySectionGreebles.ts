@@ -13,12 +13,56 @@ export class CutawaySectionGreebles implements Drawable {
     ) {}
 
     draw(context: CanvasRenderingContext2D, rng: RNG): void {
+        this.drawInternal(context, rng, {
+            drawBase: true,
+            drawGlow: true,
+            useLegacyGlow: true
+        });
+    }
+
+    drawBase(context: CanvasRenderingContext2D, rng: RNG): void {
+        this.drawInternal(context, rng, {
+            drawBase: true,
+            drawGlow: false,
+            useLegacyGlow: false
+        });
+    }
+
+    drawGlow(context: CanvasRenderingContext2D, rng: RNG): void {
+        this.drawInternal(context, rng, {
+            drawBase: false,
+            drawGlow: true,
+            useLegacyGlow: false
+        });
+    }
+
+    drawMask(context: CanvasRenderingContext2D, rng: RNG): void {
+        context.save();
+        context.fillStyle = 'black';
+        for (let i = 0; i < this.cutawayCount; i++) {
+            const w = rng.range(0.3, 0.7);
+            const h = rng.range(0.3, 0.7);
+            const x = rng.range(0, this.xUnits - w);
+            const y = rng.range(0, this.yUnits - h);
+            const path = this.generateClippingPath({ x, y, w, h }, rng);
+            context.fill(path);
+        }
+        context.restore();
+    }
+
+    private drawInternal(
+        context: CanvasRenderingContext2D,
+        rng: RNG,
+        options: { drawBase: boolean; drawGlow: boolean; useLegacyGlow: boolean }
+    ): void {
         context.save();
         context.lineWidth = 0.002; // Slightly thicker outline for the breach
         context.strokeStyle = 'black';
         const Path2D = getPath2D();
 
-        const innardsFillColor = this.themeColor.withBrightness(-0.2);
+        const innardsFillColor = this.themeColor.withBrightness(-0.35);
+        const useLegacyGlow = options.drawBase && options.drawGlow && options.useLegacyGlow;
+        const shouldDrawGlow = options.drawGlow || useLegacyGlow;
 
         for (let i = 0; i < this.cutawayCount; i++) {
             // Generate random rect for the breach area
@@ -28,57 +72,83 @@ export class CutawaySectionGreebles implements Drawable {
             const y = rng.range(0, this.yUnits - h);
 
             // 1. Generate Path
-            const path = this.generateClippingPath({x, y, w, h}, rng);
+            const path = this.generateClippingPath({ x, y, w, h }, rng);
 
             // 2. Draw Innards (Clipped)
             context.save();
             context.clip(path);
-            
-            // Background: Radial Gradient for "Glow" effect
-            const centerX = x + w/2;
-            const centerY = y + h/2;
-            const radius = Math.max(w, h);
-            const gradient = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
-            gradient.addColorStop(0, this.backlightColor.withBrightness(0.2).toRGBAString()); // Bright center
-            gradient.addColorStop(1, this.backlightColor.withBrightness(-0.5).toRGBAString()); // Dark edges
-            context.fillStyle = gradient;
-            context.fill(path); 
-            
-            // Inner Shadow (Simulate Hull Thickness using Inverse Fill)
-            // We create a shape that is "Everything OUTSIDE the hole" and cast a shadow from it.
-            // Since we are clipped to the INSIDE, we only see the shadow falling in.
-            
-            context.save();
-            const shadowCaster = new Path2D();
-            // Add a large rectangle surrounding the breach
-            const margin = 1.0;
-            shadowCaster.rect(x - margin, y - margin, w + margin*2, h + margin*2);
-            // Add the breach path itself
-            shadowCaster.addPath(path);
-            
-            context.shadowColor = 'rgba(0,0,0,0.8)';
-            context.shadowBlur = 0.05; // Soft, realistic falloff
-            context.shadowOffsetX = 0;
-            context.shadowOffsetY = 0;
-            context.fillStyle = 'black';
-            
-            // 'evenodd' fill rule: Points inside Rect (1) and inside Path (2) are EVEN -> Empty (Hole).
-            // Points inside Rect (1) but outside Path (0) are ODD -> Filled (Solid).
-            // So this fills the "Outside", casting a shadow onto the "Inside".
-            context.fill(shadowCaster, 'evenodd');
-            context.restore();
-            
-            // Draw Innards
-            this.drawInnards(context, {x, y, w, h}, innardsFillColor, rng);
+
+            if (options.drawBase && !useLegacyGlow) {
+                this.drawBacklight(
+                    context,
+                    { x, y, w, h },
+                    this.backlightColor.withBrightness(-0.2),
+                    this.backlightColor.withBrightness(-0.8),
+                    path
+                );
+            }
+
+            if (shouldDrawGlow) {
+                const glowInner = this.backlightColor.withBrightness(0.2).withAlpha(0.4);
+                const glowOuter = this.backlightColor.withBrightness(-0.5).withAlpha(0.0);
+                this.drawBacklight(
+                    context,
+                    { x, y, w, h },
+                    glowInner,
+                    glowOuter,
+                    path
+                );
+            }
+
+            if (options.drawBase) {
+                // Inner Shadow (Simulate Hull Thickness using Inverse Fill)
+                // We create a shape that is "Everything OUTSIDE the hole" and cast a shadow from it.
+                // Since we are clipped to the INSIDE, we only see the shadow falling in.
+                context.save();
+                const shadowCaster = new Path2D();
+                const margin = 1.0;
+                shadowCaster.rect(x - margin, y - margin, w + margin * 2, h + margin * 2);
+                shadowCaster.addPath(path);
+
+                context.shadowColor = 'rgba(0,0,0,0.8)';
+                context.shadowBlur = 0.05; // Soft, realistic falloff
+                context.shadowOffsetX = 0;
+                context.shadowOffsetY = 0;
+                context.fillStyle = 'black';
+                context.fill(shadowCaster, 'evenodd');
+                context.restore();
+
+                // Draw Innards
+                this.drawInnards(context, { x, y, w, h }, innardsFillColor, rng);
+            }
             context.restore();
 
             // 3. Outline the Breach (Clean edge)
-            context.lineWidth = 0.002;
-            context.strokeStyle = 'black';
-            context.stroke(path);
+            if (options.drawBase) {
+                context.lineWidth = 0.002;
+                context.strokeStyle = 'black';
+                context.stroke(path);
+            }
         }
 
         context.restore();
+    }
+
+    private drawBacklight(
+        context: CanvasRenderingContext2D,
+        rect: { x: number; y: number; w: number; h: number },
+        innerColor: HSBAColor,
+        outerColor: HSBAColor,
+        path: Path2D
+    ): void {
+        const centerX = rect.x + rect.w / 2;
+        const centerY = rect.y + rect.h / 2;
+        const radius = Math.max(rect.w, rect.h);
+        const gradient = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+        gradient.addColorStop(0, innerColor.toRGBAString());
+        gradient.addColorStop(1, outerColor.toRGBAString());
+        context.fillStyle = gradient;
+        context.fill(path);
     }
 
     private generateClippingPath(rect: {x:number, y:number, w:number, h:number}, rng: RNG): Path2D {

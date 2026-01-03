@@ -16,7 +16,7 @@ type OccluderPlan =
     | { kind: 'electronics'; seed: number; count: number }
     | { kind: 'windows'; seeds: number[]; color: HSBAColor }
     | { kind: 'trench'; seed: number; y: number; h: number }
-    | { kind: 'cutaways'; seed: number; count: number }
+    | { kind: 'cutaways'; seeds: number[] }
     | { kind: 'equipment'; seed: number; count: number }
     | { kind: 'pipes'; seed: number; count: number }
     | { kind: 'hoses'; seed: number; count: number };
@@ -24,8 +24,10 @@ type OccluderPlan =
 type EmissivePlan = {
     lightPanels?: { seeds: number[]; colors: HSBAColor[] };
     windows?: { seeds: number[]; color: HSBAColor };
+    cutaways?: { seeds: number[] };
     occludersAfterLights: OccluderPlan[];
     occludersAfterWindows: OccluderPlan[];
+    occludersAfterCutaways: OccluderPlan[];
 };
 
 export class CapitalShipSurfaceGreebles implements Drawable {
@@ -90,7 +92,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         context.save();
         const skipEmissive = options?.skipEmissive ?? false;
         this.emissivePlan = skipEmissive
-            ? { occludersAfterLights: [], occludersAfterWindows: [] }
+            ? { occludersAfterLights: [], occludersAfterWindows: [], occludersAfterCutaways: [] }
             : undefined;
         
         if (!this.skipBaseFill) {
@@ -373,19 +375,30 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         // Draws "into" the hull, so should be before raised elements.
         if (this.isTrunk && rng.bool(cutawayChance)) {
             const cutawayCount = rng.intRange(1, 2);
-            const cutaways = new CutawaySectionGreebles(
-                this.xUnits,
-                this.yUnits,
-                this.themeColor,
-                cutawayCount
-            );
             if (skipEmissive && this.emissivePlan) {
-                const seed = nextSeed();
-                cutaways.draw(context, new RNG(seed));
-                const plan = { kind: 'cutaways' as const, seed, count: cutawayCount };
+                const seeds: number[] = [];
+                for (let i = 0; i < cutawayCount; i++) {
+                    const seed = nextSeed();
+                    const cutaway = new CutawaySectionGreebles(
+                        this.xUnits,
+                        this.yUnits,
+                        this.themeColor,
+                        1
+                    );
+                    cutaway.drawBase(context, new RNG(seed));
+                    seeds.push(seed);
+                }
+                this.emissivePlan.cutaways = { seeds };
+                const plan = { kind: 'cutaways' as const, seeds };
                 this.emissivePlan.occludersAfterLights.push(plan);
                 this.emissivePlan.occludersAfterWindows.push(plan);
             } else {
+                const cutaways = new CutawaySectionGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    cutawayCount
+                );
                 cutaways.draw(context, rng);
             }
         }
@@ -405,6 +418,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 const plan = { kind: 'equipment' as const, seed, count: equipCount };
                 this.emissivePlan.occludersAfterLights.push(plan);
                 this.emissivePlan.occludersAfterWindows.push(plan);
+                this.emissivePlan.occludersAfterCutaways.push(plan);
             } else {
                 equip.draw(context, rng);
             }
@@ -420,6 +434,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 const plan = { kind: 'pipes' as const, seed, count: pipeCount };
                 this.emissivePlan.occludersAfterLights.push(plan);
                 this.emissivePlan.occludersAfterWindows.push(plan);
+                this.emissivePlan.occludersAfterCutaways.push(plan);
             } else {
                 pipes.draw(context, rng);
             }
@@ -435,6 +450,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 const plan = { kind: 'hoses' as const, seed, count: hoseCount };
                 this.emissivePlan.occludersAfterLights.push(plan);
                 this.emissivePlan.occludersAfterWindows.push(plan);
+                this.emissivePlan.occludersAfterCutaways.push(plan);
             } else {
                 hoses.draw(context, rng);
             }
@@ -586,6 +602,51 @@ export class CapitalShipSurfaceGreebles implements Drawable {
             this.applyOccluders(offCtx, plan.occludersAfterWindows);
         }
 
+        if (plan.cutaways && plan.cutaways.seeds.length > 0) {
+            beginCanvas(maskCtx, maskCanvas);
+
+            for (let i = plan.cutaways.seeds.length - 1; i >= 0; i--) {
+                const seed = plan.cutaways.seeds[i];
+                beginCanvas(tempCtx, tempCanvas);
+
+                const cutaway = new CutawaySectionGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    1
+                );
+                cutaway.drawGlow(tempCtx, new RNG(seed));
+
+                tempCtx.save();
+                tempCtx.globalCompositeOperation = 'destination-out';
+                if (typeof tempCtx.setTransform === 'function') {
+                    tempCtx.setTransform(1, 0, 0, 1, 0, 0);
+                }
+                tempCtx.drawImage(maskCanvas, 0, 0);
+                tempCtx.restore();
+
+                offCtx.save();
+                if (typeof offCtx.setTransform === 'function') {
+                    offCtx.setTransform(1, 0, 0, 1, 0, 0);
+                }
+                offCtx.drawImage(tempCanvas, 0, 0);
+                offCtx.restore();
+
+                endCanvas(tempCtx);
+
+                const cutawayMask = new CutawaySectionGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    1
+                );
+                cutawayMask.drawMask(maskCtx, new RNG(seed));
+            }
+
+            endCanvas(maskCtx);
+            this.applyOccluders(offCtx, plan.occludersAfterCutaways);
+        }
+
         endCanvas(offCtx);
 
         context.save();
@@ -626,6 +687,19 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 windows.drawLights(context, new RNG(seed));
             }
             this.applyOccluders(context, plan.occludersAfterWindows);
+        }
+
+        if (plan.cutaways) {
+            for (const seed of plan.cutaways.seeds) {
+                const cutaway = new CutawaySectionGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    1
+                );
+                cutaway.drawGlow(context, new RNG(seed));
+            }
+            this.applyOccluders(context, plan.occludersAfterCutaways);
         }
     }
 
@@ -680,9 +754,11 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                     this.xUnits,
                     this.yUnits,
                     this.themeColor,
-                    occluder.count
+                    1
                 );
-                cutaways.draw(context, new RNG(occluder.seed));
+                for (const seed of occluder.seeds) {
+                    cutaways.drawMask(context, new RNG(seed));
+                }
                 break;
             }
             case 'equipment': {
