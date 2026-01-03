@@ -7,6 +7,7 @@ import {
   LightPanelGreebles,
   CapitalShipWindowsGreebles,
   EquipmentGreebles,
+  ElectronicsPanelGreebles,
   HoseGreebles,
   WireGreebles,
   CutawaySectionGreebles,
@@ -37,6 +38,7 @@ test('greeblers draw without throwing', () => {
       new LightPanelGreebles(1, 1, THEME, 3).draw(ctx, rng);
       new CapitalShipWindowsGreebles(1, 1, THEME, 3).draw(ctx, rng);
       new EquipmentGreebles(1, 1, THEME, 4).draw(ctx, rng);
+      new ElectronicsPanelGreebles(1, 1, THEME, 1).draw(ctx, rng);
       new HoseGreebles(1, 1, THEME, 2).draw(ctx, rng);
       new WireGreebles(1, 1, 12).draw(ctx, rng);
       new CutawaySectionGreebles(1, 1, THEME, 1).draw(ctx, rng);

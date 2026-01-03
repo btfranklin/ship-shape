@@ -5,6 +5,7 @@ import { PipeGreebles } from './PipeGreebles.js';
 import { LightPanelGreebles } from './LightPanelGreebles.js';
 import { EquipmentGreebles, EquipmentTrenchGreebles } from './EquipmentGreebles.js';
 import { HoseGreebles } from './HoseGreebles.js';
+import { ElectronicsPanelGreebles } from './ElectronicsPanelGreebles.js';
 import { CutawaySectionGreebles } from './CutawaySectionGreebles.js';
 import { ShipArchetype, ComponentType } from '../ship-shape/shipTypes.js';
 
@@ -99,6 +100,8 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         
         let hoseChance = 0.1;
         let hoseRange = [1, 2];
+        let electronicsChance = 0.0;
+        let electronicsRange = [1, 2];
         
         let cutawayChance = 0.05; // Rare by default
 
@@ -112,6 +115,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 equipChance = 0.1;
                 hoseChance = 0.8;
                 hoseRange = [2, 5];
+                electronicsChance = 0.35;
                 cutawayChance = 0.2;
                 break;
             case 'tech':
@@ -122,6 +126,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 lightChance = 0.8;
                 equipRange = [5, 10];
                 equipChance = 0.9;
+                electronicsChance = 0.6;
                 cutawayChance = 0.1;
                 break;
             case 'clean':
@@ -131,6 +136,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 lightChance = 0.4;
                 equipChance = 0.0;
                 hoseChance = 0.0;
+                electronicsChance = 0.08;
                 cutawayChance = 0.0;
                 break;
             case 'dense':
@@ -142,6 +148,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 equipRange = [2, 5];
                 equipChance = 0.5;
                 hoseChance = 0.6;
+                electronicsChance = 0.2;
                 cutawayChance = 0.1;
                 break;
             case 'structure':
@@ -150,6 +157,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 lightChance = 0.0;
                 equipChance = 0.0;
                 hoseChance = 0.0;
+                electronicsChance = 0.0;
                 cutawayChance = 0.0;
                 break;
             case 'trench':
@@ -158,8 +166,18 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 lightChance = 0.0;
                 equipChance = 0.0;
                 hoseChance = 0.0;
+                electronicsChance = 0.0;
                 cutawayChance = 0.0;
                 break;
+        }
+
+        const allowsElectronics =
+            this.shipArchetype === 'science' ||
+            this.shipArchetype === 'industry' ||
+            this.shipArchetype === 'freight';
+
+        if (!allowsElectronics) {
+            electronicsChance = 0.0;
         }
 
         // 2. Panels OR Trench - BASE LAYER
@@ -185,30 +203,41 @@ export class CapitalShipSurfaceGreebles implements Drawable {
             cutaways.draw(context, rng);
         }
 
-        // 4. Equipment (Tech bits) - SURFACE LAYER
+        // 4. Electronics Panels (Tech hardware) - INSET SURFACE LAYER
+        if (rng.bool(electronicsChance)) {
+            const boxes = new ElectronicsPanelGreebles(
+                this.xUnits,
+                this.yUnits,
+                this.themeColor,
+                rng.intRange(electronicsRange[0], electronicsRange[1])
+            );
+            boxes.draw(context, rng);
+        }
+
+        // 5. Equipment (Tech bits) - SURFACE LAYER
         if (rng.bool(equipChance)) {
             const equip = new EquipmentGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(equipRange[0], equipRange[1]));
             equip.draw(context, rng);
         }
         
-        // 5. Pipes (Infrastructure) - RAISED LAYER 1
+        // 6. Pipes (Infrastructure) - RAISED LAYER 1
         if (rng.bool(pipeChance)) {
             const pipes = new PipeGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(pipeRange[0], pipeRange[1]));
             pipes.draw(context, rng);
         }
 
-        // 6. Light Panels - OVERLAY
+        // 7. Light Panels - OVERLAY
         if (rng.bool(lightChance)) {
             const lights = new LightPanelGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(lightRange[0], lightRange[1]));
             lights.draw(context, rng);
         }
 
-        // 7. Hoses (Heavy connectors) - RAISED LAYER 2
+        // 8. Hoses (Heavy connectors) - RAISED LAYER 2
         if (rng.bool(hoseChance)) {
             const hoses = new HoseGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(hoseRange[0], hoseRange[1]), false);
             hoses.draw(context, rng);
         }
-        
+
         context.restore();
     }
 }
