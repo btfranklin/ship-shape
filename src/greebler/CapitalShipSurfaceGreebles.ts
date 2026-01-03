@@ -11,7 +11,7 @@ import { CapitalShipWindowsGreebles } from './CapitalShipWindowsGreebles.js';
 import { CutawaySectionGreebles } from './CutawaySectionGreebles.js';
 import { ShipArchetype, ComponentType } from '../ship-shape/shipTypes.js';
 
-type GreebleStyle = 'standard' | 'industrial' | 'tech' | 'clean' | 'dense' | 'structure' | 'trench';
+type GreebleStyle = 'standard' | 'industrial' | 'tech' | 'clean' | 'dense' | 'structure' | 'trench' | 'unstyled';
 type OccluderPlan =
     | { kind: 'electronics'; seed: number; count: number }
     | { kind: 'windows'; seeds: number[]; color: HSBAColor }
@@ -46,22 +46,26 @@ export class CapitalShipSurfaceGreebles implements Drawable {
     private determineStyle(shipArch: ShipArchetype, compType: ComponentType, rng: RNG): GreebleStyle {
         // Hard overrides
         if (compType === 'trench') return 'trench';
-        if (compType === 'ring') return 'structure';
-        if (compType === 'sphere') return 'structure'; 
+        if (compType === 'sphere') return 'structure';
+        if (
+            compType === 'engine' ||
+            compType === 'storage' ||
+            compType === 'sensor' ||
+            compType === 'weapon' ||
+            compType === 'ring'
+        ) {
+            return 'unstyled';
+        }
         
         // Bias based on Ship Archetype
         switch (shipArch) {
             case 'science':
-                if (compType === 'engine') return rng.bool(0.5) ? 'clean' : 'tech';
-                if (compType === 'sensor') return 'tech';
                 if (compType === 'tower') return rng.bool(0.4) ? 'tech' : 'clean';
                 if (compType === 'hull') return rng.bool(0.7) ? 'clean' : 'standard';
                 return 'clean';
                 
             case 'industry':
                 if (compType === 'hull') return this.isTrunk ? 'industrial' : 'standard';
-                if (compType === 'storage') return 'industrial';
-                if (compType === 'engine') return 'industrial';
                 if (compType === 'tower') {
                     if (rng.bool(0.25)) return 'tech';
                     return rng.bool(0.4) ? 'clean' : 'standard';
@@ -70,12 +74,10 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 
             case 'combat':
                 if (compType === 'hull') return rng.bool(0.6) ? 'dense' : 'standard'; 
-                if (compType === 'weapon') return 'dense';
                 if (compType === 'tower') return 'standard';
                 return 'standard';
                 
             case 'freight':
-                if (compType === 'storage') return 'clean'; // Containers
                 if (compType === 'hull') return rng.bool(0.4) ? 'clean' : 'standard';
                 return 'standard';
                 
@@ -203,6 +205,17 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 electronicsChance = 0.0;
                 trenchChance = 1.0;
                 trenchHeightRange = [this.yUnits, this.yUnits];
+                cutawayChance = 0.0;
+                break;
+            case 'unstyled':
+                panelDensity = 0;
+                pipeChance = 0.0;
+                lightChance = 0.0;
+                equipChance = 0.0;
+                hoseChance = 0.0;
+                electronicsChance = 0.0;
+                windowChance = 0.0;
+                trenchChance = 0.0;
                 cutawayChance = 0.0;
                 break;
         }
