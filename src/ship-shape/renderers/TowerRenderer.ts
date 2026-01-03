@@ -108,12 +108,13 @@ export class TowerRenderer implements ComponentRenderer {
         ctx.clip(component.shapePath);
         ctx.translate(component.bounds.x, component.bounds.y);
         ctx.scale(UNIT_SCALE, UNIT_SCALE);
-        component.greebles.draw(ctx, rng);
+        component.greebles.draw(ctx, rng, { skipEmissive: true });
         ctx.restore();
 
         // 2b. Lighting Overlays
         // Towers get Side Lighting (Shadow Right)
         this.drawLightingOverlay(ctx, component);
+        this.drawEmissiveGreebles(ctx, component, rng);
 
         // 3. Inner Highlight (Bevel)
         ctx.save();
@@ -127,6 +128,16 @@ export class TowerRenderer implements ComponentRenderer {
         ctx.strokeStyle = 'rgba(0,0,0,0.8)';
         ctx.lineWidth = 1;
         ctx.stroke(component.shapePath);
+    }
+
+    private drawEmissiveGreebles(ctx: CanvasRenderingContext2D, component: ShipComponent, rng: RNG) {
+        if (!component.shapePath) return;
+        ctx.save();
+        ctx.clip(component.shapePath);
+        ctx.translate(component.bounds.x, component.bounds.y);
+        ctx.scale(UNIT_SCALE, UNIT_SCALE);
+        component.greebles.drawEmissive(ctx, rng, { clipPath: component.shapePath });
+        ctx.restore();
     }
 
     private drawLightingOverlay(ctx: CanvasRenderingContext2D, component: ShipComponent) {

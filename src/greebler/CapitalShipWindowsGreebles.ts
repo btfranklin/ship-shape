@@ -19,6 +19,23 @@ export class CapitalShipWindowsGreebles implements Drawable {
     ) {}
 
     draw(context: CanvasRenderingContext2D, rng: RNG): void {
+        this.drawInternal(context, rng, true, true);
+    }
+
+    drawPanels(context: CanvasRenderingContext2D, rng: RNG): void {
+        this.drawInternal(context, rng, true, false);
+    }
+
+    drawLights(context: CanvasRenderingContext2D, rng: RNG): void {
+        this.drawInternal(context, rng, false, true);
+    }
+
+    private drawInternal(
+        context: CanvasRenderingContext2D,
+        rng: RNG,
+        drawPanels: boolean,
+        drawLights: boolean
+    ): void {
         context.save();
 
         for (let i = 0; i < this.windowZoneCount; i++) {
@@ -38,10 +55,12 @@ export class CapitalShipWindowsGreebles implements Drawable {
             const y = rng.range(0, this.yUnits - h);
 
             const style = rng.choice(['flat', 'recessed']);
-            if (style === 'flat') {
-                this.drawFlat(context, x, y, w, h);
-            } else {
-                this.drawRecessed(context, x, y, w, h);
+            if (drawPanels) {
+                if (style === 'flat') {
+                    this.drawFlat(context, x, y, w, h);
+                } else {
+                    this.drawRecessed(context, x, y, w, h);
+                }
             }
 
             context.save();
@@ -51,7 +70,8 @@ export class CapitalShipWindowsGreebles implements Drawable {
             
             for (let c = 0; c < cols; c++) {
                 for (let r = 0; r < rows; r++) {
-                    if (rng.bool(0.33)) {
+                    const lit = rng.bool(0.33);
+                    if (lit) {
                         const wx = x + CapitalShipWindowsGreebles.WINDOW_ZONE_INSET + c * (CapitalShipWindowsGreebles.WINDOW_SIZE + CapitalShipWindowsGreebles.WINDOW_SPACING);
                         const wy = y + CapitalShipWindowsGreebles.WINDOW_ZONE_INSET + r * (CapitalShipWindowsGreebles.WINDOW_SIZE + CapitalShipWindowsGreebles.FLOOR_SPACING);
                         
@@ -59,27 +79,29 @@ export class CapitalShipWindowsGreebles implements Drawable {
                         const cy = wy + CapitalShipWindowsGreebles.WINDOW_SIZE / 2;
                         const radius = CapitalShipWindowsGreebles.WINDOW_SIZE * 1.5;
 
-                        // 1. Soft Bloom (Radial Gradient)
-                        // Use normal blending for a subtle diffuse look, instead of additive
-                        context.globalCompositeOperation = 'source-over'; 
-                        const grad = context.createRadialGradient(cx, cy, 0, cx, cy, radius);
-                        grad.addColorStop(0, this.windowColor.withAlpha(0.25).toRGBAString());
-                        grad.addColorStop(1, this.windowColor.withAlpha(0).toRGBAString());
-                        
-                        context.fillStyle = grad;
-                        context.beginPath();
-                        context.arc(cx, cy, radius, 0, Math.PI * 2);
-                        context.fill();
+                        if (drawLights) {
+                            // 1. Soft Bloom (Radial Gradient)
+                            // Use normal blending for a subtle diffuse look, instead of additive
+                            context.globalCompositeOperation = 'source-over'; 
+                            const grad = context.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                            grad.addColorStop(0, this.windowColor.withAlpha(0.25).toRGBAString());
+                            grad.addColorStop(1, this.windowColor.withAlpha(0).toRGBAString());
+                            
+                            context.fillStyle = grad;
+                            context.beginPath();
+                            context.arc(cx, cy, radius, 0, Math.PI * 2);
+                            context.fill();
 
-                        // 2. Core (Solid)
-                        // Switch back to normal blend for core to preserve color
-                        context.save();
-                        context.globalCompositeOperation = 'source-over'; 
-                        context.globalAlpha = 1.0;
-                        context.shadowBlur = 0; 
-                        context.fillStyle = this.windowColor.toRGBAString();
-                        context.fillRect(wx, wy, CapitalShipWindowsGreebles.WINDOW_SIZE, CapitalShipWindowsGreebles.WINDOW_SIZE);
-                        context.restore();
+                            // 2. Core (Solid)
+                            // Switch back to normal blend for core to preserve color
+                            context.save();
+                            context.globalCompositeOperation = 'source-over'; 
+                            context.globalAlpha = 1.0;
+                            context.shadowBlur = 0; 
+                            context.fillStyle = this.windowColor.toRGBAString();
+                            context.fillRect(wx, wy, CapitalShipWindowsGreebles.WINDOW_SIZE, CapitalShipWindowsGreebles.WINDOW_SIZE);
+                            context.restore();
+                        }
                     }
                 }
             }

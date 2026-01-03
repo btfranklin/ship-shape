@@ -12,8 +12,25 @@ import { CutawaySectionGreebles } from './CutawaySectionGreebles.js';
 import { ShipArchetype, ComponentType } from '../ship-shape/shipTypes.js';
 
 type GreebleStyle = 'standard' | 'industrial' | 'tech' | 'clean' | 'dense' | 'structure' | 'trench';
+type OccluderPlan =
+    | { kind: 'electronics'; seed: number; count: number }
+    | { kind: 'windows'; seeds: number[]; color: HSBAColor }
+    | { kind: 'trench'; seed: number; y: number; h: number }
+    | { kind: 'cutaways'; seed: number; count: number }
+    | { kind: 'equipment'; seed: number; count: number }
+    | { kind: 'pipes'; seed: number; count: number }
+    | { kind: 'hoses'; seed: number; count: number };
+
+type EmissivePlan = {
+    lightPanels?: { seeds: number[]; colors: HSBAColor[] };
+    windows?: { seeds: number[]; color: HSBAColor };
+    occludersAfterLights: OccluderPlan[];
+    occludersAfterWindows: OccluderPlan[];
+};
 
 export class CapitalShipSurfaceGreebles implements Drawable {
+    private emissivePlan?: EmissivePlan;
+
     constructor(
         public xUnits: number, 
         public yUnits: number, 
@@ -69,8 +86,12 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         }
     }
 
-    draw(context: CanvasRenderingContext2D, rng: RNG): void {
+    draw(context: CanvasRenderingContext2D, rng: RNG, options?: { skipEmissive?: boolean }): void {
         context.save();
+        const skipEmissive = options?.skipEmissive ?? false;
+        this.emissivePlan = skipEmissive
+            ? { occludersAfterLights: [], occludersAfterWindows: [] }
+            : undefined;
         
         if (!this.skipBaseFill) {
             // Base fill
@@ -201,6 +222,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
             this.shipArchetype === 'industry'
                 ? CapitalShipWindowsGreebles.AMBER_LIGHT
                 : CapitalShipWindowsGreebles.BLUE_LIGHT;
+        const nextSeed = () => rng.intRange(1, 0x7fffffff);
 
         const allowsTrench =
             isTrenchStyle ||
@@ -240,30 +262,94 @@ export class CapitalShipSurfaceGreebles implements Drawable {
             panels.draw(context, rng);
         }
         
-        // 3. Electronics Panels (Tech hardware) - INSET SURFACE LAYER
+        // 3. Light Panels - INSET SURFACE LAYER
+        if (rng.bool(lightChance)) {
+            const panelCount = rng.intRange(lightRange[0], lightRange[1]);
+            if (skipEmissive && this.emissivePlan) {
+                const lightColors = new LightPanelGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    1
+                ).lightColors;
+                const seeds: number[] = [];
+                for (let i = 0; i < panelCount; i++) {
+                    const seed = nextSeed();
+                    const panels = new LightPanelGreebles(
+                        this.xUnits,
+                        this.yUnits,
+                        this.themeColor,
+                        1,
+                        lightColors
+                    );
+                    panels.drawPanels(context, new RNG(seed));
+                    seeds.push(seed);
+                }
+                this.emissivePlan.lightPanels = { seeds, colors: lightColors };
+            } else {
+                const panels = new LightPanelGreebles(this.xUnits, this.yUnits, this.themeColor, panelCount);
+                panels.draw(context, rng);
+            }
+        }
+
+        // 4. Electronics Panels (Tech hardware) - INSET SURFACE LAYER
         if (rng.bool(electronicsChance)) {
+            const boxCount = rng.intRange(electronicsRange[0], electronicsRange[1]);
             const boxes = new ElectronicsPanelGreebles(
                 this.xUnits,
                 this.yUnits,
                 this.themeColor,
-                rng.intRange(electronicsRange[0], electronicsRange[1])
+                boxCount
             );
-            boxes.draw(context, rng);
+            if (skipEmissive && this.emissivePlan) {
+                const seed = nextSeed();
+                boxes.draw(context, new RNG(seed));
+                this.emissivePlan.occludersAfterLights.push({
+                    kind: 'electronics',
+                    seed,
+                    count: boxCount
+                });
+            } else {
+                boxes.draw(context, rng);
+            }
         }
 
-        // 4. Windows (Passenger rows) - INSET SURFACE LAYER
+        // 5. Windows (Passenger rows) - INSET SURFACE LAYER
         if (hasWindows) {
-            const windows = new CapitalShipWindowsGreebles(
-                this.xUnits,
-                this.yUnits,
-                this.themeColor,
-                rng.intRange(windowRange[0], windowRange[1]),
-                windowColor
-            );
-            windows.draw(context, rng);
+            const windowCount = rng.intRange(windowRange[0], windowRange[1]);
+            if (skipEmissive && this.emissivePlan) {
+                const seeds: number[] = [];
+                for (let i = 0; i < windowCount; i++) {
+                    const seed = nextSeed();
+                    const windows = new CapitalShipWindowsGreebles(
+                        this.xUnits,
+                        this.yUnits,
+                        this.themeColor,
+                        1,
+                        windowColor
+                    );
+                    windows.drawPanels(context, new RNG(seed));
+                    seeds.push(seed);
+                }
+                this.emissivePlan.windows = { seeds, color: windowColor };
+                this.emissivePlan.occludersAfterLights.push({
+                    kind: 'windows',
+                    seeds,
+                    color: windowColor
+                });
+            } else {
+                const windows = new CapitalShipWindowsGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    windowCount,
+                    windowColor
+                );
+                windows.draw(context, rng);
+            }
         }
 
-        // 5. Trench (Inset access) - INSET LAYER
+        // 6. Trench (Inset access) - INSET LAYER
         if (hasTrench) {
             const trench = new EquipmentTrenchGreebles(
                 this.xUnits,
@@ -272,40 +358,391 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 trenchY,
                 trenchHeight
             );
-            trench.draw(context, rng);
+            if (skipEmissive && this.emissivePlan) {
+                const seed = nextSeed();
+                trench.draw(context, new RNG(seed));
+                const plan = { kind: 'trench' as const, seed, y: trenchY, h: trenchHeight };
+                this.emissivePlan.occludersAfterLights.push(plan);
+                this.emissivePlan.occludersAfterWindows.push(plan);
+            } else {
+                trench.draw(context, rng);
+            }
         }
 
-        // 6. Cutaway Sections (Damage/Exposed Innards) - INSET LAYER
+        // 7. Cutaway Sections (Damage/Exposed Innards) - INSET LAYER
         // Draws "into" the hull, so should be before raised elements.
         if (this.isTrunk && rng.bool(cutawayChance)) {
-            const cutaways = new CutawaySectionGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(1, 2));
-            cutaways.draw(context, rng);
+            const cutawayCount = rng.intRange(1, 2);
+            const cutaways = new CutawaySectionGreebles(
+                this.xUnits,
+                this.yUnits,
+                this.themeColor,
+                cutawayCount
+            );
+            if (skipEmissive && this.emissivePlan) {
+                const seed = nextSeed();
+                cutaways.draw(context, new RNG(seed));
+                const plan = { kind: 'cutaways' as const, seed, count: cutawayCount };
+                this.emissivePlan.occludersAfterLights.push(plan);
+                this.emissivePlan.occludersAfterWindows.push(plan);
+            } else {
+                cutaways.draw(context, rng);
+            }
         }
 
-        // 7. Equipment (Tech bits) - SURFACE LAYER
+        // 8. Equipment (Tech bits) - SURFACE LAYER
         if (rng.bool(equipChance)) {
-            const equip = new EquipmentGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(equipRange[0], equipRange[1]));
-            equip.draw(context, rng);
+            const equipCount = rng.intRange(equipRange[0], equipRange[1]);
+            const equip = new EquipmentGreebles(
+                this.xUnits,
+                this.yUnits,
+                this.themeColor,
+                equipCount
+            );
+            if (skipEmissive && this.emissivePlan) {
+                const seed = nextSeed();
+                equip.draw(context, new RNG(seed));
+                const plan = { kind: 'equipment' as const, seed, count: equipCount };
+                this.emissivePlan.occludersAfterLights.push(plan);
+                this.emissivePlan.occludersAfterWindows.push(plan);
+            } else {
+                equip.draw(context, rng);
+            }
         }
         
-        // 8. Pipes (Infrastructure) - RAISED LAYER 1
+        // 9. Pipes (Infrastructure) - RAISED LAYER 1
         if (rng.bool(pipeChance)) {
-            const pipes = new PipeGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(pipeRange[0], pipeRange[1]));
-            pipes.draw(context, rng);
-        }
-
-        // 9. Light Panels - OVERLAY
-        if (rng.bool(lightChance)) {
-            const lights = new LightPanelGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(lightRange[0], lightRange[1]));
-            lights.draw(context, rng);
+            const pipeCount = rng.intRange(pipeRange[0], pipeRange[1]);
+            const pipes = new PipeGreebles(this.xUnits, this.yUnits, this.themeColor, pipeCount);
+            if (skipEmissive && this.emissivePlan) {
+                const seed = nextSeed();
+                pipes.draw(context, new RNG(seed));
+                const plan = { kind: 'pipes' as const, seed, count: pipeCount };
+                this.emissivePlan.occludersAfterLights.push(plan);
+                this.emissivePlan.occludersAfterWindows.push(plan);
+            } else {
+                pipes.draw(context, rng);
+            }
         }
 
         // 10. Hoses (Heavy connectors) - RAISED LAYER 2
         if (rng.bool(hoseChance)) {
-            const hoses = new HoseGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(hoseRange[0], hoseRange[1]), false);
-            hoses.draw(context, rng);
+            const hoseCount = rng.intRange(hoseRange[0], hoseRange[1]);
+            const hoses = new HoseGreebles(this.xUnits, this.yUnits, this.themeColor, hoseCount, false);
+            if (skipEmissive && this.emissivePlan) {
+                const seed = nextSeed();
+                hoses.draw(context, new RNG(seed));
+                const plan = { kind: 'hoses' as const, seed, count: hoseCount };
+                this.emissivePlan.occludersAfterLights.push(plan);
+                this.emissivePlan.occludersAfterWindows.push(plan);
+            } else {
+                hoses.draw(context, rng);
+            }
         }
 
         context.restore();
+    }
+
+    drawEmissive(context: CanvasRenderingContext2D, _rng: RNG, options?: { clipPath?: Path2D }): void {
+        if (!this.emissivePlan) return;
+
+        const plan = this.emissivePlan;
+        const offscreen = this.createOffscreenContext(context);
+        const transform = typeof context.getTransform === 'function' ? context.getTransform() : null;
+
+        if (!offscreen || !transform) {
+            this.drawEmissiveDirect(context, plan);
+            return;
+        }
+
+        const mask = this.createOffscreenContext(context);
+        const temp = this.createOffscreenContext(context);
+
+        if (!mask || !temp) {
+            this.drawEmissiveDirect(context, plan);
+            return;
+        }
+
+        const { ctx: offCtx, canvas } = offscreen;
+        const { ctx: maskCtx, canvas: maskCanvas } = mask;
+        const { ctx: tempCtx, canvas: tempCanvas } = temp;
+
+        const applyTransform = (ctx: CanvasRenderingContext2D) => {
+            if (typeof ctx.setTransform === 'function') {
+                ctx.setTransform(transform.a, transform.b, transform.c, transform.d, transform.e, transform.f);
+            }
+        };
+
+        const beginCanvas = (ctx: CanvasRenderingContext2D, target: CanvasImageSource) => {
+            const sized = target as { width?: number; height?: number };
+            ctx.save();
+            if (typeof ctx.setTransform === 'function') {
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+            }
+            ctx.clearRect(0, 0, sized.width ?? 0, sized.height ?? 0);
+            if (options?.clipPath) {
+                ctx.clip(options.clipPath);
+            }
+            applyTransform(ctx);
+        };
+
+        const endCanvas = (ctx: CanvasRenderingContext2D) => {
+            ctx.restore();
+        };
+
+        beginCanvas(offCtx, canvas);
+
+        if (plan.lightPanels && plan.lightPanels.seeds.length > 0) {
+            beginCanvas(maskCtx, maskCanvas);
+
+            for (let i = plan.lightPanels.seeds.length - 1; i >= 0; i--) {
+                const seed = plan.lightPanels.seeds[i];
+                beginCanvas(tempCtx, tempCanvas);
+
+                const panel = new LightPanelGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    1,
+                    plan.lightPanels.colors
+                );
+                panel.drawLights(tempCtx, new RNG(seed));
+
+                tempCtx.save();
+                tempCtx.globalCompositeOperation = 'destination-out';
+                if (typeof tempCtx.setTransform === 'function') {
+                    tempCtx.setTransform(1, 0, 0, 1, 0, 0);
+                }
+                tempCtx.drawImage(maskCanvas, 0, 0);
+                tempCtx.restore();
+
+                offCtx.save();
+                if (typeof offCtx.setTransform === 'function') {
+                    offCtx.setTransform(1, 0, 0, 1, 0, 0);
+                }
+                offCtx.drawImage(tempCanvas, 0, 0);
+                offCtx.restore();
+
+                endCanvas(tempCtx);
+
+                const panelMask = new LightPanelGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    1,
+                    plan.lightPanels.colors
+                );
+                panelMask.drawPanels(maskCtx, new RNG(seed));
+            }
+
+            endCanvas(maskCtx);
+            this.applyOccluders(offCtx, plan.occludersAfterLights);
+        }
+
+        if (plan.windows && plan.windows.seeds.length > 0) {
+            beginCanvas(maskCtx, maskCanvas);
+
+            for (let i = plan.windows.seeds.length - 1; i >= 0; i--) {
+                const seed = plan.windows.seeds[i];
+                beginCanvas(tempCtx, tempCanvas);
+
+                const windows = new CapitalShipWindowsGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    1,
+                    plan.windows.color
+                );
+                windows.drawLights(tempCtx, new RNG(seed));
+
+                tempCtx.save();
+                tempCtx.globalCompositeOperation = 'destination-out';
+                if (typeof tempCtx.setTransform === 'function') {
+                    tempCtx.setTransform(1, 0, 0, 1, 0, 0);
+                }
+                tempCtx.drawImage(maskCanvas, 0, 0);
+                tempCtx.restore();
+
+                offCtx.save();
+                if (typeof offCtx.setTransform === 'function') {
+                    offCtx.setTransform(1, 0, 0, 1, 0, 0);
+                }
+                offCtx.drawImage(tempCanvas, 0, 0);
+                offCtx.restore();
+
+                endCanvas(tempCtx);
+
+                const windowMask = new CapitalShipWindowsGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    1,
+                    plan.windows.color
+                );
+                windowMask.drawPanels(maskCtx, new RNG(seed));
+            }
+
+            endCanvas(maskCtx);
+            this.applyOccluders(offCtx, plan.occludersAfterWindows);
+        }
+
+        endCanvas(offCtx);
+
+        context.save();
+        if (typeof context.setTransform === 'function') {
+            context.setTransform(1, 0, 0, 1, 0, 0);
+        } else if (typeof context.resetTransform === 'function') {
+            context.resetTransform();
+        }
+        context.globalCompositeOperation = 'source-over';
+        context.drawImage(canvas, 0, 0);
+        context.restore();
+    }
+
+    private drawEmissiveDirect(context: CanvasRenderingContext2D, plan: EmissivePlan): void {
+        if (plan.lightPanels) {
+            for (const seed of plan.lightPanels.seeds) {
+                const panels = new LightPanelGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    1,
+                    plan.lightPanels.colors
+                );
+                panels.drawLights(context, new RNG(seed));
+            }
+            this.applyOccluders(context, plan.occludersAfterLights);
+        }
+
+        if (plan.windows) {
+            for (const seed of plan.windows.seeds) {
+                const windows = new CapitalShipWindowsGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    1,
+                    plan.windows.color
+                );
+                windows.drawLights(context, new RNG(seed));
+            }
+            this.applyOccluders(context, plan.occludersAfterWindows);
+        }
+    }
+
+    private applyOccluders(context: CanvasRenderingContext2D, occluders: OccluderPlan[]): void {
+        if (occluders.length === 0) return;
+        context.save();
+        context.globalCompositeOperation = 'destination-out';
+        for (const occluder of occluders) {
+            this.drawOccluder(context, occluder);
+        }
+        context.restore();
+    }
+
+    private drawOccluder(context: CanvasRenderingContext2D, occluder: OccluderPlan): void {
+        switch (occluder.kind) {
+            case 'electronics': {
+                const boxes = new ElectronicsPanelGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    occluder.count
+                );
+                boxes.draw(context, new RNG(occluder.seed));
+                break;
+            }
+            case 'windows': {
+                const windows = new CapitalShipWindowsGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    1,
+                    occluder.color
+                );
+                for (const seed of occluder.seeds) {
+                    windows.drawPanels(context, new RNG(seed));
+                }
+                break;
+            }
+            case 'trench': {
+                const trench = new EquipmentTrenchGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    occluder.y,
+                    occluder.h
+                );
+                trench.draw(context, new RNG(occluder.seed));
+                break;
+            }
+            case 'cutaways': {
+                const cutaways = new CutawaySectionGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    occluder.count
+                );
+                cutaways.draw(context, new RNG(occluder.seed));
+                break;
+            }
+            case 'equipment': {
+                const equip = new EquipmentGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    occluder.count
+                );
+                equip.draw(context, new RNG(occluder.seed));
+                break;
+            }
+            case 'pipes': {
+                const pipes = new PipeGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    occluder.count
+                );
+                pipes.draw(context, new RNG(occluder.seed));
+                break;
+            }
+            case 'hoses': {
+                const hoses = new HoseGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    occluder.count,
+                    false
+                );
+                hoses.draw(context, new RNG(occluder.seed));
+                break;
+            }
+        }
+    }
+
+    private createOffscreenContext(
+        context: CanvasRenderingContext2D
+    ): { ctx: CanvasRenderingContext2D; canvas: CanvasImageSource } | null {
+        const baseCanvas = (context as unknown as { canvas?: { width?: number; height?: number } }).canvas;
+        const width = baseCanvas?.width;
+        const height = baseCanvas?.height;
+
+        if (!width || !height) return null;
+
+        let canvas: any;
+        if (typeof OffscreenCanvas !== 'undefined') {
+            canvas = new OffscreenCanvas(width, height);
+        } else if (typeof document !== 'undefined' && document.createElement) {
+            canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+        } else if (baseCanvas && typeof (baseCanvas as any).constructor === 'function') {
+            canvas = new (baseCanvas as any).constructor(width, height);
+        } else {
+            return null;
+        }
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+        return { ctx: ctx as CanvasRenderingContext2D, canvas };
     }
 }

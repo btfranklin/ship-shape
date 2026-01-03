@@ -15,6 +15,23 @@ export class LightPanelGreebles implements Drawable {
     ) {}
 
     draw(context: CanvasRenderingContext2D, rng: RNG): void {
+        this.drawInternal(context, rng, true, true);
+    }
+
+    drawPanels(context: CanvasRenderingContext2D, rng: RNG): void {
+        this.drawInternal(context, rng, true, false);
+    }
+
+    drawLights(context: CanvasRenderingContext2D, rng: RNG): void {
+        this.drawInternal(context, rng, false, true);
+    }
+
+    private drawInternal(
+        context: CanvasRenderingContext2D,
+        rng: RNG,
+        drawPanels: boolean,
+        drawLights: boolean
+    ): void {
         context.save();
         context.lineWidth = 0.002;
         context.strokeStyle = 'black';
@@ -32,22 +49,27 @@ export class LightPanelGreebles implements Drawable {
             const x = rng.range(0, this.xUnits - w);
             const y = rng.range(0, this.yUnits - h);
 
-            // Panel BG
-            context.fillStyle = bgColor;
-            context.fillRect(x, y, w, h);
-            context.strokeRect(x, y, w, h);
+            if (drawPanels) {
+                // Panel BG
+                context.fillStyle = bgColor;
+                context.fillRect(x, y, w, h);
+                context.strokeRect(x, y, w, h);
+            }
 
             // Lights
             for (let c = 0; c < cols; c++) {
                 for (let r = 0; r < rows; r++) {
-                    if (rng.bool(0.33)) {
+                    const lit = rng.bool(0.33);
+                    if (lit) {
                         const col = rng.choice(this.lightColors);
-                        context.fillStyle = col.toRGBAString();
                         
                         const lx = x + LightPanelGreebles.LIGHT_INSET + c * (LightPanelGreebles.LIGHT_SIZE + LightPanelGreebles.LIGHT_PADDING);
                         const ly = y + LightPanelGreebles.LIGHT_INSET + r * (LightPanelGreebles.LIGHT_SIZE + LightPanelGreebles.LIGHT_PADDING);
                         
-                        context.fillRect(lx, ly, LightPanelGreebles.LIGHT_SIZE, LightPanelGreebles.LIGHT_SIZE);
+                        if (drawLights) {
+                            context.fillStyle = col.toRGBAString();
+                            context.fillRect(lx, ly, LightPanelGreebles.LIGHT_SIZE, LightPanelGreebles.LIGHT_SIZE);
+                        }
                     }
                 }
             }

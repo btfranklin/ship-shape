@@ -37,7 +37,7 @@ export class SphereRenderer implements ComponentRenderer {
         ctx.clip(component.shapePath);
         ctx.translate(x, y);
         ctx.scale(UNIT_SCALE, UNIT_SCALE);
-        component.greebles.draw(ctx, rng);
+        component.greebles.draw(ctx, rng, { skipEmissive: true });
         ctx.restore();
         
         // 3. Lighting Overlay (Radial Shadow/Highlight to reinforce 3D)
@@ -52,6 +52,13 @@ export class SphereRenderer implements ComponentRenderer {
         
         ctx.fillStyle = overlayGrad;
         ctx.fill(component.shapePath);
+        ctx.restore();
+        
+        ctx.save();
+        ctx.clip(component.shapePath);
+        ctx.translate(x, y);
+        ctx.scale(UNIT_SCALE, UNIT_SCALE);
+        component.greebles.drawEmissive(ctx, rng, { clipPath: component.shapePath });
         ctx.restore();
         
         // 4. Rim Stroke

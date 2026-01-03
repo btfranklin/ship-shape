@@ -99,8 +99,8 @@ export class UnifiedTrunkComponent {
                         ctx.translate(this.bounds.x, this.bounds.y);
                         ctx.scale(UNIT_SCALE, UNIT_SCALE);
                         
-                        this.greebles.draw(ctx, rng);
-
+                        this.greebles.draw(ctx, rng, { skipEmissive: true });
+                        
                         ctx.restore(); // Restore clip & transform from Step 4
                 
                         // 6. Lighting Overlay (Global Volume)
@@ -120,6 +120,14 @@ export class UnifiedTrunkComponent {
                         ctx.fillStyle = lightGrad;
                         ctx.fillRect(this.bounds.x, this.bounds.y, this.bounds.w, this.bounds.h);
                         
+                        ctx.restore();
+                        
+                        // 7. Emissive Pass (Lights on top of lighting)
+                        ctx.save();
+                        ctx.clip(unifiedPath);
+                        ctx.translate(this.bounds.x, this.bounds.y);
+                        ctx.scale(UNIT_SCALE, UNIT_SCALE);
+                        this.greebles.drawEmissive(ctx, rng, { clipPath: unifiedPath });
                         ctx.restore();
                     }
                 }
