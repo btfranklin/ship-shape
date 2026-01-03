@@ -7,9 +7,6 @@ export class UnifiedTrunkComponent {
         public bounds: { x: number, y: number, w: number, h: number };
         public zIndex: number;
         public greebles: CapitalShipSurfaceGreebles;
-        public trenchGreebles?: CapitalShipSurfaceGreebles;
-        public hasTrench: boolean = false;
-        public trenchY: number = 0; // In Units relative to top
         public components: ShipComponent[];
         public color: HSBAColor;
     
@@ -51,27 +48,6 @@ export class UnifiedTrunkComponent {
                 true
             );
     
-            // 3. Setup Trench (if tall enough)
-            if (this.bounds.h > 150 && shipArchetype !== 'passenger' && rng.bool(0.1)) {
-                this.hasTrench = true;
-                const trenchHeightPx = rng.range(30, 60);
-                const trenchHeightUnits = trenchHeightPx / UNIT_SCALE;
-                
-                // Position trench somewhere in the middle 60% of the ship
-                const minY = 0.2 * (this.bounds.h / UNIT_SCALE);
-                const maxY = 0.8 * (this.bounds.h / UNIT_SCALE) - trenchHeightUnits;
-                this.trenchY = rng.range(minY, maxY);
-    
-                this.trenchGreebles = new CapitalShipSurfaceGreebles(
-                    this.bounds.w / UNIT_SCALE,
-                    trenchHeightUnits,
-                    this.color,
-                    shipArchetype,
-                    'trench',
-                    true,
-                    true
-                );
-            }
         }
     
     draw(ctx: CanvasRenderingContext2D, rng: RNG) {
@@ -124,15 +100,7 @@ export class UnifiedTrunkComponent {
                         ctx.scale(UNIT_SCALE, UNIT_SCALE);
                         
                         this.greebles.draw(ctx, rng);
-                        
-                        // 5. Draw Trench (if exists)
-                        if (this.hasTrench && this.trenchGreebles) {
-                            ctx.save();
-                            ctx.translate(0, this.trenchY);
-                            this.trenchGreebles.draw(ctx, rng);
-                            ctx.restore();
-                        }
-                        
+
                         ctx.restore(); // Restore clip & transform from Step 4
                 
                         // 6. Lighting Overlay (Global Volume)

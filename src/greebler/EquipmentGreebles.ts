@@ -218,55 +218,57 @@ export class EquipmentTrenchGreebles implements Drawable {
 
     draw(context: CanvasRenderingContext2D, rng: RNG): void {
         context.save();
-        
-        const scale = 0.1;
-        const equipment = new EquipmentGreebles(this.xUnits / scale, this.trenchWidth, this.themeColor, Math.floor(this.trenchWidth * this.xUnits * 100));
-        
-        // Translate & Scale
-        context.translate(0, this.trenchYPosition - (this.trenchWidth * scale)/2);
-        context.scale(scale, scale);
-        
-        // Base fill for the trench
         const trenchX = 0;
-        // Swift code uses y = 0.05 for the rect.
-        const trenchY = 0.05; 
-        const trenchW = this.xUnits / scale;
+        const trenchY = this.trenchYPosition;
+        const trenchW = this.xUnits;
         const trenchH = this.trenchWidth;
 
+        if (trenchW <= 0 || trenchH <= 0) {
+            context.restore();
+            return;
+        }
+
+        // Base fill for the trench
         context.fillStyle = this.themeColor.withBrightness(-0.3).toRGBAString();
         context.fillRect(trenchX, trenchY, trenchW, trenchH);
-        
-        // Clip to trench area for equipment
+
+        // Clip to trench area for equipment and inner shadowing
         context.save();
         context.beginPath();
         context.rect(trenchX, trenchY, trenchW, trenchH);
         context.clip();
 
-        // Draw equipment inside the trench
-        equipment.draw(context, rng);
+        const detailScale = 0.1;
+        const equipmentCount = Math.floor(trenchW * trenchH * 1000);
+        if (equipmentCount > 0) {
+            const equipment = new EquipmentGreebles(
+                trenchW / detailScale,
+                trenchH / detailScale,
+                this.themeColor,
+                equipmentCount
+            );
+            context.save();
+            context.translate(trenchX, trenchY);
+            context.scale(detailScale, detailScale);
+            equipment.draw(context, rng);
+            context.restore();
+        }
 
-        // Inner Shadows to simulate depth
-        context.save();
-        context.shadowColor = 'rgba(0,0,0,1.0)'; // Darker shadow
-        context.shadowBlur = 15.0; // Much larger blur
-        context.fillStyle = 'black'; 
+        // Inset shading to match window panel recess
+        const shadeDepth = Math.min(0.05, trenchH * 0.3);
+        const gradTop = context.createLinearGradient(trenchX, trenchY, trenchX, trenchY + shadeDepth);
+        gradTop.addColorStop(0, 'rgba(0,0,0,0.8)');
+        gradTop.addColorStop(1, 'rgba(0,0,0,0)');
+        context.fillStyle = gradTop;
+        context.fillRect(trenchX, trenchY, trenchW, shadeDepth);
 
-        // Top Lip (Shadow Down)
-        context.save();
-        context.shadowOffsetY = 8.0; // Larger offset
-        context.fillRect(trenchX, trenchY - 10.0, trenchW, 10.0); // Move caster further up
-        context.restore();
+        const gradLeft = context.createLinearGradient(trenchX, trenchY, trenchX + shadeDepth, trenchY);
+        gradLeft.addColorStop(0, 'rgba(0,0,0,0.8)');
+        gradLeft.addColorStop(1, 'rgba(0,0,0,0)');
+        context.fillStyle = gradLeft;
+        context.fillRect(trenchX, trenchY, shadeDepth, trenchH);
 
-        // Bottom Lip (Shadow Up)
-        context.save();
-        context.shadowOffsetY = -8.0;
-        context.fillRect(trenchX, trenchY + trenchH, trenchW, 10.0); // Move caster further down
-        context.restore();
-
-        context.restore();
-        
         context.restore(); // End clip
-
         context.restore();
     }
 }

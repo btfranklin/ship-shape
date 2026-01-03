@@ -1,5 +1,6 @@
 import { HSBAColor, RNG } from './common.js';
 import type { Drawable } from './common.js';
+import { UNIT_SCALE } from './constants.js';
 import { PanelGreebles } from './PanelGreebles.js';
 import { PipeGreebles } from './PipeGreebles.js';
 import { LightPanelGreebles } from './LightPanelGreebles.js';
@@ -93,6 +94,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
 
         // Pick Archetype (Style)
         const style: GreebleStyle = this.determineStyle(this.shipArchetype, this.componentType, rng);
+        const isTrenchStyle = style === 'trench';
         
         let panelDensity = 8;
         let pipeRange = [2, 5];
@@ -108,6 +110,8 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         let electronicsRange = [1, 2];
         let windowChance = 0.0;
         let windowRange = [2, 6];
+        let trenchChance = 0.1;
+        let trenchHeightRange = [30 / UNIT_SCALE, 60 / UNIT_SCALE];
         
         let cutawayChance = 0.05; // Rare by default
 
@@ -174,6 +178,8 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 equipChance = 0.0;
                 hoseChance = 0.0;
                 electronicsChance = 0.0;
+                trenchChance = 1.0;
+                trenchHeightRange = [this.yUnits, this.yUnits];
                 cutawayChance = 0.0;
                 break;
         }
@@ -196,14 +202,36 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 ? CapitalShipWindowsGreebles.AMBER_LIGHT
                 : CapitalShipWindowsGreebles.BLUE_LIGHT;
 
-        // 2. Panels OR Trench - BASE LAYER
-        if (style === 'trench') {
-            // EquipmentTrenchGreebles has a hardcoded internal scale of 0.1. 
-            // To make it fill the component height (this.yUnits), we must pass a width scaled up by 10.
-            const trenchWidth = this.yUnits * 10;
-            const trench = new EquipmentTrenchGreebles(this.xUnits, this.yUnits, this.themeColor, this.yUnits / 2, trenchWidth);
-            trench.draw(context, rng);
-        } else {
+        const allowsTrench =
+            isTrenchStyle ||
+            (this.isTrunk &&
+                this.shipArchetype !== 'passenger' &&
+                this.yUnits * UNIT_SCALE > 150);
+        if (!allowsTrench) {
+            trenchChance = 0.0;
+        }
+
+        const hasTrench = allowsTrench && (isTrenchStyle || rng.bool(trenchChance));
+        let trenchHeight = 0;
+        let trenchY = 0;
+
+        if (hasTrench) {
+            if (isTrenchStyle) {
+                trenchHeight = this.yUnits;
+                trenchY = 0;
+            } else {
+                const maxHeight = Math.min(trenchHeightRange[1], this.yUnits);
+                const minHeight = Math.min(trenchHeightRange[0], maxHeight);
+                trenchHeight = minHeight === maxHeight ? minHeight : rng.range(minHeight, maxHeight);
+
+                const minY = this.yUnits * 0.2;
+                const maxY = Math.max(minY, this.yUnits * 0.8 - trenchHeight);
+                trenchY = rng.range(minY, maxY);
+            }
+        }
+
+        // 2. Panels - BASE LAYER
+        if (!isTrenchStyle) {
             const area = Math.max(0.5, this.xUnits * this.yUnits); // Ensure tiny components don't break
             const panelCount = Math.floor(Math.max(1, area * panelDensity));
             const showRivets = style === 'industrial' || style === 'dense' || (style === 'standard' && rng.bool(0.5));
@@ -235,32 +263,44 @@ export class CapitalShipSurfaceGreebles implements Drawable {
             windows.draw(context, rng);
         }
 
-        // 5. Cutaway Sections (Damage/Exposed Innards) - INSET LAYER
+        // 5. Trench (Inset access) - INSET LAYER
+        if (hasTrench) {
+            const trench = new EquipmentTrenchGreebles(
+                this.xUnits,
+                this.yUnits,
+                this.themeColor,
+                trenchY,
+                trenchHeight
+            );
+            trench.draw(context, rng);
+        }
+
+        // 6. Cutaway Sections (Damage/Exposed Innards) - INSET LAYER
         // Draws "into" the hull, so should be before raised elements.
         if (this.isTrunk && rng.bool(cutawayChance)) {
             const cutaways = new CutawaySectionGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(1, 2));
             cutaways.draw(context, rng);
         }
 
-        // 6. Equipment (Tech bits) - SURFACE LAYER
+        // 7. Equipment (Tech bits) - SURFACE LAYER
         if (rng.bool(equipChance)) {
             const equip = new EquipmentGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(equipRange[0], equipRange[1]));
             equip.draw(context, rng);
         }
         
-        // 7. Pipes (Infrastructure) - RAISED LAYER 1
+        // 8. Pipes (Infrastructure) - RAISED LAYER 1
         if (rng.bool(pipeChance)) {
             const pipes = new PipeGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(pipeRange[0], pipeRange[1]));
             pipes.draw(context, rng);
         }
 
-        // 8. Light Panels - OVERLAY
+        // 9. Light Panels - OVERLAY
         if (rng.bool(lightChance)) {
             const lights = new LightPanelGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(lightRange[0], lightRange[1]));
             lights.draw(context, rng);
         }
 
-        // 9. Hoses (Heavy connectors) - RAISED LAYER 2
+        // 10. Hoses (Heavy connectors) - RAISED LAYER 2
         if (rng.bool(hoseChance)) {
             const hoses = new HoseGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(hoseRange[0], hoseRange[1]), false);
             hoses.draw(context, rng);
