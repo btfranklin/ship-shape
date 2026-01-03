@@ -6,6 +6,7 @@ import { LightPanelGreebles } from './LightPanelGreebles.js';
 import { EquipmentGreebles, EquipmentTrenchGreebles } from './EquipmentGreebles.js';
 import { HoseGreebles } from './HoseGreebles.js';
 import { ElectronicsPanelGreebles } from './ElectronicsPanelGreebles.js';
+import { CapitalShipWindowsGreebles } from './CapitalShipWindowsGreebles.js';
 import { CutawaySectionGreebles } from './CutawaySectionGreebles.js';
 import { ShipArchetype, ComponentType } from '../ship-shape/shipTypes.js';
 
@@ -41,7 +42,10 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 if (compType === 'hull') return this.isTrunk ? 'industrial' : 'standard';
                 if (compType === 'storage') return 'industrial';
                 if (compType === 'engine') return 'industrial';
-                if (compType === 'tower') return rng.bool(0.25) ? 'tech' : 'standard';
+                if (compType === 'tower') {
+                    if (rng.bool(0.25)) return 'tech';
+                    return rng.bool(0.4) ? 'clean' : 'standard';
+                }
                 return 'standard'; 
                 
             case 'combat':
@@ -52,7 +56,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 
             case 'freight':
                 if (compType === 'storage') return 'clean'; // Containers
-                if (compType === 'hull') return 'standard';
+                if (compType === 'hull') return rng.bool(0.4) ? 'clean' : 'standard';
                 return 'standard';
                 
             case 'passenger':
@@ -102,6 +106,8 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         let hoseRange = [1, 2];
         let electronicsChance = 0.0;
         let electronicsRange = [1, 2];
+        let windowChance = 0.0;
+        let windowRange = [2, 6];
         
         let cutawayChance = 0.05; // Rare by default
 
@@ -131,12 +137,13 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 break;
             case 'clean':
                 panelDensity = 4;
-                pipeChance = 0.1;
+                pipeChance = 0.0;
                 lightRange = [1, 2];
                 lightChance = 0.4;
                 equipChance = 0.0;
                 hoseChance = 0.0;
                 electronicsChance = 0.08;
+                windowChance = 0.6;
                 cutawayChance = 0.0;
                 break;
             case 'dense':
@@ -180,6 +187,15 @@ export class CapitalShipSurfaceGreebles implements Drawable {
             electronicsChance = 0.0;
         }
 
+        const allowsWindows =
+            style === 'clean' &&
+            (this.componentType === 'hull' || this.componentType === 'tower');
+        const hasWindows = allowsWindows && rng.bool(windowChance);
+        const windowColor =
+            this.shipArchetype === 'industry'
+                ? CapitalShipWindowsGreebles.AMBER_LIGHT
+                : CapitalShipWindowsGreebles.BLUE_LIGHT;
+
         // 2. Panels OR Trench - BASE LAYER
         if (style === 'trench') {
             // EquipmentTrenchGreebles has a hardcoded internal scale of 0.1. 
@@ -196,14 +212,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
             panels.draw(context, rng);
         }
         
-        // 3. Cutaway Sections (Damage/Exposed Innards) - INSET LAYER
-        // Draws "into" the hull, so should be before raised elements.
-        if (this.isTrunk && rng.bool(cutawayChance)) {
-            const cutaways = new CutawaySectionGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(1, 2));
-            cutaways.draw(context, rng);
-        }
-
-        // 4. Electronics Panels (Tech hardware) - INSET SURFACE LAYER
+        // 3. Electronics Panels (Tech hardware) - INSET SURFACE LAYER
         if (rng.bool(electronicsChance)) {
             const boxes = new ElectronicsPanelGreebles(
                 this.xUnits,
@@ -214,25 +223,44 @@ export class CapitalShipSurfaceGreebles implements Drawable {
             boxes.draw(context, rng);
         }
 
-        // 5. Equipment (Tech bits) - SURFACE LAYER
+        // 4. Windows (Passenger rows) - INSET SURFACE LAYER
+        if (hasWindows) {
+            const windows = new CapitalShipWindowsGreebles(
+                this.xUnits,
+                this.yUnits,
+                this.themeColor,
+                rng.intRange(windowRange[0], windowRange[1]),
+                windowColor
+            );
+            windows.draw(context, rng);
+        }
+
+        // 5. Cutaway Sections (Damage/Exposed Innards) - INSET LAYER
+        // Draws "into" the hull, so should be before raised elements.
+        if (this.isTrunk && rng.bool(cutawayChance)) {
+            const cutaways = new CutawaySectionGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(1, 2));
+            cutaways.draw(context, rng);
+        }
+
+        // 6. Equipment (Tech bits) - SURFACE LAYER
         if (rng.bool(equipChance)) {
             const equip = new EquipmentGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(equipRange[0], equipRange[1]));
             equip.draw(context, rng);
         }
         
-        // 6. Pipes (Infrastructure) - RAISED LAYER 1
+        // 7. Pipes (Infrastructure) - RAISED LAYER 1
         if (rng.bool(pipeChance)) {
             const pipes = new PipeGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(pipeRange[0], pipeRange[1]));
             pipes.draw(context, rng);
         }
 
-        // 7. Light Panels - OVERLAY
+        // 8. Light Panels - OVERLAY
         if (rng.bool(lightChance)) {
             const lights = new LightPanelGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(lightRange[0], lightRange[1]));
             lights.draw(context, rng);
         }
 
-        // 8. Hoses (Heavy connectors) - RAISED LAYER 2
+        // 9. Hoses (Heavy connectors) - RAISED LAYER 2
         if (rng.bool(hoseChance)) {
             const hoses = new HoseGreebles(this.xUnits, this.yUnits, this.themeColor, rng.intRange(hoseRange[0], hoseRange[1]), false);
             hoses.draw(context, rng);
