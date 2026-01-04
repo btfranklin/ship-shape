@@ -1,6 +1,6 @@
-import { HSBAColor, RNG } from '../greebler/common.js';
+import { HSBAColor, RNG } from '../greebles/common.js';
 import { ShipComponent } from './ShipComponent.js';
-import { CapitalShipSurfaceGreebles } from '../greebler/CapitalShipSurfaceGreebles.js';
+import { CapitalShipSurfaceGreebles } from '../greebles/CapitalShipSurfaceGreebles.js';
 import { UnifiedTrunkComponent } from './UnifiedTrunkComponent.js';
 import { ShipArchetype, ComponentType } from './shipTypes.js';
 

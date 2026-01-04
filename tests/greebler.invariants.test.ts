@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { RNG, HSBAColor, setPath2D } from '../src/greebler/common.js';
+import { RNG, HSBAColor, setPath2D } from '../src/greebles/common.js';
 import {
   PanelGreebles,
   PipeGreebles,
@@ -13,7 +13,7 @@ import {
   CutawaySectionGreebles,
   CapitalShipSurfaceGreebles,
   EquipmentTrenchGreebles,
-} from '../src/greebler/index.js';
+} from '../src/greebles/index.js';
 import { createTestContext, FakePath2D } from './test-helpers.js';
 
 setPath2D(FakePath2D as unknown as typeof Path2D);
@@ -30,7 +30,7 @@ function withContext(fn: (ctx: CanvasRenderingContext2D, rng: RNG) => void) {
   ctx.restore();
 }
 
-test('greeblers draw without throwing', () => {
+test('greebles draw without throwing', () => {
   assert.doesNotThrow(() => {
     withContext((ctx, rng) => {
       new PanelGreebles(1, 1, THEME, 8, true).draw(ctx, rng);

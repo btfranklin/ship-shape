@@ -1,4 +1,4 @@
-import { RNG } from '../../greebler/common.js';
+import { RNG } from '../../greebles/common.js';
 import { ShipComponent } from '../ShipComponent.js';
 
 export interface ComponentRenderer {

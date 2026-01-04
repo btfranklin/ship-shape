@@ -1,7 +1,7 @@
-import { HSBAColor, RNG, getPath2D } from '../greebler/common.js';
-import { UNIT_SCALE } from '../greebler/constants.js';
+import { HSBAColor, RNG, getPath2D } from '../greebles/common.js';
+import { UNIT_SCALE } from '../greebles/constants.js';
 import { ShipComponent } from './ShipComponent.js';
-import { CapitalShipSurfaceGreebles } from '../greebler/CapitalShipSurfaceGreebles.js';
+import { CapitalShipSurfaceGreebles } from '../greebles/CapitalShipSurfaceGreebles.js';
 
 export class UnifiedTrunkComponent {
         public bounds: { x: number, y: number, w: number, h: number };

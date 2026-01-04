@@ -1,13 +1,13 @@
-import { HSBAColor, RNG } from '../src/greebler/common.js';
-import { PanelGreebles } from '../src/greebler/PanelGreebles.js';
-import { PipeGreebles } from '../src/greebler/PipeGreebles.js';
-import { LightPanelGreebles } from '../src/greebler/LightPanelGreebles.js';
-import { CapitalShipWindowsGreebles } from '../src/greebler/CapitalShipWindowsGreebles.js';
-import { EquipmentGreebles, EquipmentTrenchGreebles } from '../src/greebler/EquipmentGreebles.js';
-import { HoseGreebles } from '../src/greebler/HoseGreebles.js';
-import { WireGreebles } from '../src/greebler/WireGreebles.js';
-import { CutawaySectionGreebles } from '../src/greebler/CutawaySectionGreebles.js';
-import { ElectronicsPanelGreebles } from '../src/greebler/ElectronicsPanelGreebles.js';
+import { HSBAColor, RNG } from '../src/greebles/common.js';
+import { PanelGreebles } from '../src/greebles/PanelGreebles.js';
+import { PipeGreebles } from '../src/greebles/PipeGreebles.js';
+import { LightPanelGreebles } from '../src/greebles/LightPanelGreebles.js';
+import { CapitalShipWindowsGreebles } from '../src/greebles/CapitalShipWindowsGreebles.js';
+import { EquipmentGreebles, EquipmentTrenchGreebles } from '../src/greebles/EquipmentGreebles.js';
+import { HoseGreebles } from '../src/greebles/HoseGreebles.js';
+import { WireGreebles } from '../src/greebles/WireGreebles.js';
+import { CutawaySectionGreebles } from '../src/greebles/CutawaySectionGreebles.js';
+import { ElectronicsPanelGreebles } from '../src/greebles/ElectronicsPanelGreebles.js';
 
 const grid = document.getElementById('grid') as HTMLDivElement;
 const refreshBtn = document.getElementById('refreshBtn') as HTMLButtonElement;

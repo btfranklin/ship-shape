@@ -13,7 +13,7 @@ Greebles expect normalized units. Most generators assume `xUnits` and `yUnits`
 are in a 0..1 space, then rely on the caller to scale the context:
 
 ```ts
-import { RNG, HSBAColor, PanelGreebles } from './src/greebler/index.js';
+import { RNG, HSBAColor, PanelGreebles } from './src/greebles/index.js';
 
 const rng = new RNG(123);
 const theme = HSBAColor.fromRGBA(150, 155, 160);
@@ -30,7 +30,7 @@ These generators use `Path2D`. In Node, you must provide a `Path2D`
 implementation before rendering:
 
 ```ts
-import { setPath2D } from './src/greebler/common.js';
+import { setPath2D } from './src/greebles/common.js';
 import { Path2D } from 'canvas';
 
 setPath2D(Path2D);
@@ -38,7 +38,7 @@ setPath2D(Path2D);
 
 ## Key Exports
 
-- `RNG` and `HSBAColor` from `src/greebler/common.ts`
+- `RNG` and `HSBAColor` from `src/greebles/common.ts`
 - Surface detail: `PanelGreebles`, `PipeGreebles`, `LightPanelGreebles`,
   `CapitalShipWindowsGreebles`, `EquipmentGreebles`, `HoseGreebles`,
   `WireGreebles`, `CutawaySectionGreebles`

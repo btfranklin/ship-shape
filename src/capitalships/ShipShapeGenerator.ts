@@ -1,4 +1,4 @@
-import { RNG } from '../greebler/common.js';
+import { RNG } from '../greebles/common.js';
 
 export interface Point { x: number; y: number; }
 

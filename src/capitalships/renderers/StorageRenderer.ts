@@ -1,6 +1,6 @@
 import { ShipComponent } from '../ShipComponent.js';
 import { ComponentRenderer } from './ComponentRenderer.js';
-import { HSBAColor, RNG, getPath2D } from '../../greebler/common.js';
+import { HSBAColor, RNG, getPath2D } from '../../greebles/common.js';
 
 export class StorageRenderer implements ComponentRenderer {
     generateShape(component: ShipComponent, rng: RNG): void {

@@ -1,7 +1,7 @@
 import { createCanvas } from 'canvas';
 import fs from 'fs';
-import { RNG, HSBAColor, CapitalShipSurfaceGreebles, CapitalShipWindowsGreebles, EquipmentTrenchGreebles } from './greebler/index.js';
-import { ShipShapeGenerator } from './ship-shape/index.js';
+import { RNG, HSBAColor, CapitalShipSurfaceGreebles, CapitalShipWindowsGreebles, EquipmentTrenchGreebles } from './greebles/index.js';
+import { ShipShapeGenerator } from './capitalships/index.js';
 
 const { createWriteStream } = fs;
 

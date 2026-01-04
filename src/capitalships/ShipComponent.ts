@@ -1,6 +1,6 @@
-import { HSBAColor, RNG } from '../greebler/common.js';
-import { UNIT_SCALE } from '../greebler/constants.js';
-import { CapitalShipSurfaceGreebles } from '../greebler/CapitalShipSurfaceGreebles.js';
+import { HSBAColor, RNG } from '../greebles/common.js';
+import { UNIT_SCALE } from '../greebles/constants.js';
+import { CapitalShipSurfaceGreebles } from '../greebles/CapitalShipSurfaceGreebles.js';
 import { ComponentRenderer } from './renderers/ComponentRenderer.js';
 import { StandardComponentRenderer } from './renderers/StandardComponentRenderer.js';
 import { EngineRenderer } from './renderers/EngineRenderer.js';

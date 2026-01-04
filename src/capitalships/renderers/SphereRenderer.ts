@@ -1,10 +1,10 @@
-import { RNG, getPath2D } from '../../greebler/common.js';
-import { UNIT_SCALE } from '../../greebler/constants.js';
+import { RNG, getPath2D } from '../../greebles/common.js';
+import { UNIT_SCALE } from '../../greebles/constants.js';
 import { ShipComponent } from '../ShipComponent.js';
 import { ComponentRenderer } from './ComponentRenderer.js';
-import { SphereWindowsGreebles } from '../../greebler/SphereWindowsGreebles.js';
-import { SphereLightGreebles } from '../../greebler/SphereLightGreebles.js';
-import { CapitalShipWindowsGreebles } from '../../greebler/CapitalShipWindowsGreebles.js';
+import { SphereWindowsGreebles } from '../../greebles/SphereWindowsGreebles.js';
+import { SphereLightGreebles } from '../../greebles/SphereLightGreebles.js';
+import { CapitalShipWindowsGreebles } from '../../greebles/CapitalShipWindowsGreebles.js';
 
 export class SphereRenderer implements ComponentRenderer {
     generateShape(component: ShipComponent, rng: RNG): void {

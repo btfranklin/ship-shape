@@ -1,14 +1,14 @@
 # Ship Shape
 
-Procedural ship generator built on top of the greebler surface library. It
+Procedural ship generator built on top of the greebles surface library. It
 creates ship components, orders them by z-index, and renders them into a Canvas
 2D context.
 
 ## Quick Start (Browser)
 
 ```ts
-import { RNG, HSBAColor } from './src/greebler/index.js';
-import { CompositeShipGenerator } from './src/ship-shape/index.js';
+import { RNG, HSBAColor } from './src/greebles/index.js';
+import { CompositeShipGenerator } from './src/capitalships/index.js';
 
 const rng = new RNG(12345);
 const theme = new HSBAColor(0.6, 0.1, 0.6);
@@ -34,7 +34,7 @@ The renderers use `Path2D`. In Node, set a `Path2D` implementation before
 rendering:
 
 ```ts
-import { setPath2D } from './src/greebler/common.js';
+import { setPath2D } from './src/greebles/common.js';
 import { Path2D } from 'canvas';
 
 setPath2D(Path2D);
@@ -44,7 +44,7 @@ setPath2D(Path2D);
 
 - `CompositeShipGenerator.generate(...)` returns a mix of `ShipComponent` and
   `UnifiedTrunkComponent`. Both have `draw(ctx, rng)` methods.
-- `ShipComponent` types are defined in `src/ship-shape/shipTypes.ts` and include
+- `ShipComponent` types are defined in `src/capitalships/shipTypes.ts` and include
   `hull`, `engine`, `weapon`, `sensor`, `storage`, `sphere`, `ring`, `trench`,
   and `tower`.
 - `UnifiedTrunkComponent` merges multiple trunk hulls into a single silhouette

@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { RNG, HSBAColor, setPath2D } from '../src/greebler/common.js';
-import { CompositeShipGenerator } from '../src/ship-shape/CompositeShipGenerator.js';
-import { UnifiedTrunkComponent } from '../src/ship-shape/UnifiedTrunkComponent.js';
-import type { ShipArchetype } from '../src/ship-shape/shipTypes.js';
+import { RNG, HSBAColor, setPath2D } from '../src/greebles/common.js';
+import { CompositeShipGenerator } from '../src/capitalships/CompositeShipGenerator.js';
+import { UnifiedTrunkComponent } from '../src/capitalships/UnifiedTrunkComponent.js';
+import type { ShipArchetype } from '../src/capitalships/shipTypes.js';
 import { createTestContext, FakePath2D } from './test-helpers.js';
 
 setPath2D(FakePath2D as unknown as typeof Path2D);

@@ -1,6 +1,6 @@
-import { HSBAColor, RNG } from '../src/greebler/common.js';
-import { ShipComponent } from '../src/ship-shape/ShipComponent.js';
-import { ComponentType, ShipArchetype } from '../src/ship-shape/shipTypes.js';
+import { HSBAColor, RNG } from '../src/greebles/common.js';
+import { ShipComponent } from '../src/capitalships/ShipComponent.js';
+import { ComponentType, ShipArchetype } from '../src/capitalships/shipTypes.js';
 
 // Definition of Types
 interface TypeDef {

@@ -1,8 +1,8 @@
-import { HSBAColor, RNG, CapitalShipSurfaceGreebles, CapitalShipWindowsGreebles, EquipmentTrenchGreebles } from '../src/greebler/index.js';
-import { ShipShapeGenerator, CompositeShipGenerator } from '../src/ship-shape/index.js';
-import { PanelGreebles, PipeGreebles, LightPanelGreebles } from '../src/greebler/index.js';
-import { ShipArchetype } from '../src/ship-shape/shipTypes.js';
-import { UnifiedTrunkComponent } from '../src/ship-shape/UnifiedTrunkComponent.js';
+import { HSBAColor, RNG, CapitalShipSurfaceGreebles, CapitalShipWindowsGreebles, EquipmentTrenchGreebles } from '../src/greebles/index.js';
+import { ShipShapeGenerator, CompositeShipGenerator } from '../src/capitalships/index.js';
+import { PanelGreebles, PipeGreebles, LightPanelGreebles } from '../src/greebles/index.js';
+import { ShipArchetype } from '../src/capitalships/shipTypes.js';
+import { UnifiedTrunkComponent } from '../src/capitalships/UnifiedTrunkComponent.js';
 
 console.log('Greebler Playground Loaded');
 
