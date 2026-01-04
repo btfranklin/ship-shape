@@ -16,6 +16,10 @@
         button { padding: 10px; cursor: pointer; background: #444; color: #fff; border: 1px solid #555; border-radius: 4px; }
         button:hover { background: #555; }
         h2 { margin-top: 0; font-size: 1.2em; }
+        .label-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .label-row label { margin-bottom: 0; }
+        button.icon-button { width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+        button.icon-button svg { width: 16px; height: 16px; fill: currentColor; }
     </style>
 </head>
 <body>
@@ -35,7 +39,14 @@
         </div>
         
         <div class="control-group">
-            <label>Base Color (Hue)</label>
+            <div class="label-row">
+                <label for="hueInput">Base Color (Hue)</label>
+                <button id="hueRefreshBtn" class="icon-button" type="button" aria-label="Refresh ship color">
+                    <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+                        <path d="M3 12a9 9 0 0 1 15.5-6.4L21 3v6h-6l2.2-2.2A7 7 0 1 0 19 12h2a9 9 0 0 1-18 0z"></path>
+                    </svg>
+                </button>
+            </div>
             <input type="range" id="hueInput" min="0" max="360" value="200">
         </div>
 

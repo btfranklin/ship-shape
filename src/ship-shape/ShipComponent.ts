@@ -32,6 +32,7 @@ export class ShipComponent {
     public shipCenterY?: number;
     public shipCenterX?: number;
     public customData: Record<string, any> = {};
+    public lightColors: HSBAColor[];
     
     private renderer: ComponentRenderer;
 
@@ -50,7 +51,8 @@ export class ShipComponent {
         invertLighting: boolean = false,
         forcedEngineStyle?: 'standard' | 'radiator' | 'energy',
         shipCenterY?: number,
-        shipCenterX?: number
+        shipCenterX?: number,
+        lightColors?: HSBAColor[]
     ) {
         this.bounds = { x, y, w, h };
         this.zIndex = zIndex;
@@ -62,6 +64,7 @@ export class ShipComponent {
         this.invertLighting = invertLighting;
         this.shipCenterY = shipCenterY;
         this.shipCenterX = shipCenterX;
+        this.lightColors = lightColors ?? [HSBAColor.fromRGBA(0, 255, 0)];
 
         // Select Renderer
         switch (type) {
@@ -121,7 +124,8 @@ export class ShipComponent {
             shipArchetype, 
             type, 
             skipBaseFill, 
-            isTrunk
+            isTrunk,
+            this.lightColors
         );
     }
 

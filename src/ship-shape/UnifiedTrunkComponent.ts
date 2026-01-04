@@ -9,9 +9,11 @@ export class UnifiedTrunkComponent {
         public greebles: CapitalShipSurfaceGreebles;
         public components: ShipComponent[];
         public color: HSBAColor;
+        public lightColors: HSBAColor[];
     
         constructor(components: ShipComponent[], rng: RNG) {
             this.components = components;
+            this.lightColors = components[0].lightColors;
             
             // 1. Calculate Union Bounds
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -45,7 +47,8 @@ export class UnifiedTrunkComponent {
                 shipArchetype,
                 'hull',
                 true,
-                true
+                true,
+                this.lightColors
             );
     
         }

@@ -9,3 +9,5 @@ export * from './PipeGreebles.js';
 export * from './HoseGreebles.js';
 export * from './WireGreebles.js';
 export * from './CutawaySectionGreebles.js';
+export * from './SphereWindowsGreebles.js';
+export * from './SphereLightGreebles.js';

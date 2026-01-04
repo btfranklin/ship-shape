@@ -40,7 +40,8 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         public shipArchetype: ShipArchetype,
         public componentType: ComponentType,
         public skipBaseFill: boolean = false,
-        public isTrunk: boolean = false
+        public isTrunk: boolean = false,
+        public lightColors?: HSBAColor[]
     ) {}
 
     private determineStyle(shipArch: ShipArchetype, compType: ComponentType, rng: RNG): GreebleStyle {
@@ -285,12 +286,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         if (rng.bool(lightChance)) {
             const panelCount = rng.intRange(lightRange[0], lightRange[1]);
             if (skipEmissive && this.emissivePlan) {
-                const lightColors = new LightPanelGreebles(
-                    this.xUnits,
-                    this.yUnits,
-                    this.themeColor,
-                    1
-                ).lightColors;
+                const lightColors = this.lightColors ?? [HSBAColor.fromRGBA(0, 255, 0)];
                 const seeds: number[] = [];
                 for (let i = 0; i < panelCount; i++) {
                     const seed = nextSeed();
@@ -306,7 +302,13 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 }
                 this.emissivePlan.lightPanels = { seeds, colors: lightColors };
             } else {
-                const panels = new LightPanelGreebles(this.xUnits, this.yUnits, this.themeColor, panelCount);
+                const panels = new LightPanelGreebles(
+                    this.xUnits,
+                    this.yUnits,
+                    this.themeColor,
+                    panelCount,
+                    this.lightColors
+                );
                 panels.draw(context, rng);
             }
         }

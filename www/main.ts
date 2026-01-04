@@ -20,6 +20,7 @@ const generateBtn = document.getElementById('generateBtn') as HTMLButtonElement;
 const modeSelect = document.getElementById('modeSelect') as HTMLSelectElement;
 const archetypeSelect = document.getElementById('archetypeSelect') as HTMLSelectElement;
 const hueInput = document.getElementById('hueInput') as HTMLInputElement;
+const hueRefreshBtn = document.getElementById('hueRefreshBtn') as HTMLButtonElement;
 const rainbowCheck = document.getElementById('rainbowCheck') as HTMLInputElement;
 
 // State
@@ -175,6 +176,7 @@ function renderFullShip(rng: RNG, theme: HSBAColor) {
 modeSelect.addEventListener('change', () => { updateUI(); generate(); });
 archetypeSelect.addEventListener('change', () => { generate(); });
 generateBtn.addEventListener('click', generate);
+hueRefreshBtn.addEventListener('click', generate);
 if (rainbowCheck) {
     rainbowCheck.addEventListener('change', generate);
 }

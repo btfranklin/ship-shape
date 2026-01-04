@@ -18,6 +18,7 @@ export class CompositeShipGenerator {
         
         // Pick Random Archetype if not provided
         const archetype: ShipArchetype = shipArchetype ?? rng.choice(['freight', 'science', 'industry', 'passenger', 'combat']);
+        const lightColors = this.createLightColors(rng);
 
         // 1. Create Root (Engine Block)
         let engineStyle: 'standard' | 'radiator' | 'energy' = 'standard';
@@ -53,14 +54,16 @@ export class CompositeShipGenerator {
             false,
             false,
             engineStyle,
-            centerY
+            centerY,
+            undefined,
+            lightColors
         );
         rootComp.generateShape(rng);
 
         const rootNode: ShipNode = { component: rootComp, children: [] };
 
         // 2. Grow the Tree
-        this.grow(rootNode, 0, 20, width, scaleH, themeColor, rng, archetype, centerY);
+        this.grow(rootNode, 0, 20, width, scaleH, themeColor, rng, archetype, centerY, lightColors);
 
         // Post-process engine
         const firstHullNode = rootNode.children.find(child => child.component.type === 'hull' && child.component.isTrunk);
@@ -90,7 +93,7 @@ export class CompositeShipGenerator {
         }
 
         // 3. Add Global Storage Details (Spanning multiple sections)
-        this.addGlobalStorage(rootNode, themeColor, rng, archetype, centerY);
+        this.addGlobalStorage(rootNode, themeColor, rng, archetype, centerY, lightColors);
 
         // 4. Traverse Post-Order
         const drawList: ShipComponent[] = [];
@@ -142,7 +145,9 @@ export class CompositeShipGenerator {
                         false,
                         false,
                         undefined,
-                        centerY
+                        centerY,
+                        undefined,
+                        lightColors
                     );
                     ringComp.generateShape(rng);
                     finalComponents.push(ringComp);
@@ -156,7 +161,7 @@ export class CompositeShipGenerator {
         return finalComponents;
     }
 
-    private grow(node: ShipNode, depth: number, maxDepth: number, totalW: number, totalH: number, theme: HSBAColor, rng: RNG, archetype: ShipArchetype, shipCenterY: number) {
+    private grow(node: ShipNode, depth: number, maxDepth: number, totalW: number, totalH: number, theme: HSBAColor, rng: RNG, archetype: ShipArchetype, shipCenterY: number, lightColors: HSBAColor[]) {
         if (depth >= maxDepth) return;
 
         const parentComp = node.component;
@@ -218,7 +223,9 @@ export class CompositeShipGenerator {
                     true, // isTrunk
                     false,
                     undefined,
-                    shipCenterY
+                    shipCenterY,
+                    undefined,
+                    lightColors
                 );
                 childComp.generateShape(rng);
                 
@@ -226,12 +233,12 @@ export class CompositeShipGenerator {
                 node.children.push(childNode);
                 grownForward = true;
                 
-                this.grow(childNode, depth + 1, maxDepth, totalW, totalH, theme, rng, archetype, shipCenterY);
+                this.grow(childNode, depth + 1, maxDepth, totalW, totalH, theme, rng, archetype, shipCenterY, lightColors);
             }
         }
 
         if (!grownForward && (parentComp.type === 'hull' || parentComp.type === 'engine')) {
-            this.addNose(node, totalW, totalH, theme, rng, archetype, shipCenterY);
+            this.addNose(node, totalW, totalH, theme, rng, archetype, shipCenterY, lightColors);
         }
 
         // 2. Branch Up (Towers/Sensors/Weapons)
@@ -304,7 +311,9 @@ export class CompositeShipGenerator {
                 false,
                 false,
                 undefined,
-                shipCenterY
+                shipCenterY,
+                undefined,
+                lightColors
             );
             
             if (type === 'weapon' && x < totalW / 3) {
@@ -317,7 +326,7 @@ export class CompositeShipGenerator {
             node.children.push(childNode);
             
             if (type === 'tower') {
-                this.grow(childNode, depth + 1, maxDepth, totalW, totalH, theme, rng, archetype, shipCenterY);
+                this.grow(childNode, depth + 1, maxDepth, totalW, totalH, theme, rng, archetype, shipCenterY, lightColors);
             }
         }
 
@@ -381,7 +390,9 @@ export class CompositeShipGenerator {
                 false,
                 true, // invertLighting
                 undefined,
-                shipCenterY
+                shipCenterY,
+                undefined,
+                lightColors
             );
             
             if (type === 'weapon' && x < totalW / 3) {
@@ -415,7 +426,9 @@ export class CompositeShipGenerator {
                 false,
                 false,
                 undefined,
-                shipCenterY
+                shipCenterY,
+                undefined,
+                lightColors
             );
             
             if (x < totalW / 3) {
@@ -427,7 +440,7 @@ export class CompositeShipGenerator {
         }
     }
 
-    private addNose(node: ShipNode, totalW: number, totalH: number, theme: HSBAColor, rng: RNG, archetype: ShipArchetype, shipCenterY: number) {
+    private addNose(node: ShipNode, totalW: number, totalH: number, theme: HSBAColor, rng: RNG, archetype: ShipArchetype, shipCenterY: number, lightColors: HSBAColor[]) {
         const parent = node.component;
         const pBounds = parent.bounds;
         const overlap = pBounds.w * 0.1;
@@ -456,7 +469,7 @@ export class CompositeShipGenerator {
             const h = pBounds.h * 0.9; 
             const y = pBounds.y + (pBounds.h - h)/2;
             
-            const nose = new ShipComponent(startX, y, w, h, parent.zIndex - 1, 'hull', theme, rng, archetype, 'taper-front', true, false, undefined, shipCenterY); 
+            const nose = new ShipComponent(startX, y, w, h, parent.zIndex - 1, 'hull', theme, rng, archetype, 'taper-front', true, false, undefined, shipCenterY, undefined, lightColors); 
             nose.generateShape(rng);
             node.children.push({ component: nose, children: [] });
             
@@ -469,7 +482,7 @@ export class CompositeShipGenerator {
             const sensorOverlap = pBounds.w * 0.05; 
             const x = currentRight - sensorOverlap; 
             
-            const nose = new ShipComponent(x, y, w, h, parent.zIndex - 1, 'sensor', theme, rng, archetype, 'front', false, false, undefined, shipCenterY);
+            const nose = new ShipComponent(x, y, w, h, parent.zIndex - 1, 'sensor', theme, rng, archetype, 'front', false, false, undefined, shipCenterY, undefined, lightColors);
             nose.generateShape(rng);
             node.children.push({ component: nose, children: [] });
 
@@ -489,13 +502,13 @@ export class CompositeShipGenerator {
             const y = pBounds.y + pBounds.h/2 - s/2;
             const sphereX = currentRight - s * 0.5; 
             
-            const nose = new ShipComponent(sphereX, y, s, s, parent.zIndex - 1, 'sphere', theme, rng, archetype, 'default', false, false, undefined, shipCenterY);
+            const nose = new ShipComponent(sphereX, y, s, s, parent.zIndex - 1, 'sphere', theme, rng, archetype, 'nose', false, false, undefined, shipCenterY, undefined, lightColors);
             nose.generateShape(rng);
             node.children.push({ component: nose, children: [] });
         }
     }
 
-    private addGlobalStorage(root: ShipNode, theme: HSBAColor, rng: RNG, archetype: ShipArchetype, shipCenterY: number) {
+    private addGlobalStorage(root: ShipNode, theme: HSBAColor, rng: RNG, archetype: ShipArchetype, shipCenterY: number, lightColors: HSBAColor[]) {
         const trunkHulls: ShipComponent[] = [];
         const collect = (node: ShipNode) => {
             if (node.component.type === 'hull' && node.component.isTrunk) {
@@ -596,14 +609,15 @@ export class CompositeShipGenerator {
                             (rowIndex - (rowCount - 1) / 2) * (storageH + rowGap);
                         const y = baseY + offset;
                         if (y < minY || y + storageH > maxY) continue;
-                        this.createStorageLoop(root, count, startX, y, storageW, storageH, gap, 
-                            500, 
-                            theme.withBrightness(0.05), 
-                            rng, archetype, 
-                            variant, 
-                            false, 
-                            shipCenterY
-                        );
+                    this.createStorageLoop(root, count, startX, y, storageW, storageH, gap, 
+                        500, 
+                        theme.withBrightness(0.05), 
+                        rng, archetype, 
+                        variant, 
+                        false, 
+                        shipCenterY,
+                        lightColors
+                    );
                     }
                     
                 } else {
@@ -633,7 +647,8 @@ export class CompositeShipGenerator {
                         rng, archetype,
                         'liquid', 
                         true, 
-                        shipCenterY
+                        shipCenterY,
+                        lightColors
                     );
                 }
 
@@ -644,7 +659,7 @@ export class CompositeShipGenerator {
         }
     }
 
-    private createStorageLoop(root: ShipNode, count: number, startX: number, y: number, w: number, h: number, gap: number, zIndex: number, color: HSBAColor, rng: RNG, archetype: ShipArchetype, variant: string, isEdge: boolean, shipCenterY: number) {
+    private createStorageLoop(root: ShipNode, count: number, startX: number, y: number, w: number, h: number, gap: number, zIndex: number, color: HSBAColor, rng: RNG, archetype: ShipArchetype, variant: string, isEdge: boolean, shipCenterY: number, lightColors: HSBAColor[]) {
         const sharedBands = rng.intRange(1, 3);
         let firstStorageGreebles: CapitalShipSurfaceGreebles | undefined;
         
@@ -662,7 +677,9 @@ export class CompositeShipGenerator {
                 false,
                 isEdge && y > shipCenterY,
                 undefined,
-                isEdge ? shipCenterY : undefined
+                isEdge ? shipCenterY : undefined,
+                undefined,
+                lightColors
             );
 
             storage.customData.bands = sharedBands;
@@ -673,6 +690,27 @@ export class CompositeShipGenerator {
             storage.generateShape(rng);
             root.children.push({ component: storage, children: [] });
         }
+    }
+
+    private createLightColors(rng: RNG): HSBAColor[] {
+        const baseHue = rng.range(0, 1);
+        const baseSat = rng.range(0.6, 1.0);
+        const baseBright = rng.range(0.75, 1.0);
+        const base = new HSBAColor(baseHue, baseSat, baseBright);
+        const useMultiple = rng.bool(0.35);
+        if (!useMultiple) return [base];
+
+        const count = rng.bool(0.65) ? 2 : 3;
+        const colors = [base];
+        const hueOffsets = [0.08, 0.12, 0.18];
+        for (let i = 1; i < count; i++) {
+            const offset = rng.choice(hueOffsets) * (rng.bool() ? 1 : -1);
+            const hue = (baseHue + offset + 1) % 1;
+            const sat = Math.max(0.4, Math.min(1, baseSat + rng.range(-0.2, 0.2)));
+            const bright = Math.max(0.6, Math.min(1, baseBright + rng.range(-0.15, 0.1)));
+            colors.push(new HSBAColor(hue, sat, bright));
+        }
+        return colors;
     }
 
     private traversePostOrder(node: ShipNode, callback: (c: ShipComponent) => void) {
