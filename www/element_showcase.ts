@@ -107,6 +107,16 @@ const types: TypeDef[] = [
         allowedArchetypes: ['freight', 'industry']
     },
     {
+        type: 'storage',
+        variant: 'sphere',
+        desc: "Gas Storage (Spherical Tanks).",
+        greebles: [
+            "Shape: Sphere tank",
+            "Shading: Spherical highlight"
+        ],
+        allowedArchetypes: ['freight', 'industry']
+    },
+    {
         type: 'weapon',
         desc: "Side-View Turrets (Top/Bottom Mount).",
         greebles: [
@@ -253,7 +263,9 @@ function render() {
                     w = 120; h = 60;
                 }
             } else if (def.type === 'storage') {
-                if (def.variant && def.variant.includes('vertical')) {
+                if (def.variant && def.variant.includes('sphere')) {
+                    w = 140; h = 140;
+                } else if (def.variant && def.variant.includes('vertical')) {
                     w = 80; h = 160;
                 } else if (def.variant && def.variant.includes('goods')) {
                     if (def.variant.includes('vertical')) {

@@ -7,8 +7,11 @@ export class StorageRenderer implements ComponentRenderer {
         const Path2D = getPath2D();
         const path = new Path2D();
         const { x, y, w, h } = component.bounds;
-        
-        if (component.variant.includes('goods')) {
+
+        if (component.variant.includes('sphere')) {
+            const r = Math.min(w, h) / 2;
+            path.arc(x + w / 2, y + h / 2, r, 0, Math.PI * 2);
+        } else if (component.variant.includes('goods')) {
             // Rectangular Shipping Container
             path.rect(x, y, w, h);
         } else {
@@ -124,7 +127,9 @@ export class StorageRenderer implements ComponentRenderer {
             ctx.clip(component.shapePath);
         }
 
-        if (component.variant.includes('goods')) {
+        if (component.variant.includes('sphere')) {
+            this.drawSphereTank(ctx, component);
+        } else if (component.variant.includes('goods')) {
             this.drawContainer(ctx, component);
         } else {
             this.drawCapsule(ctx, component, rng);
@@ -325,6 +330,40 @@ export class StorageRenderer implements ComponentRenderer {
                 ctx.beginPath();
                 ctx.moveTo(x, by + 2); ctx.lineTo(x + w, by + 2); ctx.stroke();
             }
+        }
+    }
+
+    private drawSphereTank(ctx: CanvasRenderingContext2D, component: ShipComponent) {
+        const { x, y, w, h } = component.bounds;
+        const r = Math.min(w, h) / 2;
+        const cx = x + w / 2;
+        const cy = y + h / 2;
+        const base = component.color;
+
+        const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
+        grad.addColorStop(0, base.withBrightness(0.3).toRGBAString());
+        grad.addColorStop(0.5, base.withBrightness(-0.1).toRGBAString());
+        grad.addColorStop(1, base.withBrightness(-0.2).toRGBAString());
+        ctx.fillStyle = grad;
+        if (component.shapePath) {
+            ctx.fill(component.shapePath);
+        } else {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        const overlayGrad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
+        overlayGrad.addColorStop(0, 'rgba(255,255,255,0.15)');
+        overlayGrad.addColorStop(0.5, 'rgba(0,0,0,0)');
+        overlayGrad.addColorStop(1, 'rgba(0,0,0,0.25)');
+        ctx.fillStyle = overlayGrad;
+        if (component.shapePath) {
+            ctx.fill(component.shapePath);
+        } else {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
 }

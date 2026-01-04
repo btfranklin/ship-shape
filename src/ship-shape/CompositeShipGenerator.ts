@@ -511,7 +511,7 @@ export class CompositeShipGenerator {
         let i = 0;
         while (i < trunkHulls.length) {
             let chance = 0.0;
-            if (archetype === 'freight') chance = 0.5;
+            if (archetype === 'freight') chance = 0.8;
             else if (archetype === 'industry') chance = 0.4;
 
             if (chance > 0 && rng.bool(chance)) {
@@ -535,21 +535,30 @@ export class CompositeShipGenerator {
                     minH = Math.min(minH, h.bounds.h);
                 }
 
-                const isFace = rng.bool(0.5); 
+                const isFace = archetype === 'freight' ? rng.bool(0.8) : rng.bool(0.5);
                 
                 if (isFace) {
                     const isVertical = rng.bool(); 
                     let storageW, storageH;
                     
                     // Variant Selection - Equal probability for Freight and Industry
-                    const variant = rng.choice(['goods', 'liquid', 'default']);
+                    const variant = rng.choice(['goods', 'liquid', 'default', 'sphere']);
 
-                    if (isVertical) {
-                         storageH = minH * rng.range(0.5, 0.8);
-                         storageW = storageH * rng.range(0.3, 0.5);
+                    if (variant === 'sphere') {
+                        const sizeMin = archetype === 'freight' ? 0.3 : 0.25;
+                        const sizeMax = archetype === 'freight' ? 0.55 : 0.45;
+                        storageH = minH * rng.range(sizeMin, sizeMax);
+                        storageW = storageH * rng.range(0.9, 1.1);
+                    } else if (isVertical) {
+                        const sizeMin = archetype === 'freight' ? 0.6 : 0.5;
+                        const sizeMax = archetype === 'freight' ? 0.95 : 0.8;
+                        storageH = minH * rng.range(sizeMin, sizeMax);
+                        storageW = storageH * rng.range(0.3, 0.5);
                     } else {
-                         storageH = minH * rng.range(0.2, 0.4);
-                         storageW = storageH * rng.range(1.5, 2.5);
+                        const sizeMin = archetype === 'freight' ? 0.25 : 0.2;
+                        const sizeMax = archetype === 'freight' ? 0.5 : 0.4;
+                        storageH = minH * rng.range(sizeMin, sizeMax);
+                        storageW = storageH * rng.range(1.5, 2.5);
                     }
                     
                     // If goods, enforce rectangular aspect ratios?
@@ -572,16 +581,30 @@ export class CompositeShipGenerator {
                     
                     const groupW = count * storageW + (count - 1) * gap;
                     const startX = spanX + (spanW - groupW) / 2;
-                    const y = shipCenterY - storageH / 2;
+                    const baseY = shipCenterY - storageH / 2;
+                    const rowGap = storageH * 0.15;
+                    const availableHeight = maxY - minY;
+                    const maxRows = Math.max(1, Math.floor((availableHeight + rowGap) / (storageH + rowGap)));
+                    let desiredRows = 1;
+                    if (archetype === 'freight') {
+                        desiredRows = rng.bool(0.1) ? 2 : 1;
+                    }
+                    const rowCount = Math.min(desiredRows, maxRows);
 
-                    this.createStorageLoop(root, count, startX, y, storageW, storageH, gap, 
-                        500, 
-                        theme.withBrightness(0.05), 
-                        rng, archetype, 
-                        variant, 
-                        false, 
-                        shipCenterY
-                    );
+                    for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+                        const offset =
+                            (rowIndex - (rowCount - 1) / 2) * (storageH + rowGap);
+                        const y = baseY + offset;
+                        if (y < minY || y + storageH > maxY) continue;
+                        this.createStorageLoop(root, count, startX, y, storageW, storageH, gap, 
+                            500, 
+                            theme.withBrightness(0.05), 
+                            rng, archetype, 
+                            variant, 
+                            false, 
+                            shipCenterY
+                        );
+                    }
                     
                 } else {
                     const isTop = rng.bool();
