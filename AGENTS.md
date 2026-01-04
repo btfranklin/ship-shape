@@ -14,6 +14,12 @@ This repo contains two main libraries:
 - Always run linter after making changes: `npm run lint`.
 - Always run tests after making changes: `npm run test`.
 
+## Dependencies
+- When adding new dependencies, ensure they are added to `package.json` and
+  `npm install` is run.
+- *Always* install the *most recent* version of the dependency unless there is a specific reason not to.
+- Configure all dependencies with the caret (`^`) prefix to ensure the most recent compatible version is used.
+
 ## Rendering and Path2D
 
 Do not instantiate `new Path2D()` directly. Always call `getPath2D()` from
