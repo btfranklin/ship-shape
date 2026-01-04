@@ -23,8 +23,12 @@ export class SphereLightGreebles implements Drawable {
 
         const baseCount = Math.floor(radius * 60);
         const minLights = this.options.minLights ?? 6;
-        const maxLights = this.options.maxLights ?? 20;
-        const lightCount = Math.max(minLights, Math.min(maxLights + baseCount, baseCount + rng.intRange(0, 6)));
+        const maxLights = this.options.maxLights;
+        let lightCount = Math.max(minLights, baseCount + rng.intRange(0, 6));
+        if (maxLights !== undefined) {
+            const clampedMin = Math.min(minLights, maxLights);
+            lightCount = rng.intRange(clampedMin, maxLights);
+        }
 
         const visibleLimit = Math.PI / 2;
         const sizeBase = radius * 0.06;

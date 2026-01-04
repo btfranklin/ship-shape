@@ -51,7 +51,8 @@ export class SphereRenderer implements ComponentRenderer {
             ? new SphereLightGreebles(
                 w / UNIT_SCALE,
                 h / UNIT_SCALE,
-                component.lightColors
+                component.lightColors,
+                hasRows ? { minLights: 0, maxLights: 3 } : undefined
             )
             : null;
 
@@ -95,11 +96,11 @@ export class SphereRenderer implements ComponentRenderer {
         ctx.translate(x, y);
         ctx.scale(UNIT_SCALE, UNIT_SCALE);
         component.greebles.drawEmissive(ctx, rng, { clipPath: component.shapePath });
-        if (windows) {
-            windows.drawLights(ctx, new RNG(windowSeed));
-        }
         if (lights) {
             lights.draw(ctx, new RNG(dotSeed));
+        }
+        if (windows) {
+            windows.drawLights(ctx, new RNG(windowSeed));
         }
         ctx.restore();
         
