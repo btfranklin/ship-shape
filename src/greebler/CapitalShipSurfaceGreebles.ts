@@ -151,7 +151,11 @@ export class CapitalShipSurfaceGreebles implements Drawable {
                 hoseChance = 0.8;
                 hoseRange = [2, 5];
                 electronicsChance = 0.35;
+                windowChance = 0.2;
                 cutawayChance = 0.2;
+                break;
+            case 'standard':
+                windowChance = 0.15;
                 break;
             case 'tech':
                 panelDensity = 5;
@@ -230,7 +234,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         }
 
         const allowsWindows =
-            style === 'clean' &&
+            (style === 'clean' || style === 'standard' || style === 'industrial') &&
             (this.componentType === 'hull' || this.componentType === 'tower');
         const hasWindows = allowsWindows && rng.bool(windowChance);
         const windowColor =
