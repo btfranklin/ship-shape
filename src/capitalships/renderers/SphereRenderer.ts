@@ -7,7 +7,7 @@ import { SphereLightGreebles } from '../../greebles/SphereLightGreebles.js';
 import { CapitalShipWindowsGreebles } from '../../greebles/CapitalShipWindowsGreebles.js';
 
 export class SphereRenderer implements ComponentRenderer {
-    generateShape(component: ShipComponent, rng: RNG): void {
+    generateShape(component: ShipComponent, _rng: RNG): void {
         const Path2D = getPath2D();
         const p = new Path2D();
         const { x, y, w, h } = component.bounds;

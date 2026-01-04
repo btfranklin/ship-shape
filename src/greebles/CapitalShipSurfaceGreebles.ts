@@ -817,27 +817,36 @@ export class CapitalShipSurfaceGreebles implements Drawable {
     private createOffscreenContext(
         context: CanvasRenderingContext2D
     ): { ctx: CanvasRenderingContext2D; canvas: CanvasImageSource } | null {
-        const baseCanvas = (context as unknown as { canvas?: { width?: number; height?: number } }).canvas;
+        type CanvasLike = {
+            width?: number;
+            height?: number;
+            getContext?: (
+                contextId: '2d'
+            ) => CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
+            constructor?: new (width: number, height: number) => CanvasLike;
+        };
+
+        const baseCanvas = (context as unknown as { canvas?: CanvasLike }).canvas;
         const width = baseCanvas?.width;
         const height = baseCanvas?.height;
 
         if (!width || !height) return null;
 
-        let canvas: any;
+        let canvas: OffscreenCanvas | HTMLCanvasElement | CanvasLike;
         if (typeof OffscreenCanvas !== 'undefined') {
             canvas = new OffscreenCanvas(width, height);
         } else if (typeof document !== 'undefined' && document.createElement) {
             canvas = document.createElement('canvas');
             canvas.width = width;
             canvas.height = height;
-        } else if (baseCanvas && typeof (baseCanvas as any).constructor === 'function') {
-            canvas = new (baseCanvas as any).constructor(width, height);
+        } else if (baseCanvas?.constructor && typeof baseCanvas.constructor === 'function') {
+            canvas = new baseCanvas.constructor(width, height);
         } else {
             return null;
         }
 
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext?.('2d') ?? null;
         if (!ctx) return null;
-        return { ctx: ctx as CanvasRenderingContext2D, canvas };
+        return { ctx: ctx as unknown as CanvasRenderingContext2D, canvas: canvas as CanvasImageSource };
     }
 }

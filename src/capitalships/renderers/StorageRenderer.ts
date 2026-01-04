@@ -1,9 +1,9 @@
 import { ShipComponent } from '../ShipComponent.js';
 import { ComponentRenderer } from './ComponentRenderer.js';
-import { HSBAColor, RNG, getPath2D } from '../../greebles/common.js';
+import { RNG, getPath2D } from '../../greebles/common.js';
 
 export class StorageRenderer implements ComponentRenderer {
-    generateShape(component: ShipComponent, rng: RNG): void {
+    generateShape(component: ShipComponent, _rng: RNG): void {
         const Path2D = getPath2D();
         const path = new Path2D();
         const { x, y, w, h } = component.bounds;
@@ -54,7 +54,6 @@ export class StorageRenderer implements ComponentRenderer {
 
     draw(ctx: CanvasRenderingContext2D, component: ShipComponent, rng: RNG): void {
         const { x, y, w, h } = component.bounds;
-        const isHorizontal = w > h;
 
         // --- Support Structure (Scaffolding) ---
         if (component.shipCenterY !== undefined) {
@@ -304,7 +303,10 @@ export class StorageRenderer implements ComponentRenderer {
         ctx.fillRect(x, y, w, h);
 
         // Details (Bands/Ribs)
-        const numBands = component.customData.bands ?? rng.intRange(1, 3);
+        const bandOverride = typeof component.customData.bands === 'number'
+            ? component.customData.bands
+            : undefined;
+        const numBands = bandOverride ?? rng.intRange(1, 3);
         
         if (isHorizontal) {
             const spacing = w / (numBands + 1);

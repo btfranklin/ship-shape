@@ -5,7 +5,7 @@ import { WireGreebles } from './WireGreebles.js';
 type ElectronicsPanelShape = 'rect' | 'parallelogram' | 'trapezoid' | 'trapezoid-invert';
 
 export class ElectronicsPanelGreebles implements Drawable {
-    public readonly type: 'tech' = 'tech';
+    public readonly type = 'tech' as const;
 
     constructor(
         public xUnits: number,

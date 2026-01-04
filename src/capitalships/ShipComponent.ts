@@ -31,7 +31,7 @@ export class ShipComponent {
     public facing: 'forward' | 'backward' = 'forward';
     public shipCenterY?: number;
     public shipCenterX?: number;
-    public customData: Record<string, any> = {};
+    public customData: Record<string, unknown> = {};
     public lightColors: HSBAColor[];
     
     private renderer: ComponentRenderer;

@@ -92,7 +92,7 @@ function generateShip() {
     // Save
     const out = createWriteStream('ship_ts.png');
     const stream = canvas.createPNGStream();
-    (stream as any).pipe(out);
+    stream.pipe(out);
     out.on('finish', () => console.log('The PNG file was created.'));
 }
 

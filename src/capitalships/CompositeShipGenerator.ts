@@ -108,7 +108,7 @@ export class CompositeShipGenerator {
         const finalComponents: (ShipComponent | UnifiedTrunkComponent)[] = [...others];
         
         if (hulls.length > 0) {
-            const trunk = new UnifiedTrunkComponent(hulls, rng);
+            const trunk = new UnifiedTrunkComponent(hulls);
             finalComponents.push(trunk);
         }
 

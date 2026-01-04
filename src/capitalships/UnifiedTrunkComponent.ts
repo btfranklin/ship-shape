@@ -11,7 +11,7 @@ export class UnifiedTrunkComponent {
         public color: HSBAColor;
         public lightColors: HSBAColor[];
     
-        constructor(components: ShipComponent[], rng: RNG) {
+        constructor(components: ShipComponent[]) {
             this.components = components;
             this.lightColors = components[0].lightColors;
             

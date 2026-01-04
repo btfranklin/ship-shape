@@ -1,6 +1,5 @@
-import { HSBAColor, RNG, CapitalShipSurfaceGreebles, CapitalShipWindowsGreebles, EquipmentTrenchGreebles } from '../src/greebles/index.js';
-import { ShipShapeGenerator, CompositeShipGenerator } from '../src/capitalships/index.js';
-import { PanelGreebles, PipeGreebles, LightPanelGreebles } from '../src/greebles/index.js';
+import { HSBAColor, RNG, CapitalShipSurfaceGreebles } from '../src/greebles/index.js';
+import { CompositeShipGenerator } from '../src/capitalships/index.js';
 import { ShipArchetype } from '../src/capitalships/shipTypes.js';
 import { UnifiedTrunkComponent } from '../src/capitalships/UnifiedTrunkComponent.js';
 

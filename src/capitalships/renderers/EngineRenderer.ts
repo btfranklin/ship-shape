@@ -189,7 +189,7 @@ export class EngineRenderer implements ComponentRenderer {
         ctx.fillRect(ix, iy, iw, ih);
 
         // 3. Plasma Stream
-        const energyColor = new HSBAColor((component as any).energyGlowHue, 1.0, 1.0);
+        const energyColor = new HSBAColor(component.energyGlowHue, 1.0, 1.0);
         
         // Stream Gradient (Hot Left -> Stable Right)
         const streamGrad = ctx.createLinearGradient(ix, iy, ix + iw, iy);

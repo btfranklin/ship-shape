@@ -1,9 +1,9 @@
-import { RNG, HSBAColor, getPath2D } from '../../greebles/common.js';
+import { RNG, getPath2D } from '../../greebles/common.js';
 import { ShipComponent } from '../ShipComponent.js';
 import { ComponentRenderer } from './ComponentRenderer.js';
 
 export class SensorRenderer implements ComponentRenderer {
-    generateShape(component: ShipComponent, rng: RNG): void {
+    generateShape(component: ShipComponent, _rng: RNG): void {
         const Path2D = getPath2D();
         const p = new Path2D();
         const { x, y, w, h } = component.bounds;

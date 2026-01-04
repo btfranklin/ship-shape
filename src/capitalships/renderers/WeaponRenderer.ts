@@ -1,4 +1,4 @@
-import { RNG, HSBAColor, getPath2D } from '../../greebles/common.js';
+import { RNG, getPath2D } from '../../greebles/common.js';
 import { ShipComponent } from '../ShipComponent.js';
 import { ComponentRenderer } from './ComponentRenderer.js';
 
