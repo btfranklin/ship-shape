@@ -51,7 +51,7 @@ ctx.restore();
 ## Node / Server-Side Rendering
 
 Rendering uses `Path2D`. In Node, provide a `Path2D` implementation before
-drawing:
+drawing. One option is the `canvas` package:
 
 ```ts
 import { setPath2D } from './src/greebles/common.js';
@@ -92,4 +92,3 @@ From `src/capitalships/index.ts`:
 ## Demo Entry Points
 
 - `www/main.ts` - interactive playground
-- `src/index.ts` - Node example writing a PNG with `canvas`
