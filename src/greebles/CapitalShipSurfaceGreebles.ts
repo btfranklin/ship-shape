@@ -9,7 +9,7 @@ import { HoseGreebles } from './HoseGreebles.js';
 import { ElectronicsPanelGreebles } from './ElectronicsPanelGreebles.js';
 import { CapitalShipWindowsGreebles } from './CapitalShipWindowsGreebles.js';
 import { CutawaySectionGreebles } from './CutawaySectionGreebles.js';
-import { ShipArchetype, ComponentType } from '../capitalships/shipTypes.js';
+import type { ShipArchetype, ComponentType } from '../shared/shipTypes.js';
 
 type GreebleStyle = 'standard' | 'industrial' | 'tech' | 'clean' | 'dense' | 'structure' | 'trench' | 'unstyled';
 type OccluderPlan =

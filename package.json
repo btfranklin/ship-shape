@@ -1,16 +1,38 @@
 {
     "name": "ship-shape",
     "version": "0.1.0",
-    "description": "",
+    "description": "Procedural Canvas 2D ship, greeble, and railway generators.",
     "main": "dist/index.js",
+    "types": "dist/index.d.ts",
     "type": "module",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./greebles": {
+            "types": "./dist/greebles/index.d.ts",
+            "import": "./dist/greebles/index.js"
+        },
+        "./capitalships": {
+            "types": "./dist/capitalships/index.d.ts",
+            "import": "./dist/capitalships/index.js"
+        },
+        "./railway": {
+            "types": "./dist/railway/index.d.ts",
+            "import": "./dist/railway/index.js"
+        },
+        "./package.json": "./package.json"
+    },
     "scripts": {
         "clean": "rm -rf dist",
         "test": "tsc -p tsconfig.tests.json && node --test dist/tests/*.test.js",
         "build-and-test": "npm run clean && npm run build && npm test",
         "build": "tsc",
         "lint": "eslint .",
-        "dev": "vite"
+        "dev": "vite",
+        "generate:legibility": "node scripts/generate-legibility-artifacts.mjs",
+        "check:legibility": "node scripts/generate-legibility-artifacts.mjs --check"
     },
     "keywords": [],
     "author": "",
@@ -20,6 +42,7 @@
         "@typescript-eslint/eslint-plugin": "^8.0.0",
         "@typescript-eslint/parser": "^8.0.0",
         "eslint": "^9.0.0",
+        "playwright": "^1.58.2",
         "typescript": "^5.9.3",
         "vite": "^7.3.0"
     }

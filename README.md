@@ -1,17 +1,29 @@
 # Ship Shape
 
-Procedural ship rendering toolkit for Canvas 2D. The package combines:
+Ship Shape is a procedural Canvas 2D rendering toolkit with three first-class subsystems:
 
-- Low-level greeble generators (panels, pipes, windows, trenches, lights).
-- A capital ship generator that composes components and renders them by z-index.
+- `ship-shape/greebles`: low-level panel, pipe, window, trench, light, and cutaway primitives.
+- `ship-shape/capitalships`: procedural capital ship composition and rendering.
+- `ship-shape/railway`: steam engine, rail car, and consist generation.
 
-Everything is deterministic when you use the shared `RNG`.
+The package is deterministic when you keep a shared `RNG` instance for a single run.
 
-## Quick Start (Browser)
+## Install And Import Surface
+
+Use the package entrypoints:
+
+- `ship-shape`
+- `ship-shape/greebles`
+- `ship-shape/capitalships`
+- `ship-shape/railway`
+
+Deep imports from `src/...` are internal-only and should not be treated as supported API.
+
+## Quick Start
 
 ```ts
-import { RNG, HSBAColor } from './src/greebles/index.js';
-import { CompositeShipGenerator } from './src/capitalships/index.js';
+import { RNG, HSBAColor } from 'ship-shape/greebles';
+import { CompositeShipGenerator } from 'ship-shape/capitalships';
 
 const rng = new RNG(12345);
 const theme = new HSBAColor(0.6, 0.1, 0.6);
@@ -22,73 +34,83 @@ const components = generator.generate(
   canvas.height,
   theme,
   rng,
-  'science', // optional archetype
-  600        // optional reference height for scale consistency
+  'science',
+  600
 );
 
-for (const comp of components) {
-  comp.draw(ctx, rng);
+for (const component of components) {
+  component.draw(ctx, rng);
 }
 ```
 
 ## Low-Level Greebles
 
-Greebles use normalized units. You scale the context to match your pixel size
-and then draw.
+Greebles draw in normalized units. Scale the context to the desired pixel size first.
 
 ```ts
-import { RNG, HSBAColor, PanelGreebles } from './src/greebles/index.js';
+import { RNG, HSBAColor, PanelGreebles } from 'ship-shape/greebles';
 
 const rng = new RNG(123);
 const theme = HSBAColor.fromRGBA(150, 155, 160);
 
 ctx.save();
-ctx.scale(size, size); // size in pixels, normalized to 0..1
+ctx.scale(size, size);
 new PanelGreebles(1, 1, theme, 8, true).draw(ctx, rng);
 ctx.restore();
 ```
 
-## Node / Server-Side Rendering
-
-Rendering uses `Path2D`. In Node, provide a `Path2D` implementation before
-drawing. One option is the `canvas` package:
+## Railway Example
 
 ```ts
-import { setPath2D } from './src/greebles/common.js';
+import { RNG, HSBAColor } from 'ship-shape/greebles';
+import { SteamEngineGenerator } from 'ship-shape/railway';
+
+const rng = new RNG(90210);
+const theme = new HSBAColor(0.12, 0.2, 0.6);
+const generator = new SteamEngineGenerator();
+
+const consist = generator.generateConsist(1400, 800, theme, rng, {
+  includeTender: true,
+  includeCowcatcher: true,
+  kind: 'mixed',
+  carCount: 3,
+});
+```
+
+## Node / Server-Side Rendering
+
+Rendering uses `Path2D`. In Node, configure the implementation before drawing:
+
+```ts
+import { setPath2D } from 'ship-shape/greebles';
 import { Path2D } from 'canvas';
 
 setPath2D(Path2D);
 ```
 
-## Concepts
+## Stable Contracts
 
-- `CompositeShipGenerator.generate(...)` returns components already sorted by
-  `zIndex`. Draw them in order.
-- Components are either `ShipComponent` or `UnifiedTrunkComponent`; both expose
-  `draw(ctx, rng)`.
-- Use the shared `RNG` instance to keep output deterministic per seed.
+- `CompositeShipGenerator.generate(...)` returns components sorted by `zIndex`.
+- `SteamEngineGenerator.generate(...)` returns ready-to-draw components.
+- `SteamEngineGenerator.generateLayout(...)`, `generateCar(...)`, and `generateConsist(...)` return layout metadata as well as drawables.
+- `UnifiedTrunkComponent` groups trunk hull sections for capital ships.
+- Callers should keep using the same `RNG` instance within a single render.
 
-## Key Exports
+## Developer Commands
 
-From `src/greebles/index.ts`:
+- `npm run dev`
+- `npm run lint`
+- `npm run build`
+- `npm run test`
+- `npm run generate:legibility`
+- `npm run check:legibility`
 
-- `RNG`, `HSBAColor`, `setPath2D`, `getPath2D`
-- `CapitalShipSurfaceGreebles`, `CapitalShipWindowsGreebles`
-- `PanelGreebles`, `LightPanelGreebles`, `PipeGreebles`, `HoseGreebles`,
-  `WireGreebles`, `CutawaySectionGreebles`, `EquipmentGreebles`,
-  `ElectronicsPanelGreebles`, `SphereWindowsGreebles`, `SphereLightGreebles`
+## Docs
 
-From `src/capitalships/index.ts`:
-
-- `ShipShapeGenerator`, `CompositeShipGenerator`, `ShipComponent`
-
-## Dev Commands
-
-- `npm run build` - compile TypeScript
-- `npm run dev` - Vite playground in `www/`
-- `npm test` - compile tests and run node test runner
-- `npm run lint` - run ESLint
-
-## Demo Entry Points
-
-- `www/main.ts` - interactive playground
+- Repo map: [`docs/index.md`](docs/index.md)
+- Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- Interfaces: [`docs/INTERFACES.md`](docs/INTERFACES.md)
+- Quality gates: [`docs/QUALITY.md`](docs/QUALITY.md)
+- Playgrounds: [`docs/PLAYGROUNDS.md`](docs/PLAYGROUNDS.md)
+- Public API inventory: [`docs/generated/public-api-inventory.md`](docs/generated/public-api-inventory.md)
+- Playground inventory: [`docs/generated/playground-inventory.md`](docs/generated/playground-inventory.md)
