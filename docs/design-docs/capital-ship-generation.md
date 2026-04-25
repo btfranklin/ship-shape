@@ -4,12 +4,12 @@
 
 ## Pipeline
 
-1. Create the engine root.
-2. Grow a forward tree of hull sections and side branches.
-3. Add archetype-sensitive nose and storage details.
+1. Create the engine root through the root planner.
+2. Grow a forward tree of hull sections, side branches, and tower sensor attachments through the growth planner.
+3. Add archetype-sensitive nose and storage details through internal planners.
 4. Traverse into draw order.
 5. Merge trunk hull sections into `UnifiedTrunkComponent`.
-6. Add post-processing such as rings.
+6. Add ring post-processing through the ring planner.
 7. Return output sorted by `zIndex`.
 
 ## Stable Expectations
@@ -22,4 +22,5 @@
 
 - Keep tree-growth rules deterministic.
 - Preserve the post-order traversal semantics unless the draw contract changes intentionally.
-- If you add a new component type, update the renderer selection path and the docs inventory if it becomes public surface.
+- If you add a new component type, update the renderer selection path, the relevant planner, and the docs inventory if it becomes public surface.
+- Keep `CompositeShipGenerator.generate(...)` as orchestration over internal planners rather than folding stage details back into the public generator.

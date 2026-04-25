@@ -3,7 +3,7 @@
 The railway subsystem has two main layers:
 
 - `SteamEngineGenerator` for vehicle and consist layout
-- `SteamEngineComponent` for geometry and paint behavior
+- `SteamEngineComponent` as the public drawable facade, with internal helpers for geometry and paint families
 
 ## Layout Contracts
 
@@ -20,5 +20,5 @@ The railway subsystem has two main layers:
 ## Editing Guidance
 
 - Change `SteamEngineGenerator` when spacing, coupler placement, or vehicle sequencing changes.
-- Change `SteamEngineComponent` when shape construction or paint detail changes.
+- Keep `SteamEngineComponent` as the public facade. Change the internal shape builder for geometry and the body, running-gear, or accessory painters for paint/detail changes.
 - Use the railway playgrounds for visual validation and the consist invariant test for mechanical validation.

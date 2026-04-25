@@ -38,4 +38,3 @@ This directory is the repo-local system of record for architecture, supported in
 ## Execution Memory
 
 - Exec-plan index: [`exec-plans/index.md`](exec-plans/index.md)
-- Tech debt tracker: [`exec-plans/tech-debt-tracker.md`](exec-plans/tech-debt-tracker.md)

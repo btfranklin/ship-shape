@@ -1,9 +1,7 @@
 # Execution Memory
 
-This folder tracks non-trivial repo-shape work and ongoing cleanup priorities.
+This folder tracks non-trivial repo-shape work and durable execution plans.
 
 ## Current Entries
 
-- Tech debt tracker: [`tech-debt-tracker.md`](tech-debt-tracker.md)
-
-No active execution plans are checked in yet. Add them here when work spans multiple sessions or needs durable acceptance criteria.
+No active execution plans or cleanup trackers are checked in right now. Add entries here when work spans multiple sessions or needs durable acceptance criteria.

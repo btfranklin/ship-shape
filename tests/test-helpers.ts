@@ -33,8 +33,38 @@ class FakeGradient {
 
 const fakeGradient = new FakeGradient();
 
-export function createTestContext(): CanvasRenderingContext2D {
+export interface TestContextCall {
+  name: string;
+  args: unknown[];
+}
+
+interface TestContextOptions {
+  calls?: TestContextCall[];
+  canvas?: FakeCanvas;
+  withCanvas?: boolean;
+  withTransform?: boolean;
+}
+
+class FakeCanvas {
+  constructor(
+    public width: number = 300,
+    public height: number = 150
+  ) {}
+
+  getContext(_contextId: '2d') {
+    return createTestContext({
+      canvas: this,
+      withTransform: true,
+    });
+  }
+}
+
+export function createTestContext(options: TestContextOptions = {}): CanvasRenderingContext2D {
+  const calls = options.calls ?? [];
+  const canvas = options.canvas ?? (options.withCanvas ? new FakeCanvas() : undefined);
   const ctx = {
+    canvas,
+
     // State
     fillStyle: '',
     strokeStyle: '',
@@ -56,13 +86,22 @@ export function createTestContext(): CanvasRenderingContext2D {
     translate(_x: number, _y: number) {},
     scale(_x: number, _y: number) {},
     rotate(_angle: number) {},
-    resetTransform() {},
+    resetTransform() {
+      calls.push({ name: 'resetTransform', args: [] });
+    },
+    setTransform(...args: unknown[]) {
+      calls.push({ name: 'setTransform', args });
+    },
+    getTransform: options.withTransform
+      ? () => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 })
+      : undefined,
 
     // Paths
     beginPath() {},
     closePath() {},
     moveTo(_x: number, _y: number) {},
     lineTo(_x: number, _y: number) {},
+    quadraticCurveTo(_cpx: number, _cpy: number, _x: number, _y: number) {},
     rect(_x: number, _y: number, _w: number, _h: number) {},
     arc(
       _x: number,
@@ -90,7 +129,9 @@ export function createTestContext(): CanvasRenderingContext2D {
     fillRect(_x: number, _y: number, _w: number, _h: number) {},
     strokeRect(_x: number, _y: number, _w: number, _h: number) {},
     clearRect(_x: number, _y: number, _w: number, _h: number) {},
-    drawImage(_img: unknown, _sx: number, _sy: number, _sw?: number, _sh?: number) {},
+    drawImage(_img: unknown, _sx: number, _sy: number, _sw?: number, _sh?: number) {
+      calls.push({ name: 'drawImage', args: [_img, _sx, _sy, _sw, _sh] });
+    },
 
     // Styles
     setLineDash(_segments: number[]) {},

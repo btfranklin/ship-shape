@@ -29,15 +29,15 @@ The structural tests enforce these boundaries so new cross-domain edges fail wit
 - `Path2D` access goes through `getPath2D()` so browser and Node execution can share the same code paths.
 - Greebles assume normalized coordinates; callers scale the canvas context before drawing.
 
-## Large Internal Hotspots
+## Large Internal Structures
 
 - `src/greebles/CapitalShipSurfaceGreebles.ts`
-  Central style-selection and layer-composition pipeline for capital ship surfaces.
+  Public facade for capital ship surface rendering. Style, layer planning, draw execution, and emissive/offscreen rendering live in internal helpers.
 - `src/capitalships/CompositeShipGenerator.ts`
-  Tree growth, trunk merging, storage loops, and ring post-processing.
+  Public orchestration for staged ship generation. Root setup, tree growth, storage loops, rings, light colors, and traversal live in internal helpers.
 - `src/railway/SteamEngineComponent.ts`
-  Shape construction and paint logic for railway components.
+  Public railway component facade. Shape construction and paint families live in internal helpers.
 - `www/index.html`
-  Main multi-surface runtime shell with the broadest control surface.
+  Main multi-surface runtime shell. Repeated controls and styles live in companion files.
 
-These areas have design docs and are tracked in the tech debt file because they carry the most cognitive load.
+These areas have design docs because they carry the most cognitive load.

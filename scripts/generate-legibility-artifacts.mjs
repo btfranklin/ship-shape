@@ -168,20 +168,27 @@ function generatePlaygroundInventory() {
   ];
 
   for (const htmlFile of htmlFiles) {
-    const tsFile = htmlFile.replace(/\.html$/, '.ts');
+    const htmlSource = readText(path.join(rootDir, 'www', htmlFile));
+    const scriptEntries = [...htmlSource.matchAll(/<script\b[^>]*type=["']module["'][^>]*src=["']([^"']+)["'][^>]*>/g)]
+      .map((match) => match[1])
+      .map((src) => src.replace(/^\//, ''))
+      .filter((src) => src.endsWith('.ts'))
+      .sort((a, b) => a.localeCompare(b));
     const metadata = playgroundMetadata[htmlFile] ?? {
       focus: 'General-purpose runtime surface in `www/`.',
       knobs: 'Inspect the companion script for the available controls and seed inputs.',
     };
-    const tsPath = path.join(rootDir, 'www', tsFile);
     lines.push(`## \`${htmlFile}\``);
     lines.push('');
     lines.push(`- HTML entry: [\`${htmlFile}\`](../../www/${htmlFile})`);
-    lines.push(
-      fs.existsSync(tsPath)
-        ? `- Script entry: [\`${tsFile}\`](../../www/${tsFile})`
-        : '- Script entry: none'
-    );
+    if (scriptEntries.length === 0) {
+      lines.push('- Script entries: none');
+    } else {
+      lines.push('- Script entries:');
+      for (const scriptEntry of scriptEntries) {
+        lines.push(`  - [\`${scriptEntry}\`](../../www/${scriptEntry})`);
+      }
+    }
     lines.push(`- Focus: ${metadata.focus}`);
     lines.push(`- Debugging knobs: ${metadata.knobs}`);
     lines.push('');

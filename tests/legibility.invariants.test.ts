@@ -26,7 +26,6 @@ const REQUIRED_DOCS = [
   'docs/QUALITY.md',
   'docs/PLAYGROUNDS.md',
   'docs/exec-plans/index.md',
-  'docs/exec-plans/tech-debt-tracker.md',
   'docs/design-docs/greeble-surface-pipeline.md',
   'docs/design-docs/capital-ship-generation.md',
   'docs/design-docs/railway-layout.md',
@@ -139,7 +138,6 @@ test('docs indexes point to required references', () => {
     'generated/public-api-inventory.md',
     'generated/playground-inventory.md',
     'exec-plans/index.md',
-    'exec-plans/tech-debt-tracker.md',
   ]) {
     assert.match(
       docsIndex,
@@ -148,10 +146,15 @@ test('docs indexes point to required references', () => {
     );
   }
 
-  assert.match(
+  assert.doesNotMatch(
+    docsIndex,
+    /tech-debt-tracker\.md/,
+    'docs/index.md must not link to the removed tech debt tracker'
+  );
+  assert.doesNotMatch(
     execPlanIndex,
     /tech-debt-tracker\.md/,
-    'docs/exec-plans/index.md must link to the tech debt tracker'
+    'docs/exec-plans/index.md must not link to the removed tech debt tracker'
   );
 });
 
@@ -169,16 +172,42 @@ test('package exports define the supported public entrypoints', () => {
 
 test('playground docs cover every HTML entrypoint', () => {
   const playgroundDoc = readRepoFile('docs/PLAYGROUNDS.md');
+  const playgroundInventory = readRepoFile('docs/generated/playground-inventory.md');
   const htmlFiles = fs
     .readdirSync(repoPath('www'))
     .filter((file) => file.endsWith('.html'))
     .sort((a, b) => a.localeCompare(b));
 
   for (const htmlFile of htmlFiles) {
+    const htmlSource = readRepoFile(`www/${htmlFile}`);
+    const scriptEntries = [...htmlSource.matchAll(/<script\b[^>]*type=["']module["'][^>]*src=["']([^"']+)["'][^>]*>/g)]
+      .map((match) => match[1].replace(/^\//, ''))
+      .filter((scriptEntry) => scriptEntry.endsWith('.ts'));
+
     assert.match(
       playgroundDoc,
       new RegExp(htmlFile.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
       `docs/PLAYGROUNDS.md must mention ${htmlFile}`
+    );
+
+    for (const scriptEntry of scriptEntries) {
+      assert.match(
+        playgroundInventory,
+        new RegExp(scriptEntry.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+        `docs/generated/playground-inventory.md must mention script ${scriptEntry} loaded by ${htmlFile}`
+      );
+    }
+  }
+});
+
+test('capital ship renderers do not fabricate fake ShipComponent instances', () => {
+  const rendererFiles = listSourceFiles(repoPath('src/capitalships/renderers'));
+  for (const filePath of rendererFiles) {
+    const source = fs.readFileSync(filePath, 'utf8');
+    assert.doesNotMatch(
+      source,
+      /as\s+unknown\s+as\s+ShipComponent/,
+      `${path.relative(REPO_ROOT, filePath)} must not cast partial objects to ShipComponent`
     );
   }
 });

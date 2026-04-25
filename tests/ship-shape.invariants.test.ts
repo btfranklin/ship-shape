@@ -76,3 +76,54 @@ test('CompositeShipGenerator draw does not throw', () => {
     comp.draw(ctx, rng);
   }
 });
+
+test('tower sensor attachments are generated as draw-ready components', () => {
+  const scenarios: Array<{ archetype: ShipArchetype; seed: number }> = [
+    { archetype: 'freight', seed: 8 },
+    { archetype: 'science', seed: 1 },
+    { archetype: 'industry', seed: 8 },
+    { archetype: 'passenger', seed: 8 },
+    { archetype: 'combat', seed: 4 },
+  ];
+
+  for (const { archetype, seed } of scenarios) {
+    const rng = new RNG(seed);
+    const generator = new CompositeShipGenerator();
+    const components = generator.generate(WIDTH, HEIGHT, THEME, rng, archetype, 600);
+    const towerSensors = [];
+    const towers = [];
+
+    for (const comp of components) {
+      if (
+        !(comp instanceof UnifiedTrunkComponent) &&
+        comp.type === 'sensor' &&
+        comp.shipCenterX !== undefined
+      ) {
+        towerSensors.push(comp);
+      } else if (!(comp instanceof UnifiedTrunkComponent) && comp.type === 'tower') {
+        towers.push(comp);
+      }
+    }
+
+    assert.ok(towerSensors.length > 0, `${archetype} seed ${seed} produced no tower sensor attachments`);
+
+    for (const sensor of towerSensors) {
+      assert.ok(sensor.shapePath, `${archetype} seed ${seed} tower sensor missing shapePath`);
+      assert.equal(
+        sensor.variant === 'front' || sensor.variant === 'back',
+        true,
+        `${archetype} seed ${seed} tower sensor has unexpected variant`
+      );
+      assertFiniteNumber(sensor.shipCenterX as number, `${archetype} tower sensor shipCenterX`);
+      const parentTower = towers.find((tower) => (
+        Math.abs(tower.bounds.x + tower.bounds.w / 2 - (sensor.shipCenterX as number)) < 0.0001
+      ));
+      assert.ok(parentTower, `${archetype} seed ${seed} tower sensor has no matching tower`);
+      assert.ok(sensor.zIndex < parentTower.zIndex, `${archetype} tower sensor should draw below its tower`);
+      assert.ok(
+        components.indexOf(sensor) < components.indexOf(parentTower),
+        `${archetype} tower sensor should sort before its tower`
+      );
+    }
+  }
+});

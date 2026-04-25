@@ -2,7 +2,6 @@ import { RNG, getPath2D } from '../../greebles/common.js';
 import { UNIT_SCALE } from '../../greebles/constants.js';
 import { ShipComponent } from '../ShipComponent.js';
 import { ComponentRenderer } from './ComponentRenderer.js';
-import { SensorRenderer } from './SensorRenderer.js';
 
 export class TowerRenderer implements ComponentRenderer {
     generateShape(component: ShipComponent, rng: RNG): void {
@@ -45,51 +44,6 @@ export class TowerRenderer implements ComponentRenderer {
 
     draw(ctx: CanvasRenderingContext2D, component: ShipComponent, rng: RNG): void {
         if (!component.shapePath) return;
-
-        // 0. Sensor Attachments (Behind Tower)
-        // We draw these first so their support beams are occluded by the tower body where they overlap.
-        const hasFrontSensor = rng.bool(0.3);
-        const hasBackSensor = rng.bool(0.1);
-        
-        if (hasFrontSensor || hasBackSensor) {
-            const Path2D = getPath2D();
-            const sensorRenderer = new SensorRenderer();
-            const sensorH = component.bounds.w * rng.range(0.3, 0.5); 
-            const sensorW = component.bounds.w * 0.6; 
-            
-            // Common properties
-            const mockBase = {
-                color: component.color,
-                shipArchetype: component.shipArchetype,
-                zIndex: component.zIndex,
-                greebles: component.greebles, 
-                components: [],
-                shapePath: new Path2D(),
-                shipCenterX: component.bounds.x + component.bounds.w / 2
-            } as unknown as ShipComponent;
-
-            if (hasFrontSensor) {
-                const sensorY = component.bounds.y + rng.range(0, component.bounds.h - sensorH);
-                const sensorX = component.bounds.x + component.bounds.w - 2; 
-                
-                mockBase.bounds = { x: sensorX, y: sensorY, w: sensorW, h: sensorH };
-                mockBase.variant = 'front';
-                
-                sensorRenderer.generateShape(mockBase, rng);
-                sensorRenderer.draw(ctx, mockBase, rng);
-            }
-            
-            if (hasBackSensor) {
-                const sensorY = component.bounds.y + rng.range(0, component.bounds.h - sensorH);
-                const sensorX = component.bounds.x + 2 - sensorW;
-                
-                mockBase.bounds = { x: sensorX, y: sensorY, w: sensorW, h: sensorH };
-                mockBase.variant = 'back';
-                
-                sensorRenderer.generateShape(mockBase, rng);
-                sensorRenderer.draw(ctx, mockBase, rng);
-            }
-        }
 
         // 1. Volume Fill (Side Gradient)
         // Left (Light) -> Right (Shadow)
