@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { RNG, HSBAColor, setPath2D } from '../src/greebles/common.js';
 import { CompositeShipGenerator } from '../src/capitalships/CompositeShipGenerator.js';
 import { UnifiedTrunkComponent } from '../src/capitalships/UnifiedTrunkComponent.js';
+import type { ShipComponent } from '../src/capitalships/ShipComponent.js';
 import type { ShipArchetype } from '../src/capitalships/shipTypes.js';
 import { createTestContext, FakePath2D } from './test-helpers.js';
 
@@ -90,8 +91,8 @@ test('tower sensor attachments are generated as draw-ready components', () => {
     const rng = new RNG(seed);
     const generator = new CompositeShipGenerator();
     const components = generator.generate(WIDTH, HEIGHT, THEME, rng, archetype, 600);
-    const towerSensors = [];
-    const towers = [];
+    const towerSensors: ShipComponent[] = [];
+    const towers: ShipComponent[] = [];
 
     for (const comp of components) {
       if (
@@ -118,7 +119,9 @@ test('tower sensor attachments are generated as draw-ready components', () => {
       const parentTower = towers.find((tower) => (
         Math.abs(tower.bounds.x + tower.bounds.w / 2 - (sensor.shipCenterX as number)) < 0.0001
       ));
-      assert.ok(parentTower, `${archetype} seed ${seed} tower sensor has no matching tower`);
+      if (!parentTower) {
+        assert.fail(`${archetype} seed ${seed} tower sensor has no matching tower`);
+      }
       assert.ok(sensor.zIndex < parentTower.zIndex, `${archetype} tower sensor should draw below its tower`);
       assert.ok(
         components.indexOf(sensor) < components.indexOf(parentTower),

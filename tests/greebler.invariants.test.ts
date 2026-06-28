@@ -135,17 +135,18 @@ test('CapitalShipSurfaceGreebles skipEmissive plans include occluder metadata', 
   }, new RNG(99));
 
   assert.ok(plan.emissivePlan, 'skipEmissive should create an emissive plan');
+  const { emissivePlan } = plan;
   assert.ok(plan.layers.some((layer) => layer.kind === 'pipes'), 'industrial trunk plans should include pipes');
   assert.ok(
-    plan.emissivePlan.occludersAfterLights.some((occluder) => occluder.kind === 'pipes'),
+    emissivePlan.occludersAfterLights.some((occluder) => occluder.kind === 'pipes'),
     'pipe layers should become light occluders for the emissive pass'
   );
   assert.ok(
-    plan.emissivePlan.occludersAfterWindows.some((occluder) => occluder.kind === 'pipes'),
+    emissivePlan.occludersAfterWindows.some((occluder) => occluder.kind === 'pipes'),
     'pipe layers should become window occluders for the emissive pass'
   );
   assert.ok(
-    plan.emissivePlan.occludersAfterCutaways.some((occluder) => occluder.kind === 'pipes'),
+    emissivePlan.occludersAfterCutaways.some((occluder) => occluder.kind === 'pipes'),
     'pipe layers should become cutaway occluders for the emissive pass'
   );
 });
