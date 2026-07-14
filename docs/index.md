@@ -14,6 +14,7 @@ This directory is the repo-local system of record for architecture, supported in
 - `npm run lint`
 - `npm run build`
 - `npm run test`
+- `npm run test:browser`
 - `npm run generate:legibility`
 - `npm run check:legibility`
 

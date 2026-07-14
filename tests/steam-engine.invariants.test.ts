@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { RNG, HSBAColor, setPath2D } from '../src/greebles/common.js';
 import { SteamEngineGenerator } from '../src/railway/SteamEngineGenerator.js';
-import { createTestContext, FakePath2D } from './test-helpers.js';
+import type { RailVehicleLayout } from '../src/railway/SteamEngineGenerator.js';
+import { FakePath2D } from './test-helpers.js';
 
 setPath2D(FakePath2D as unknown as typeof Path2D);
 
@@ -12,6 +13,22 @@ const THEME = new HSBAColor(0.12, 0.2, 0.6);
 
 function assertFiniteNumber(value: number, label: string) {
   assert.ok(Number.isFinite(value), `${label} must be finite`);
+}
+
+function projectRailVehicle(layout: RailVehicleLayout) {
+  return {
+    kind: layout.kind,
+    bounds: layout.bounds,
+    couplerFront: layout.couplerFront,
+    couplerRear: layout.couplerRear,
+    components: layout.components.map((component) => ({
+      type: component.type,
+      variant: component.variant,
+      wheelStyle: component.wheelStyle,
+      bounds: component.bounds,
+      zIndex: component.zIndex,
+    })),
+  };
 }
 
 test('SteamEngineGenerator invariants', () => {
@@ -48,19 +65,33 @@ test('SteamEngineGenerator invariants', () => {
   assert.ok(hasBoiler, 'engine has no boiler');
 });
 
-test('SteamEngineGenerator draw does not throw', () => {
-  const rng = new RNG(20240802);
+test('SteamEngineGenerator layouts are deterministic for fixed seeds and options', () => {
   const generator = new SteamEngineGenerator();
-  const components = generator.generate(WIDTH, HEIGHT, THEME, rng);
+  const createLayouts = () => {
+    const engine = generator.generateLayout(WIDTH, HEIGHT, THEME, new RNG(20240802), {
+      includeTender: true,
+      includeCowcatcher: true,
+      wheelStyle: 'mixed',
+    });
+    const car = generator.generateCar(WIDTH, HEIGHT, THEME, new RNG(20240803), {
+      kind: 'mixed',
+      wheelStyle: 'mixed',
+    });
+    const consist = generator.generateConsist(WIDTH, HEIGHT, THEME, new RNG(20240804), {
+      includeTender: true,
+      includeCowcatcher: true,
+      kind: 'mixed',
+      wheelStyle: 'mixed',
+      carCount: 4,
+    });
 
-  const ctx = createTestContext();
+    return [engine, car, ...consist].map(projectRailVehicle);
+  };
 
-  for (const comp of components) {
-    comp.draw(ctx, rng);
-  }
+  assert.deepEqual(createLayouts(), createLayouts());
 });
 
-test('war-train consist aligns couplers', () => {
+test('war-train consist aligns and orders couplers', () => {
   const rng = new RNG(41277);
   const generator = new SteamEngineGenerator();
   const consist = generator.generateConsist(WIDTH, HEIGHT, THEME, rng, {
@@ -84,7 +115,7 @@ test('war-train consist aligns couplers', () => {
   for (let i = 1; i < consist.length; i++) {
     assert.ok(
       consist[i].couplerFront.x > consist[i - 1].couplerRear.x,
-      'vehicles should be laid out from left to right without overlap'
+      'vehicle couplers should be ordered from left to right'
     );
   }
 });

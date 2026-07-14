@@ -102,6 +102,7 @@ setPath2D(Path2D);
 - `npm run lint`
 - `npm run build`
 - `npm run test`
+- `npm run test:browser`
 - `npm run generate:legibility`
 - `npm run check:legibility`
 

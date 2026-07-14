@@ -27,6 +27,7 @@
     "scripts": {
         "clean": "rm -rf dist",
         "test": "tsc -p tsconfig.tests.json && node --test dist/tests/*.test.js",
+        "test:browser": "node --test tests/browser-rendering.test.mjs",
         "build-and-test": "npm run clean && npm run build && npm test",
         "build": "tsc",
         "lint": "eslint .",

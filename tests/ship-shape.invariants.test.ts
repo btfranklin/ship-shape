@@ -5,7 +5,7 @@ import { CompositeShipGenerator } from '../src/capitalships/CompositeShipGenerat
 import { UnifiedTrunkComponent } from '../src/capitalships/UnifiedTrunkComponent.js';
 import type { ShipComponent } from '../src/capitalships/ShipComponent.js';
 import type { ShipArchetype } from '../src/capitalships/shipTypes.js';
-import { createTestContext, FakePath2D } from './test-helpers.js';
+import { FakePath2D } from './test-helpers.js';
 
 setPath2D(FakePath2D as unknown as typeof Path2D);
 
@@ -22,6 +22,36 @@ const ARCHETYPES: ShipArchetype[] = [
 
 function assertFiniteNumber(value: number, label: string) {
   assert.ok(Number.isFinite(value), `${label} must be finite`);
+}
+
+function projectShipComponent(component: ShipComponent) {
+  return {
+    type: component.type,
+    variant: component.variant,
+    bounds: component.bounds,
+    zIndex: component.zIndex,
+    isTrunk: component.isTrunk,
+    engineStyle: component.engineStyle,
+    energyGlowHue: component.energyGlowHue,
+    facing: component.facing,
+    invertLighting: component.invertLighting,
+    shipCenterX: component.shipCenterX,
+    shipCenterY: component.shipCenterY,
+  };
+}
+
+function projectShip(components: Array<ShipComponent | UnifiedTrunkComponent>) {
+  return components.map((component) => component instanceof UnifiedTrunkComponent
+    ? {
+        kind: 'unified-trunk' as const,
+        bounds: component.bounds,
+        zIndex: component.zIndex,
+        components: component.components.map(projectShipComponent),
+      }
+    : {
+        kind: 'component' as const,
+        ...projectShipComponent(component),
+      });
 }
 
 test('CompositeShipGenerator invariants', () => {
@@ -66,15 +96,30 @@ test('CompositeShipGenerator invariants', () => {
   }
 });
 
-test('CompositeShipGenerator draw does not throw', () => {
-  const rng = new RNG(20240801);
-  const generator = new CompositeShipGenerator();
-  const components = generator.generate(WIDTH, HEIGHT, THEME, rng, 'science', 600);
+test('CompositeShipGenerator structure is deterministic for fixed seeds', () => {
+  for (const archetype of ARCHETYPES) {
+    const first = new CompositeShipGenerator().generate(
+      WIDTH,
+      HEIGHT,
+      THEME,
+      new RNG(20240801),
+      archetype,
+      600
+    );
+    const second = new CompositeShipGenerator().generate(
+      WIDTH,
+      HEIGHT,
+      THEME,
+      new RNG(20240801),
+      archetype,
+      600
+    );
 
-  const ctx = createTestContext();
-
-  for (const comp of components) {
-    comp.draw(ctx, rng);
+    assert.deepEqual(
+      projectShip(first),
+      projectShip(second),
+      `${archetype} structure changed for the same seed`
+    );
   }
 });
 

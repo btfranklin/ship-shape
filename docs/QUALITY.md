@@ -5,6 +5,7 @@
 - `npm run lint`
 - `npm run build`
 - `npm run test`
+- `npm run test:browser`
 - `npm run check:legibility`
 
 Use `npm run generate:legibility` after changing public entrypoints, docs inventories, or runtime pages.
@@ -13,8 +14,9 @@ Use `npm run generate:legibility` after changing public entrypoints, docs invent
 
 - ESLint covers TypeScript hygiene.
 - TypeScript compilation builds the package and declaration files.
-- Runtime invariants verify capital ship generation, greeble rendering, and railway layouts against a fake canvas and fake `Path2D`.
-- Structural tests verify dependency direction, required docs, docs indexes, and docs consistency.
+- Pure model invariants verify deterministic capital ship generation, greeble planning, railway layouts, bounds, ordering, and structural relationships without treating test doubles as browser-rendering evidence.
+- Real Chromium rendering tests exercise representative greeble, capital ship, and railway scenarios against native Canvas 2D and `Path2D`. Unexpected console errors, page errors, request failures, invalid drawing arguments, unbalanced canvas state, transform leakage, and empty or uniform pixel output fail the suite. Semantic instrumentation is the primary oracle; coarse pixel assertions avoid brittle cross-platform screenshot baselines.
+- Structural tests use the TypeScript compiler and module resolver to enforce dependency direction across static imports, re-exports, type-only imports, side-effect imports, import-equals declarations, and string-literal dynamic imports. They also verify required docs, docs indexes, and docs consistency.
 - The legibility generator check ensures `docs/generated/public-api-inventory.md` and `docs/generated/playground-inventory.md` stay synchronized with the repo.
 
 ## CI
@@ -24,6 +26,8 @@ CI runs:
 - `npm run lint`
 - `npm run build`
 - `npm run test`
+- `npx playwright install --with-deps chromium`
+- `npm run test:browser`
 - `npm run check:legibility`
 
 ## Recovery Path
@@ -31,3 +35,4 @@ CI runs:
 - Public API changed: update the relevant index exports, run `npm run generate:legibility`, and refresh the interface docs if the contract changed.
 - New runtime page added: document it in `docs/PLAYGROUNDS.md`, then regenerate the inventories.
 - Boundary test failed: move the shared type or helper to `src/shared`, or invert the dependency so the lower-level domain no longer imports upward.
+- Browser rendering test failed: inspect the reported scenario, browser console or page error, and drawing-contract violation; capture a screenshot only when visual inspection is needed.

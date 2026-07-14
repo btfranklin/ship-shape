@@ -30,6 +30,7 @@ Start with the docs map, not random source files:
 - `npm run lint`
 - `npm run build`
 - `npm run test`
+- `npm run test:browser`
 - `npm run generate:legibility`
 - `npm run check:legibility`
 

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { formatBoundaryViolations, inspectDependencyBoundaries } from './dependency-boundaries.js';
 
 const TEST_FILE = fileURLToPath(import.meta.url);
 const DIST_TESTS_DIR = path.dirname(TEST_FILE);
@@ -15,6 +16,7 @@ const CANONICAL_COMMANDS = [
   'npm run lint',
   'npm run build',
   'npm run test',
+  'npm run test:browser',
   'npm run generate:legibility',
   'npm run check:legibility',
 ];
@@ -49,47 +51,6 @@ function listSourceFiles(dir: string): string[] {
     }
     return entry.name.endsWith('.ts') ? [entryPath] : [];
   });
-}
-
-function classifyDomain(filePath: string): 'root' | 'shared' | 'greebles' | 'capitalships' | 'railway' | 'other' {
-  const rel = path.relative(path.join(REPO_ROOT, 'src'), filePath).replaceAll(path.sep, '/');
-  if (rel === 'index.ts') return 'root';
-  if (rel.startsWith('shared/')) return 'shared';
-  if (rel.startsWith('greebles/')) return 'greebles';
-  if (rel.startsWith('capitalships/')) return 'capitalships';
-  if (rel.startsWith('railway/')) return 'railway';
-  return 'other';
-}
-
-function resolveRelativeImport(importerPath: string, specifier: string) {
-  const resolved = path.resolve(path.dirname(importerPath), specifier);
-  if (resolved.endsWith('.js')) {
-    return `${resolved.slice(0, -3)}.ts`;
-  }
-  if (fs.existsSync(resolved)) {
-    return resolved;
-  }
-  if (fs.existsSync(`${resolved}.ts`)) {
-    return `${resolved}.ts`;
-  }
-  return resolved;
-}
-
-function allowedTargetsFor(domain: ReturnType<typeof classifyDomain>) {
-  switch (domain) {
-    case 'shared':
-      return new Set(['shared']);
-    case 'greebles':
-      return new Set(['greebles', 'shared']);
-    case 'capitalships':
-      return new Set(['capitalships', 'greebles', 'shared']);
-    case 'railway':
-      return new Set(['railway', 'greebles', 'shared']);
-    case 'root':
-      return new Set(['root', 'greebles', 'capitalships', 'railway']);
-    default:
-      return new Set<string>();
-  }
 }
 
 test('required legibility docs exist', () => {
@@ -213,35 +174,8 @@ test('capital ship renderers do not fabricate fake ShipComponent instances', () 
 });
 
 test('src dependency direction follows the documented architecture', () => {
-  const sourceFiles = listSourceFiles(repoPath('src'));
-  const importPattern = /from\s+['"]([^'"]+)['"]/g;
-
-  for (const filePath of sourceFiles) {
-    const source = fs.readFileSync(filePath, 'utf8');
-    const sourceDomain = classifyDomain(filePath);
-    const allowedTargets = allowedTargetsFor(sourceDomain);
-
-    for (const match of source.matchAll(importPattern)) {
-      const specifier = match[1];
-      if (!specifier.startsWith('.')) {
-        continue;
-      }
-
-      const targetPath = resolveRelativeImport(filePath, specifier);
-      if (!targetPath.startsWith(repoPath('src'))) {
-        continue;
-      }
-
-      const targetDomain = classifyDomain(targetPath);
-      assert.ok(
-        allowedTargets.has(targetDomain),
-        `${path.relative(REPO_ROOT, filePath)} may not import ${path.relative(
-          REPO_ROOT,
-          targetPath
-        )}. Move shared code into src/shared or invert the dependency direction.`
-      );
-    }
-  }
+  const violations = inspectDependencyBoundaries(REPO_ROOT);
+  assert.equal(violations.length, 0, formatBoundaryViolations(violations));
 });
 
 test('generated legibility artifacts are up to date', () => {
