@@ -11,14 +11,10 @@ const DIST_TESTS_DIR = path.dirname(TEST_FILE);
 const REPO_ROOT = path.resolve(DIST_TESTS_DIR, '../..');
 
 const CANONICAL_LIBRARY_LAYERS = ['greebles', 'capitalships'];
-const CANONICAL_COMMANDS = [
+const ENTRY_COMMANDS = [
   'npm run dev',
-  'npm run lint',
-  'npm run build',
-  'npm run test',
-  'npm run test:browser',
+  'npm run validate',
   'npm run generate:legibility',
-  'npm run check:legibility',
 ];
 
 const REQUIRED_DOCS = [
@@ -27,7 +23,6 @@ const REQUIRED_DOCS = [
   'docs/INTERFACES.md',
   'docs/QUALITY.md',
   'docs/PLAYGROUNDS.md',
-  'docs/exec-plans/index.md',
   'docs/design-docs/greeble-surface-pipeline.md',
   'docs/design-docs/capital-ship-generation.md',
   'docs/generated/public-api-inventory.md',
@@ -52,7 +47,7 @@ function listSourceFiles(dir: string): string[] {
   });
 }
 
-test('required legibility docs exist', () => {
+test('required repository docs exist', () => {
   for (const relativePath of REQUIRED_DOCS) {
     assert.ok(
       fs.existsSync(repoPath(relativePath)),
@@ -61,7 +56,7 @@ test('required legibility docs exist', () => {
   }
 });
 
-test('README, AGENTS, and docs index agree on library layers and commands', () => {
+test('README, AGENTS, and docs index expose the library layers and entry commands', () => {
   const files = ['README.md', 'AGENTS.md', 'docs/index.md'];
 
   for (const file of files) {
@@ -73,7 +68,7 @@ test('README, AGENTS, and docs index agree on library layers and commands', () =
         `${file} must mention the ${layer} library layer`
       );
     }
-    for (const command of CANONICAL_COMMANDS) {
+    for (const command of ENTRY_COMMANDS) {
       assert.match(
         content,
         new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
@@ -85,7 +80,6 @@ test('README, AGENTS, and docs index agree on library layers and commands', () =
 
 test('docs indexes point to required references', () => {
   const docsIndex = readRepoFile('docs/index.md');
-  const execPlanIndex = readRepoFile('docs/exec-plans/index.md');
 
   for (const relativePath of [
     'ARCHITECTURE.md',
@@ -96,7 +90,6 @@ test('docs indexes point to required references', () => {
     'design-docs/capital-ship-generation.md',
     'generated/public-api-inventory.md',
     'generated/playground-inventory.md',
-    'exec-plans/index.md',
   ]) {
     assert.match(
       docsIndex,
@@ -104,17 +97,6 @@ test('docs indexes point to required references', () => {
       `docs/index.md must link to ${relativePath}`
     );
   }
-
-  assert.doesNotMatch(
-    docsIndex,
-    /tech-debt-tracker\.md/,
-    'docs/index.md must not link to the removed tech debt tracker'
-  );
-  assert.doesNotMatch(
-    execPlanIndex,
-    /tech-debt-tracker\.md/,
-    'docs/exec-plans/index.md must not link to the removed tech debt tracker'
-  );
 });
 
 test('package exports define the supported public entrypoints', () => {

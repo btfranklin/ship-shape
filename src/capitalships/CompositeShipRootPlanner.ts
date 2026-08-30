@@ -23,25 +23,17 @@ export class CompositeShipRootPlanner {
         const engineX = width * 0.05;
         const engineY = centerY - engineH / 2;
 
-        const rootComp = new ShipComponent(
-            engineX,
-            engineY,
-            engineW,
-            engineH,
-            10,
-            'engine',
-            themeColor.withBrightness(-0.1),
+        const rootComp = new ShipComponent({
+            bounds: { x: engineX, y: engineY, w: engineW, h: engineH },
+            zIndex: 10,
+            type: 'engine',
+            color: themeColor.withBrightness(-0.1),
             rng,
-            archetype,
-            'default',
-            false,
-            false,
+            shipArchetype: archetype,
             engineStyle,
-            centerY,
-            undefined,
-            lightColors
-        );
-        rootComp.generateShape(rng);
+            shipCenterY: centerY,
+            lightColors,
+        });
 
         return { component: rootComp, children: [] };
     }
@@ -67,11 +59,11 @@ export class CompositeShipRootPlanner {
             limitH = hullComp.leftEdge.maxY - hullComp.leftEdge.minY;
         }
 
-        engineComp.bounds.h = Math.min(oldEngineH, limitH);
-        engineComp.bounds.y = limitY + (limitH - engineComp.bounds.h) / 2;
+        const nextHeight = Math.min(oldEngineH, limitH);
+        const nextY = limitY + (limitH - nextHeight) / 2;
 
-        if (oldEngineH !== engineComp.bounds.h || oldEngineY !== engineComp.bounds.y) {
-            engineComp.generateShape(rng);
+        if (oldEngineH !== nextHeight || oldEngineY !== nextY) {
+            engineComp.updateBounds({ h: nextHeight, y: nextY }, rng);
         }
     }
 

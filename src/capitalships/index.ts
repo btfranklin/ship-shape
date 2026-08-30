@@ -1,4 +1,3 @@
-export * from './ShipShapeGenerator.js';
 export * from './CompositeShipGenerator.js';
 export * from './ShipComponent.js';
 export * from './UnifiedTrunkComponent.js';

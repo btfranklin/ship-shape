@@ -25,7 +25,15 @@ export class CompositeShipGenerator {
 
         // 2. Grow the Tree
         const growthPlanner = new CompositeShipGrowthPlanner();
-        growthPlanner.grow(rootNode, 0, 20, width, scaleH, themeColor, rng, archetype, centerY, lightColors);
+        growthPlanner.grow(rootNode, 0, 20, {
+            totalW: width,
+            totalH: scaleH,
+            theme: themeColor,
+            rng,
+            archetype,
+            shipCenterY: centerY,
+            lightColors,
+        });
 
         // Post-process engine
         rootPlanner.alignStandardEngineToFirstHull(rootNode, rng);

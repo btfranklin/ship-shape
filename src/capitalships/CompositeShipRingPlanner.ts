@@ -31,25 +31,16 @@ export class CompositeShipRingPlanner {
             const ringX = targetHull.bounds.x + targetHull.bounds.w / 2 - ringW / 2;
             const ringY = targetHull.bounds.y + targetHull.bounds.h / 2 - ringH / 2;
 
-            const ringComp = new ShipComponent(
-                ringX,
-                ringY,
-                ringW,
-                ringH,
-                1000,
-                'ring',
-                themeColor.withBrightness(-0.2),
+            const ringComp = new ShipComponent({
+                bounds: { x: ringX, y: ringY, w: ringW, h: ringH },
+                zIndex: 1000,
+                type: 'ring',
+                color: themeColor.withBrightness(-0.2),
                 rng,
-                archetype,
-                'default',
-                false,
-                false,
-                undefined,
-                centerY,
-                undefined,
-                lightColors
-            );
-            ringComp.generateShape(rng);
+                shipArchetype: archetype,
+                shipCenterY: centerY,
+                lightColors,
+            });
             finalComponents.push(ringComp);
         });
     }

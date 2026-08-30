@@ -10,12 +10,10 @@ This directory is the repo-local system of record for architecture, supported in
 ## Canonical Commands
 
 - `npm run dev`
-- `npm run lint`
-- `npm run build`
-- `npm run test`
-- `npm run test:browser`
+- `npm run validate`
 - `npm run generate:legibility`
-- `npm run check:legibility`
+
+See [`QUALITY.md`](QUALITY.md) for focused validation commands and recovery guidance.
 
 ## Core References
 
@@ -33,7 +31,3 @@ This directory is the repo-local system of record for architecture, supported in
 
 - Public API inventory: [`generated/public-api-inventory.md`](generated/public-api-inventory.md)
 - Playground inventory: [`generated/playground-inventory.md`](generated/playground-inventory.md)
-
-## Execution Memory
-
-- Exec-plan index: [`exec-plans/index.md`](exec-plans/index.md)

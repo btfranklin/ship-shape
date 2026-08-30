@@ -43,8 +43,8 @@ export function drawSurfaceLayerPlan(
                 break;
 
             case 'lightPanels':
-                if (layer.panelSeeds) {
-                    for (const seed of layer.panelSeeds) {
+                if (layer.emissiveMode === 'separate') {
+                    for (const seed of layer.seeds) {
                         new LightPanelGreebles(
                             config.xUnits,
                             config.yUnits,
@@ -53,7 +53,7 @@ export function drawSurfaceLayerPlan(
                             layer.colors
                         ).drawPanels(context, new RNG(seed));
                     }
-                } else if (layer.seed) {
+                } else {
                     new LightPanelGreebles(
                         config.xUnits,
                         config.yUnits,
@@ -74,8 +74,8 @@ export function drawSurfaceLayerPlan(
                 break;
 
             case 'windows':
-                if (layer.panelSeeds) {
-                    for (const seed of layer.panelSeeds) {
+                if (layer.emissiveMode === 'separate') {
+                    for (const seed of layer.seeds) {
                         new CapitalShipWindowsGreebles(
                             config.xUnits,
                             config.yUnits,
@@ -84,7 +84,7 @@ export function drawSurfaceLayerPlan(
                             layer.color
                         ).drawPanels(context, new RNG(seed));
                     }
-                } else if (layer.seed) {
+                } else {
                     new CapitalShipWindowsGreebles(
                         config.xUnits,
                         config.yUnits,
@@ -106,8 +106,8 @@ export function drawSurfaceLayerPlan(
                 break;
 
             case 'cutaways':
-                if (layer.baseSeeds) {
-                    for (const seed of layer.baseSeeds) {
+                if (layer.emissiveMode === 'separate') {
+                    for (const seed of layer.seeds) {
                         new CutawaySectionGreebles(
                             config.xUnits,
                             config.yUnits,
@@ -115,7 +115,7 @@ export function drawSurfaceLayerPlan(
                             1
                         ).drawBase(context, new RNG(seed));
                     }
-                } else if (layer.seed) {
+                } else {
                     new CutawaySectionGreebles(
                         config.xUnits,
                         config.yUnits,

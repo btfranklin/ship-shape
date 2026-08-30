@@ -13,48 +13,89 @@ import { WeaponRenderer } from './renderers/WeaponRenderer.js';
 import { StorageRenderer } from './renderers/StorageRenderer.js';
 import { ShipArchetype, ComponentType } from './shipTypes.js';
 
+export type ComponentVariant =
+    | 'default'
+    | 'taper-top'
+    | 'taper-bottom'
+    | 'taper-front'
+    | 'front'
+    | 'back'
+    | 'top-view'
+    | 'nose'
+    | 'goods'
+    | 'goods vertical'
+    | 'liquid'
+    | 'liquid vertical'
+    | 'sphere'
+    | 'vertical';
+
+export interface ShipBounds {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+}
+
+export interface ShipComponentOptions {
+    bounds: ShipBounds;
+    zIndex: number;
+    type: ComponentType;
+    color: HSBAColor;
+    rng: RNG;
+    shipArchetype: ShipArchetype;
+    variant?: ComponentVariant;
+    isTrunk?: boolean;
+    invertLighting?: boolean;
+    engineStyle?: 'standard' | 'radiator' | 'energy';
+    facing?: 'forward' | 'backward';
+    shipCenterY?: number;
+    shipCenterX?: number;
+    lightColors?: readonly HSBAColor[];
+    storageBands?: number;
+}
+
 export class ShipComponent {
-    public bounds: { x: number, y: number, w: number, h: number };
-    public zIndex: number;
-    public type: ComponentType;
-    public color: HSBAColor;
-    public engineStyle: 'standard' | 'radiator' | 'energy' = 'standard';
-    public greebles: CapitalShipSurfaceGreebles;
-    public shapePath?: Path2D;
+    public readonly zIndex: number;
+    public readonly type: ComponentType;
+    public readonly color: HSBAColor;
+    public readonly engineStyle: 'standard' | 'radiator' | 'energy';
+    public readonly energyGlowHue: number;
+    public readonly variant: ComponentVariant;
+    public readonly shipArchetype: ShipArchetype;
+    public readonly isTrunk: boolean;
+    public readonly invertLighting: boolean;
+    public readonly shipCenterY?: number;
+    public readonly shipCenterX?: number;
+    public readonly lightColors: readonly HSBAColor[];
+    public readonly storageBands?: number;
 
-    public energyGlowHue: number = 0.0;
-    public variant: string = 'default';
-    public shipArchetype: ShipArchetype;
-    public isTrunk: boolean = false;
-    public invertLighting: boolean = false;
-    public leftEdge: { minY: number, maxY: number } | null = null;
-    public facing: 'forward' | 'backward' = 'forward';
-    public shipCenterY?: number;
-    public shipCenterX?: number;
-    public customData: Record<string, unknown> = {};
-    public lightColors: HSBAColor[];
-    
-    private renderer: ComponentRenderer;
+    private _bounds: Readonly<ShipBounds>;
+    private _greebles: CapitalShipSurfaceGreebles;
+    private _shapePath!: Path2D;
+    private _leftEdge: Readonly<{ minY: number; maxY: number }> | null = null;
+    private readonly _facing: 'forward' | 'backward';
+    private readonly renderer: ComponentRenderer;
 
-    constructor(
-        x: number,
-        y: number,
-        w: number,
-        h: number,
-        zIndex: number,
-        type: ComponentType,
-        color: HSBAColor,
-        rng: RNG,
-        shipArchetype: ShipArchetype,
-        variant: string = 'default',
-        isTrunk: boolean = false,
-        invertLighting: boolean = false,
-        forcedEngineStyle?: 'standard' | 'radiator' | 'energy',
-        shipCenterY?: number,
-        shipCenterX?: number,
-        lightColors?: HSBAColor[]
-    ) {
-        this.bounds = { x, y, w, h };
+    constructor(options: ShipComponentOptions) {
+        const {
+            bounds,
+            zIndex,
+            type,
+            color,
+            rng,
+            shipArchetype,
+            variant = 'default',
+            isTrunk = false,
+            invertLighting = false,
+            engineStyle: forcedEngineStyle,
+            facing = 'forward',
+            shipCenterY,
+            shipCenterX,
+            lightColors,
+            storageBands,
+        } = options;
+
+        this._bounds = Object.freeze({ ...bounds });
         this.zIndex = zIndex;
         this.type = type;
         this.color = color;
@@ -64,7 +105,15 @@ export class ShipComponent {
         this.invertLighting = invertLighting;
         this.shipCenterY = shipCenterY;
         this.shipCenterX = shipCenterX;
-        this.lightColors = lightColors ?? [HSBAColor.fromRGBA(0, 255, 0)];
+        const resolvedLightColors = lightColors && lightColors.length > 0
+            ? lightColors
+            : [HSBAColor.fromRGBA(0, 255, 0)];
+        this.lightColors = Object.freeze([...resolvedLightColors]);
+        this.storageBands = storageBands;
+        this._facing = facing;
+
+        let engineStyle: 'standard' | 'radiator' | 'energy' = 'standard';
+        let energyGlowHue = 0;
 
         // Select Renderer
         switch (type) {
@@ -100,40 +149,80 @@ export class ShipComponent {
         // Engine Specific Logic
         if (type === 'engine') {
             if (forcedEngineStyle) {
-                this.engineStyle = forcedEngineStyle;
-                if (this.engineStyle === 'energy') {
-                    this.energyGlowHue = rng.range(0.0, 1.0);
+                engineStyle = forcedEngineStyle;
+                if (engineStyle === 'energy') {
+                    energyGlowHue = rng.range(0.0, 1.0);
                 }
             } else {
                 const r = rng.next();
-                if (r < 0.4) this.engineStyle = 'standard';
-                else if (r < 0.7) this.engineStyle = 'radiator';
+                if (r < 0.4) engineStyle = 'standard';
+                else if (r < 0.7) engineStyle = 'radiator';
                 else {
-                    this.engineStyle = 'energy';
-                    this.energyGlowHue = rng.range(0.0, 1.0);
+                    engineStyle = 'energy';
+                    energyGlowHue = rng.range(0.0, 1.0);
                 }
             }
         }
+        this.engineStyle = engineStyle;
+        this.energyGlowHue = energyGlowHue;
 
-        // Configure greebles
-        const skipBaseFill = (type === 'sphere' || type === 'ring' || type === 'trench');
-        this.greebles = new CapitalShipSurfaceGreebles(
-            w / UNIT_SCALE, 
-            h / UNIT_SCALE, 
-            color, 
-            shipArchetype, 
-            type, 
-            skipBaseFill, 
-            isTrunk,
-            this.lightColors
-        );
+        this._greebles = this.createGreebles();
+        this.generateShape(rng);
     }
 
-    generateShape(rng: RNG) {
-        this.renderer.generateShape(this, rng);
+    get bounds(): Readonly<ShipBounds> {
+        return this._bounds;
     }
 
-    draw(ctx: CanvasRenderingContext2D, rng: RNG) {
+    get greebles(): CapitalShipSurfaceGreebles {
+        return this._greebles;
+    }
+
+    get shapePath(): Path2D {
+        return this._shapePath;
+    }
+
+    get leftEdge(): Readonly<{ minY: number; maxY: number }> | null {
+        return this._leftEdge;
+    }
+
+    get facing(): 'forward' | 'backward' {
+        return this._facing;
+    }
+
+    updateBounds(
+        changes: Partial<ShipBounds>,
+        rng: RNG
+    ): void {
+        const previous = this._bounds;
+        this._bounds = Object.freeze({ ...previous, ...changes });
+        if (previous.w !== this._bounds.w || previous.h !== this._bounds.h) {
+            this._greebles = this.createGreebles();
+        }
+        this.generateShape(rng);
+    }
+
+    private generateShape(rng: RNG): void {
+        const shape = this.renderer.generateShape(this, rng);
+        this._shapePath = shape.path;
+        this._leftEdge = shape.leftEdge ? Object.freeze({ ...shape.leftEdge }) : null;
+    }
+
+    draw(ctx: CanvasRenderingContext2D, rng: RNG): void {
         this.renderer.draw(ctx, this, rng);
+    }
+
+    private createGreebles(): CapitalShipSurfaceGreebles {
+        const skipBaseFill = this.type === 'sphere' || this.type === 'ring' || this.type === 'trench';
+        return new CapitalShipSurfaceGreebles(
+            this._bounds.w / UNIT_SCALE,
+            this._bounds.h / UNIT_SCALE,
+            this.color,
+            this.shipArchetype,
+            this.type,
+            skipBaseFill,
+            this.isTrunk,
+            [...this.lightColors]
+        );
     }
 }

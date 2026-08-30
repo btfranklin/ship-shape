@@ -1,6 +1,5 @@
 import { HSBAColor, RNG } from '../greebles/common.js';
-import { CapitalShipSurfaceGreebles } from '../greebles/CapitalShipSurfaceGreebles.js';
-import { ShipComponent } from './ShipComponent.js';
+import { ComponentVariant, ShipComponent } from './ShipComponent.js';
 import { ShipArchetype } from './shipTypes.js';
 import type { ShipNode } from './compositeTypes.js';
 
@@ -51,7 +50,12 @@ export class CompositeShipStoragePlanner {
                     const isVertical = rng.bool(); 
                     let storageW, storageH;
                     
-                    const variant = rng.choice(['goods', 'liquid', 'default', 'sphere']);
+                    const variant = rng.choice<ComponentVariant>([
+                        'goods',
+                        'liquid',
+                        'default',
+                        'sphere',
+                    ]);
 
                     if (variant === 'sphere') {
                         const sizeMin = archetype === 'freight' ? 0.3 : 0.25;
@@ -151,35 +155,24 @@ export class CompositeShipStoragePlanner {
         }
     }
 
-    private createStorageLoop(root: ShipNode, count: number, startX: number, y: number, w: number, h: number, gap: number, zIndex: number, color: HSBAColor, rng: RNG, archetype: ShipArchetype, variant: string, isEdge: boolean, shipCenterY: number, lightColors: HSBAColor[]) {
+    private createStorageLoop(root: ShipNode, count: number, startX: number, y: number, w: number, h: number, gap: number, zIndex: number, color: HSBAColor, rng: RNG, archetype: ShipArchetype, variant: ComponentVariant, isEdge: boolean, shipCenterY: number, lightColors: HSBAColor[]) {
         const sharedBands = rng.intRange(1, 3);
-        let firstStorageGreebles: CapitalShipSurfaceGreebles | undefined;
-        
         for (let i = 0; i < count; i++) {
             const cx = startX + i * (w + gap);
             
-            const storage = new ShipComponent(
-                cx, y, w, h,
+            const storage = new ShipComponent({
+                bounds: { x: cx, y, w, h },
                 zIndex,
-                'storage',
+                type: 'storage',
                 color,
                 rng,
-                archetype,
+                shipArchetype: archetype,
                 variant,
-                false,
-                isEdge && y > shipCenterY,
-                undefined,
-                isEdge ? shipCenterY : undefined,
-                undefined,
-                lightColors
-            );
-
-            storage.customData.bands = sharedBands;
-            
-            if (i === 0) firstStorageGreebles = storage.greebles;
-            else if (firstStorageGreebles) storage.greebles = firstStorageGreebles;
-            
-            storage.generateShape(rng);
+                invertLighting: isEdge && y > shipCenterY,
+                shipCenterY: isEdge ? shipCenterY : undefined,
+                lightColors,
+                storageBands: sharedBands,
+            });
             root.children.push({ component: storage, children: [] });
         }
     }

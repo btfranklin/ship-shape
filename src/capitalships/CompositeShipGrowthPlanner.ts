@@ -1,11 +1,22 @@
 import { HSBAColor, RNG } from '../greebles/common.js';
-import { ShipComponent } from './ShipComponent.js';
+import { ComponentVariant, ShipBounds, ShipComponent } from './ShipComponent.js';
 import { ComponentType, ShipArchetype } from './shipTypes.js';
 import type { ShipNode } from './compositeTypes.js';
 
+interface GrowthContext {
+    totalW: number;
+    totalH: number;
+    theme: HSBAColor;
+    rng: RNG;
+    archetype: ShipArchetype;
+    shipCenterY: number;
+    lightColors: HSBAColor[];
+}
+
 export class CompositeShipGrowthPlanner {
-    grow(node: ShipNode, depth: number, maxDepth: number, totalW: number, totalH: number, theme: HSBAColor, rng: RNG, archetype: ShipArchetype, shipCenterY: number, lightColors: HSBAColor[]) {
+    grow(node: ShipNode, depth: number, maxDepth: number, context: GrowthContext): void {
         if (depth >= maxDepth) return;
+        const { totalW, totalH, theme, rng, archetype, shipCenterY, lightColors } = context;
 
         const parentComp = node.component;
         const pBounds = parentComp.bounds;
@@ -54,196 +65,40 @@ export class CompositeShipGrowthPlanner {
             
             if (x + w < totalW) {
                 const type: ComponentType = 'hull';
-                const childComp = new ShipComponent(
-                    x, y, w, h, 
-                    parentComp.zIndex + 10, 
+                const childComp = new ShipComponent({
+                    bounds: { x, y, w, h },
+                    zIndex: parentComp.zIndex + 10,
                     type,
-                    theme,
+                    color: theme,
                     rng,
-                    archetype,
-                    'default',
-                    true,
-                    false,
-                    undefined,
+                    shipArchetype: archetype,
+                    isTrunk: true,
                     shipCenterY,
-                    undefined,
-                    lightColors
-                );
-                childComp.generateShape(rng);
+                    lightColors,
+                });
                 
                 const childNode = { component: childComp, children: [] };
                 node.children.push(childNode);
                 grownForward = true;
                 
-                this.grow(childNode, depth + 1, maxDepth, totalW, totalH, theme, rng, archetype, shipCenterY, lightColors);
+                this.grow(childNode, depth + 1, maxDepth, context);
             }
         }
 
         if (!grownForward && (parentComp.type === 'hull' || parentComp.type === 'engine')) {
-            this.addNose(node, totalW, totalH, theme, rng, archetype, shipCenterY, lightColors);
+            this.addNose(node, context);
         }
 
         if (rng.bool(upChance)) {
-            const r = rng.next();
-            let type: ComponentType = 'tower';
-            let variant = 'default';
-            
-            const weaponThreshold = (archetype === 'combat') ? 0.3 : 0.0;
-            const sensorThreshold = weaponThreshold + ((archetype === 'science' || archetype === 'combat') ? (archetype === 'combat' ? 0.2 : 0.3) : 0.05);
-            const towerThreshold = sensorThreshold + 0.3; 
-            const taperThreshold = towerThreshold + 0.2;
-            const sphereThreshold = taperThreshold + 0.1;
-            
-            if (r < weaponThreshold) {
-                type = 'weapon';
-            } else if (r < sensorThreshold) {
-                type = 'sensor';
-            } else if (r < towerThreshold) {
-                type = 'tower';
-            } else if (r < taperThreshold) {
-                type = 'hull';
-                variant = 'taper-top';
-            } else if (r < sphereThreshold) {
-                type = 'sphere';
-            } else {
-                type = 'hull';
-                variant = 'default'; 
-            }
-
-            let w = pBounds.w * rng.range(0.3, 0.6);
-            let h = pBounds.h * rng.range(0.5, 1.2);
-
-            if (type === 'weapon') {
-                w = rng.range(60, 80);
-                if (w > pBounds.w) w = pBounds.w;
-                h = w * 0.5;
-            } else if (type === 'sensor') {
-                w = pBounds.w * rng.range(0.3, 0.6);
-                h = pBounds.h * rng.range(0.3, 0.6);
-            } else if (type === 'tower') {
-                w = pBounds.w * rng.range(0.2, 0.4);
-                h = pBounds.h * rng.range(0.8, 1.5);
-            } else if (type === 'hull') {
-                w = pBounds.w * rng.range(0.5, 0.8);
-                h = pBounds.h * rng.range(0.4, 0.7);
-            } else if (type === 'sphere') {
-                const s = Math.min(pBounds.w, pBounds.h) * rng.range(0.4, 0.7);
-                w = s; h = s;
-            }
-
-            const x = pBounds.x + rng.range(0, pBounds.w - w);
-            let y = pBounds.y - h * 0.8; 
-            if (type === 'sphere') {
-                y = pBounds.y - h * 0.5;
-            } else if (type === 'sensor') {
-                 y = pBounds.y - h * 0.9;
-            } else if (type === 'weapon') {
-                 y = pBounds.y - h * 0.9;
-            }
-            
-            const childComp = new ShipComponent(
-                x, y, w, h,
-                parentComp.zIndex - 1,
-                type,
-                theme.withBrightness(0.1),
-                rng,
-                archetype,
-                variant,
-                false,
-                false,
-                undefined,
-                shipCenterY,
-                undefined,
-                lightColors
-            );
-            
-            if (type === 'weapon' && x < totalW / 3) {
-                childComp.facing = 'backward';
-            }
-
-            childComp.generateShape(rng);
-            
-            const childNode = { component: childComp, children: [] };
-            node.children.push(childNode);
-            
-            if (type === 'tower') {
-                this.addTowerSensors(childNode, rng, archetype, lightColors);
-                this.grow(childNode, depth + 1, maxDepth, totalW, totalH, theme, rng, archetype, shipCenterY, lightColors);
+            const childNode = this.addSideComponent('top', node, context);
+            if (childNode.component.type === 'tower') {
+                this.addTowerSensors(childNode, context);
+                this.grow(childNode, depth + 1, maxDepth, context);
             }
         }
 
         if (rng.bool(downChance)) {
-            const r = rng.next();
-            let type: ComponentType = 'sphere';
-            let variant = 'default';
-            
-            const weaponThreshold = (archetype === 'combat') ? 0.3 : 0.0;
-            const sensorThreshold = weaponThreshold + ((archetype === 'science' || archetype === 'combat') ? (archetype === 'combat' ? 0.2 : 0.3) : 0.05);
-            const taperThreshold = sensorThreshold + 0.3;
-            
-            if (r < weaponThreshold) {
-                type = 'weapon';
-            } else if (r < sensorThreshold) {
-                type = 'sensor';
-            } else if (r < taperThreshold) {
-                type = 'hull';
-                variant = 'taper-bottom';
-            } else {
-                type = 'sphere';
-            }
-
-            let w = pBounds.w * rng.range(0.4, 0.6);
-            let h = pBounds.h * rng.range(0.4, 0.6);
-            
-            if (type === 'weapon') {
-                w = rng.range(60, 80);
-                if (w > pBounds.w) w = pBounds.w;
-                h = w * 0.5;
-            } else if (type === 'sensor') {
-                w = pBounds.w * rng.range(0.3, 0.6);
-                h = pBounds.h * rng.range(0.3, 0.6);
-            } else if (type === 'hull') {
-                w = pBounds.w * rng.range(0.5, 0.8);
-                h = pBounds.h * rng.range(0.4, 0.7);
-            } else if (type === 'sphere') {
-                const s = Math.min(pBounds.w, pBounds.h) * rng.range(0.4, 0.6);
-                w = s; h = s;
-            }
-            
-            const x = pBounds.x + rng.range(0, pBounds.w - w);
-            let y = pBounds.y + pBounds.h - h * 0.2; 
-            if (type === 'sphere') {
-                y = pBounds.y + pBounds.h - h * 0.5;
-            } else if (type === 'sensor') {
-                y = pBounds.y + pBounds.h - h * 0.1;
-            } else if (type === 'weapon') {
-                y = pBounds.y + pBounds.h - h * 0.1;
-            }
-            
-            const childComp = new ShipComponent(
-                x, y, w, h,
-                parentComp.zIndex - 1,
-                type,
-                theme.withBrightness(-0.1),
-                rng,
-                archetype,
-                variant,
-                false,
-                true,
-                undefined,
-                shipCenterY,
-                undefined,
-                lightColors
-            );
-            
-            if (type === 'weapon' && x < totalW / 3) {
-                childComp.facing = 'backward';
-            }
-
-            childComp.generateShape(rng);
-            
-            const childNode = { component: childComp, children: [] };
-            node.children.push(childNode);
+            this.addSideComponent('bottom', node, context);
         }
 
         if (archetype === 'combat' && parentComp.type !== 'engine' && rng.bool(0.4)) {
@@ -255,32 +110,126 @@ export class CompositeShipGrowthPlanner {
             const x = pBounds.x + (pBounds.w - w) / 2;
             const y = pBounds.y + (pBounds.h - h) / 2;
             
-            const weapon = new ShipComponent(
-                x, y, w, h,
-                500, 
-                'weapon',
-                theme.withBrightness(-0.15),
+            const weapon = new ShipComponent({
+                bounds: { x, y, w, h },
+                zIndex: 500,
+                type: 'weapon',
+                color: theme.withBrightness(-0.15),
                 rng,
-                archetype,
-                'top-view',
-                false,
-                false,
-                undefined,
+                shipArchetype: archetype,
+                variant: 'top-view',
+                facing: x < totalW / 3 ? 'backward' : 'forward',
                 shipCenterY,
-                undefined,
-                lightColors
-            );
-            
-            if (x < totalW / 3) {
-                weapon.facing = 'backward';
-            }
-
-            weapon.generateShape(rng);
+                lightColors,
+            });
             node.children.push({ component: weapon, children: [] });
         }
     }
 
-    private addNose(node: ShipNode, totalW: number, totalH: number, theme: HSBAColor, rng: RNG, archetype: ShipArchetype, shipCenterY: number, lightColors: HSBAColor[]) {
+    private addSideComponent(
+        side: 'top' | 'bottom',
+        parentNode: ShipNode,
+        context: GrowthContext
+    ): ShipNode {
+        const { totalW, theme, rng, archetype, shipCenterY, lightColors } = context;
+        const parent = parentNode.component;
+        const { type, variant } = this.chooseSideComponent(side, archetype, rng);
+        const { w, h } = this.sizeSideComponent(side, type, parent.bounds, rng);
+        const x = parent.bounds.x + rng.range(0, parent.bounds.w - w);
+        const y = this.placeSideComponent(side, type, parent.bounds, h);
+
+        const component = new ShipComponent({
+            bounds: { x, y, w, h },
+            zIndex: parent.zIndex - 1,
+            type,
+            color: theme.withBrightness(side === 'top' ? 0.1 : -0.1),
+            rng,
+            shipArchetype: archetype,
+            variant,
+            invertLighting: side === 'bottom',
+            facing: type === 'weapon' && x < totalW / 3 ? 'backward' : 'forward',
+            shipCenterY,
+            lightColors,
+        });
+        const childNode: ShipNode = { component, children: [] };
+        parentNode.children.push(childNode);
+        return childNode;
+    }
+
+    private chooseSideComponent(
+        side: 'top' | 'bottom',
+        archetype: ShipArchetype,
+        rng: RNG
+    ): { type: ComponentType; variant: ComponentVariant } {
+        const roll = rng.next();
+        const weaponThreshold = archetype === 'combat' ? 0.3 : 0;
+        const sensorThreshold = weaponThreshold
+            + (archetype === 'combat' ? 0.2 : archetype === 'science' ? 0.3 : 0.05);
+
+        if (roll < weaponThreshold) return { type: 'weapon', variant: 'default' };
+        if (roll < sensorThreshold) return { type: 'sensor', variant: 'default' };
+
+        if (side === 'bottom') {
+            return roll < sensorThreshold + 0.3
+                ? { type: 'hull', variant: 'taper-bottom' }
+                : { type: 'sphere', variant: 'default' };
+        }
+
+        const towerThreshold = sensorThreshold + 0.3;
+        if (roll < towerThreshold) return { type: 'tower', variant: 'default' };
+        if (roll < towerThreshold + 0.2) return { type: 'hull', variant: 'taper-top' };
+        if (roll < towerThreshold + 0.3) return { type: 'sphere', variant: 'default' };
+        return { type: 'hull', variant: 'default' };
+    }
+
+    private sizeSideComponent(
+        side: 'top' | 'bottom',
+        type: ComponentType,
+        parent: Readonly<ShipBounds>,
+        rng: RNG
+    ): { w: number; h: number } {
+        let w = parent.w * rng.range(side === 'top' ? 0.3 : 0.4, 0.6);
+        let h = parent.h * rng.range(side === 'top' ? 0.5 : 0.4, side === 'top' ? 1.2 : 0.6);
+
+        if (type === 'weapon') {
+            w = Math.min(rng.range(60, 80), parent.w);
+            h = w * 0.5;
+        } else if (type === 'sensor') {
+            w = parent.w * rng.range(0.3, 0.6);
+            h = parent.h * rng.range(0.3, 0.6);
+        } else if (type === 'tower') {
+            w = parent.w * rng.range(0.2, 0.4);
+            h = parent.h * rng.range(0.8, 1.5);
+        } else if (type === 'hull') {
+            w = parent.w * rng.range(0.5, 0.8);
+            h = parent.h * rng.range(0.4, 0.7);
+        } else if (type === 'sphere') {
+            const maxScale = side === 'top' ? 0.7 : 0.6;
+            const size = Math.min(parent.w, parent.h) * rng.range(0.4, maxScale);
+            w = size;
+            h = size;
+        }
+
+        return { w, h };
+    }
+
+    private placeSideComponent(
+        side: 'top' | 'bottom',
+        type: ComponentType,
+        parent: Readonly<ShipBounds>,
+        height: number
+    ): number {
+        if (side === 'top') {
+            const overlap = type === 'sphere' ? 0.5 : type === 'sensor' || type === 'weapon' ? 0.9 : 0.8;
+            return parent.y - height * overlap;
+        }
+
+        const overlap = type === 'sphere' ? 0.5 : type === 'sensor' || type === 'weapon' ? 0.1 : 0.2;
+        return parent.y + parent.h - height * overlap;
+    }
+
+    private addNose(node: ShipNode, context: GrowthContext): void {
+        const { totalW, theme, rng, archetype, shipCenterY, lightColors } = context;
         const parent = node.component;
         const pBounds = parent.bounds;
         const overlap = pBounds.w * 0.1;
@@ -309,8 +258,18 @@ export class CompositeShipGrowthPlanner {
             const h = pBounds.h * 0.9; 
             const y = pBounds.y + (pBounds.h - h)/2;
             
-            const nose = new ShipComponent(startX, y, w, h, parent.zIndex - 1, 'hull', theme, rng, archetype, 'taper-front', true, false, undefined, shipCenterY, undefined, lightColors); 
-            nose.generateShape(rng);
+            const nose = new ShipComponent({
+                bounds: { x: startX, y, w, h },
+                zIndex: parent.zIndex - 1,
+                type: 'hull',
+                color: theme,
+                rng,
+                shipArchetype: archetype,
+                variant: 'taper-front',
+                isTrunk: true,
+                shipCenterY,
+                lightColors,
+            });
             node.children.push({ component: nose, children: [] });
             
         } else if (choice === 'sensor') {
@@ -322,8 +281,17 @@ export class CompositeShipGrowthPlanner {
             const sensorOverlap = pBounds.w * 0.05; 
             const x = currentRight - sensorOverlap; 
             
-            const nose = new ShipComponent(x, y, w, h, parent.zIndex - 1, 'sensor', theme, rng, archetype, 'front', false, false, undefined, shipCenterY, undefined, lightColors);
-            nose.generateShape(rng);
+            const nose = new ShipComponent({
+                bounds: { x, y, w, h },
+                zIndex: parent.zIndex - 1,
+                type: 'sensor',
+                color: theme,
+                rng,
+                shipArchetype: archetype,
+                variant: 'front',
+                shipCenterY,
+                lightColors,
+            });
             node.children.push({ component: nose, children: [] });
 
         } else {
@@ -342,13 +310,23 @@ export class CompositeShipGrowthPlanner {
             const y = pBounds.y + pBounds.h/2 - s/2;
             const sphereX = currentRight - s * 0.5; 
             
-            const nose = new ShipComponent(sphereX, y, s, s, parent.zIndex - 1, 'sphere', theme, rng, archetype, 'nose', false, false, undefined, shipCenterY, undefined, lightColors);
-            nose.generateShape(rng);
+            const nose = new ShipComponent({
+                bounds: { x: sphereX, y, w: s, h: s },
+                zIndex: parent.zIndex - 1,
+                type: 'sphere',
+                color: theme,
+                rng,
+                shipArchetype: archetype,
+                variant: 'nose',
+                shipCenterY,
+                lightColors,
+            });
             node.children.push({ component: nose, children: [] });
         }
     }
 
-    private addTowerSensors(node: ShipNode, rng: RNG, archetype: ShipArchetype, lightColors: HSBAColor[]) {
+    private addTowerSensors(node: ShipNode, context: GrowthContext): void {
+        const { rng, archetype, lightColors } = context;
         const tower = node.component;
         const hasFrontSensor = rng.bool(0.3);
         const hasBackSensor = rng.bool(0.1);
@@ -361,25 +339,17 @@ export class CompositeShipGrowthPlanner {
         const shipCenterX = tower.bounds.x + tower.bounds.w / 2;
 
         const createSensor = (variant: 'front' | 'back', x: number, y: number) => {
-            const sensor = new ShipComponent(
-                x,
-                y,
-                sensorW,
-                sensorH,
-                sensorZ,
-                'sensor',
-                tower.color,
+            const sensor = new ShipComponent({
+                bounds: { x, y, w: sensorW, h: sensorH },
+                zIndex: sensorZ,
+                type: 'sensor',
+                color: tower.color,
                 rng,
-                archetype,
+                shipArchetype: archetype,
                 variant,
-                false,
-                false,
-                undefined,
-                undefined,
                 shipCenterX,
-                lightColors
-            );
-            sensor.generateShape(rng);
+                lightColors,
+            });
             node.children.push({ component: sensor, children: [] });
         };
 

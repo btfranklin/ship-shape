@@ -6,13 +6,20 @@ export class LightPanelGreebles implements Drawable {
     static LIGHT_PADDING = 0.0035;
     static LIGHT_SIZE = 0.01;
 
+    public readonly lightColors: readonly HSBAColor[];
+
     constructor(
         public xUnits: number,
         public yUnits: number,
         public themeColor: HSBAColor,
         public panelCount: number,
-        public lightColors: HSBAColor[] = [HSBAColor.fromRGBA(0, 255, 0)]
-    ) {}
+        lightColors: readonly HSBAColor[] = [HSBAColor.fromRGBA(0, 255, 0)]
+    ) {
+        const resolvedLightColors = lightColors.length > 0
+            ? lightColors
+            : [HSBAColor.fromRGBA(0, 255, 0)];
+        this.lightColors = Object.freeze([...resolvedLightColors]);
+    }
 
     draw(context: CanvasRenderingContext2D, rng: RNG): void {
         this.drawInternal(context, rng, true, true);

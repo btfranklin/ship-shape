@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { RNG, HSBAColor, setPath2D } from '../src/greebles/common.js';
 import { CompositeShipGenerator } from '../src/capitalships/CompositeShipGenerator.js';
 import { UnifiedTrunkComponent } from '../src/capitalships/UnifiedTrunkComponent.js';
-import type { ShipComponent } from '../src/capitalships/ShipComponent.js';
+import { ShipComponent } from '../src/capitalships/ShipComponent.js';
 import type { ShipArchetype } from '../src/capitalships/shipTypes.js';
 import { FakePath2D } from './test-helpers.js';
 
@@ -54,7 +54,55 @@ function projectShip(components: Array<ShipComponent | UnifiedTrunkComponent>) {
       });
 }
 
-test('CompositeShipGenerator invariants', () => {
+test('direct components own shape and bounds state from construction onward', () => {
+  const rng = new RNG(100);
+  const component = new ShipComponent({
+    bounds: { x: 1, y: 2, w: 30, h: 20 },
+    zIndex: 1,
+    type: 'hull',
+    color: THEME,
+    rng,
+    shipArchetype: 'science',
+    lightColors: [],
+  });
+  const initialShape = component.shapePath;
+
+  assert.ok(initialShape);
+  assert.equal(component.lightColors.length, 1, 'an empty palette should use the default light color');
+  assert.equal(Object.isFrozen(component.bounds), true);
+  assert.throws(
+    () => {
+      (component.bounds as { w: number }).w = 99;
+    },
+    TypeError
+  );
+
+  component.updateBounds({ w: 40 }, rng);
+  assert.equal(component.bounds.w, 40);
+  assert.notEqual(component.shapePath, initialShape);
+});
+
+test('unified trunks keep a stable snapshot of their component list and geometry', () => {
+  const rng = new RNG(101);
+  const component = new ShipComponent({
+    bounds: { x: 0, y: 0, w: 30, h: 20 },
+    zIndex: 1,
+    type: 'hull',
+    color: THEME,
+    rng,
+    shipArchetype: 'science',
+    isTrunk: true,
+  });
+  const source = [component];
+  const trunk = new UnifiedTrunkComponent(source);
+
+  source.push(component);
+  assert.equal(trunk.components.length, 1);
+  assert.equal(Object.isFrozen(trunk.components), true);
+  assert.equal(Object.isFrozen(trunk.bounds), true);
+});
+
+test('generated capital ships satisfy draw-order and shape invariants', () => {
   for (const archetype of ARCHETYPES) {
     const rng = new RNG(12345);
     const generator = new CompositeShipGenerator();

@@ -96,7 +96,10 @@ export class RNG {
         return this.next() < probability;
     }
     
-    choice<T>(array: T[]): T {
+    choice<T>(array: readonly T[]): T {
+        if (array.length === 0) {
+            throw new RangeError('RNG.choice requires at least one item.');
+        }
         return array[Math.floor(this.next() * array.length)] as T;
     }
 }

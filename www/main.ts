@@ -3,7 +3,7 @@ import { CompositeShipGenerator } from '../src/capitalships/index.js';
 import { ShipArchetype } from '../src/capitalships/shipTypes.js';
 import { UnifiedTrunkComponent } from '../src/capitalships/UnifiedTrunkComponent.js';
 
-console.log('Greebler Playground Loaded');
+console.log('Ship Shape Playground Loaded');
 
 // Constants
 const WIDTH = 1800;

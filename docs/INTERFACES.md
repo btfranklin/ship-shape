@@ -28,8 +28,8 @@ Contract notes:
 Import from `ship-shape/capitalships` for:
 
 - `CompositeShipGenerator`
-- `ShipShapeGenerator`
 - `ShipComponent`
+- `ShipComponentOptions`, `ShipBounds`, and `ComponentVariant`
 - `UnifiedTrunkComponent`
 - `ShipArchetype`
 - `ComponentType`
@@ -39,6 +39,7 @@ Contract notes:
 - `CompositeShipGenerator.generate(width, height, themeColor, rng, shipArchetype?, referenceHeight?)`
   returns components already sorted by `zIndex`.
 - Output components are draw-ready and should be drawn in order.
+- Direct `ShipComponent` construction uses one `ShipComponentOptions` object. Construction creates the initial shape, so the component is draw-ready when the constructor returns.
 - `UnifiedTrunkComponent` represents merged trunk hull sections and also exposes `draw(ctx, rng)`.
 
 ## Root Export

@@ -1,9 +1,9 @@
 import { RNG, HSBAColor, getPath2D } from '../../greebles/common.js';
 import { ShipComponent } from '../ShipComponent.js';
-import { ComponentRenderer } from './ComponentRenderer.js';
+import { ComponentRenderer, ComponentShape } from './ComponentRenderer.js';
 
 export class EngineRenderer implements ComponentRenderer {
-    generateShape(component: ShipComponent, rng: RNG): void {
+    generateShape(component: ShipComponent, rng: RNG): ComponentShape {
         const Path2D = getPath2D();
         const p = new Path2D();
         const { x, y, w, h } = component.bounds;
@@ -39,12 +39,10 @@ export class EngineRenderer implements ComponentRenderer {
                 p.closePath();
                 break;
         }
-        component.shapePath = p;
+        return { path: p };
     }
 
     draw(ctx: CanvasRenderingContext2D, component: ShipComponent, rng: RNG): void {
-        if (!component.shapePath) return;
-        
         ctx.save();
         ctx.clip(component.shapePath);
         
@@ -65,7 +63,6 @@ export class EngineRenderer implements ComponentRenderer {
     }
 
     private drawRadiatorEngine(ctx: CanvasRenderingContext2D, component: ShipComponent) {
-        if (!component.shapePath) return;
         const { x, y, w, h } = component.bounds;
 
         // 1. Housing (Volumetric Metallic Gradient)
@@ -163,7 +160,6 @@ export class EngineRenderer implements ComponentRenderer {
     }
 
     private drawEnergyEngine(ctx: CanvasRenderingContext2D, component: ShipComponent, rng: RNG) {
-        if (!component.shapePath) return;
         const { x, y, w, h } = component.bounds;
 
         // 1. Housing
@@ -268,7 +264,6 @@ export class EngineRenderer implements ComponentRenderer {
     }
 
     private drawStandardEngine(ctx: CanvasRenderingContext2D, component: ShipComponent) {
-        if (!component.shapePath) return;
         const { x, y, w, h } = component.bounds;
         
         // 1. Base Cylinder (Body)

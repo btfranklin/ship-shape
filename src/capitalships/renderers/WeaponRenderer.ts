@@ -1,9 +1,9 @@
 import { RNG, getPath2D } from '../../greebles/common.js';
 import { ShipComponent } from '../ShipComponent.js';
-import { ComponentRenderer } from './ComponentRenderer.js';
+import { ComponentRenderer, ComponentShape } from './ComponentRenderer.js';
 
 export class WeaponRenderer implements ComponentRenderer {
-    generateShape(component: ShipComponent, rng: RNG): void {
+    generateShape(component: ShipComponent, rng: RNG): ComponentShape {
         const Path2D = getPath2D();
         const p = new Path2D();
         const { x, y, w, h } = component.bounds;
@@ -92,12 +92,10 @@ export class WeaponRenderer implements ComponentRenderer {
             p.closePath();
         }
         
-        component.shapePath = p;
+        return { path: p };
     }
 
     draw(ctx: CanvasRenderingContext2D, component: ShipComponent, rng: RNG): void {
-        if (!component.shapePath) return;
-
         const { x, y, w, h } = component.bounds;
         const isTopView = component.variant === 'top-view';
         const isBottom = component.invertLighting;

@@ -1,25 +1,23 @@
 import { RNG, getPath2D } from '../../greebles/common.js';
 import { UNIT_SCALE } from '../../greebles/constants.js';
 import { ShipComponent } from '../ShipComponent.js';
-import { ComponentRenderer } from './ComponentRenderer.js';
+import { ComponentRenderer, ComponentShape } from './ComponentRenderer.js';
 import { SphereWindowsGreebles } from '../../greebles/SphereWindowsGreebles.js';
 import { SphereLightGreebles } from '../../greebles/SphereLightGreebles.js';
 import { CapitalShipWindowsGreebles } from '../../greebles/CapitalShipWindowsGreebles.js';
 
 export class SphereRenderer implements ComponentRenderer {
-    generateShape(component: ShipComponent, _rng: RNG): void {
+    generateShape(component: ShipComponent, _rng: RNG): ComponentShape {
         const Path2D = getPath2D();
         const p = new Path2D();
         const { x, y, w, h } = component.bounds;
         // Assume w = diameter
         const radius = Math.min(w, h) / 2;
         p.arc(x + w/2, y + h/2, radius, 0, Math.PI * 2);
-        component.shapePath = p;
+        return { path: p };
     }
 
     draw(ctx: CanvasRenderingContext2D, component: ShipComponent, rng: RNG): void {
-        if (!component.shapePath) return;
-        
         const { x, y, w, h } = component.bounds;
         const cx = x + w/2;
         const cy = y + h/2;
@@ -51,7 +49,7 @@ export class SphereRenderer implements ComponentRenderer {
             ? new SphereLightGreebles(
                 w / UNIT_SCALE,
                 h / UNIT_SCALE,
-                component.lightColors,
+                [...component.lightColors],
                 hasRows ? { minLights: 0, maxLights: 3 } : undefined
             )
             : null;

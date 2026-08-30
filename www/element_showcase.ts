@@ -1,11 +1,11 @@
 import { HSBAColor, RNG } from '../src/greebles/common.js';
-import { ShipComponent } from '../src/capitalships/ShipComponent.js';
+import { ComponentVariant, ShipComponent } from '../src/capitalships/ShipComponent.js';
 import { ComponentType, ShipArchetype } from '../src/capitalships/shipTypes.js';
 
 // Definition of Types
 interface TypeDef {
     type: ComponentType;
-    variant?: string;
+    variant?: ComponentVariant;
     desc: string;
     greebles: string[];
     allowedArchetypes?: ShipArchetype[];
@@ -290,24 +290,16 @@ function render() {
             // Randomly invert lighting for side items to show top/bottom mounting
             const invert = localRng.bool(); 
             
-            const comp = new ShipComponent(
-                finalX, finalY, w, h, 
-                10, 
-                def.type, 
-                theme, 
-                localRng, 
-                selectedArchetype,
-                def.variant || 'default',
-                false, // isTrunk
-                invert, // invertLighting
-                undefined, // engineStyle
-                undefined // shipCenterY - Disable support/connection drawing for showcase
-            );
-            
-            // For front sensor, ensure it's not inverted? Or it doesn't matter?
-            // Renderer handles it.
-            
-            comp.generateShape(localRng);
+            const comp = new ShipComponent({
+                bounds: { x: finalX, y: finalY, w, h },
+                zIndex: 10,
+                type: def.type,
+                color: theme,
+                rng: localRng,
+                shipArchetype: selectedArchetype,
+                variant: def.variant,
+                invertLighting: invert,
+            });
             comp.draw(ctx, localRng);
             
             ctx.restore();

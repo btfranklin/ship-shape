@@ -1,6 +1,7 @@
 # Node.js
 node_modules/
 dist/
+dist-tests/
 
 # npm
 npm-debug.log*
@@ -43,4 +44,3 @@ logs
 *.bak
 *.swp
 *~
-

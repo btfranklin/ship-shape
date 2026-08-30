@@ -7,6 +7,11 @@ import { EquipmentGreebles, EquipmentTrenchGreebles } from './EquipmentGreebles.
 import { PipeGreebles } from './PipeGreebles.js';
 import { HoseGreebles } from './HoseGreebles.js';
 
+type ScratchSurface = {
+    ctx: CanvasRenderingContext2D;
+    canvas: CanvasImageSource;
+};
+
 export type OccluderPlan =
     | { kind: 'electronics'; seed: number; count: number }
     | { kind: 'windows'; seeds: number[]; color: HSBAColor }
@@ -33,29 +38,39 @@ export class CapitalShipSurfaceEmissiveRenderer {
     ) {}
 
     draw(context: CanvasRenderingContext2D, plan: EmissivePlan, options?: { clipPath?: Path2D }): void {
-        const offscreen = this.createOffscreenContext(context);
-        const transform = typeof context.getTransform === 'function' ? context.getTransform() : null;
+        if (!this.hasEmissiveContent(plan)) return;
 
-        if (!offscreen || !transform) {
-            this.drawEmissiveDirect(context, plan);
+        const transform = typeof context.getTransform === 'function' ? context.getTransform() : null;
+        const bounds = transform ? this.getDeviceBounds(context, transform) : null;
+        const offscreen = bounds
+            ? this.createOffscreenContext(context, bounds.width, bounds.height)
+            : null;
+
+        if (!offscreen || !transform || !bounds) {
+            this.drawEmissiveDirectWithoutOcclusion(context, plan);
             return;
         }
 
-        const mask = this.createOffscreenContext(context);
-        const temp = this.createOffscreenContext(context);
+        const mask = this.createOffscreenContext(context, bounds.width, bounds.height);
+        const temp = this.createOffscreenContext(context, bounds.width, bounds.height);
 
         if (!mask || !temp) {
-            this.drawEmissiveDirect(context, plan);
+            this.drawEmissiveDirectWithoutOcclusion(context, plan);
             return;
         }
 
         const { ctx: offCtx, canvas } = offscreen;
-        const { ctx: maskCtx, canvas: maskCanvas } = mask;
-        const { ctx: tempCtx, canvas: tempCanvas } = temp;
 
         const applyTransform = (ctx: CanvasRenderingContext2D) => {
             if (typeof ctx.setTransform === 'function') {
-                ctx.setTransform(transform.a, transform.b, transform.c, transform.d, transform.e, transform.f);
+                ctx.setTransform(
+                    transform.a,
+                    transform.b,
+                    transform.c,
+                    transform.d,
+                    transform.e - bounds.left,
+                    transform.f - bounds.top
+                );
             }
         };
 
@@ -67,6 +82,9 @@ export class CapitalShipSurfaceEmissiveRenderer {
             }
             ctx.clearRect(0, 0, sized.width ?? 0, sized.height ?? 0);
             if (options?.clipPath) {
+                if (typeof ctx.setTransform === 'function') {
+                    ctx.setTransform(1, 0, 0, 1, -bounds.left, -bounds.top);
+                }
                 ctx.clip(options.clipPath);
             }
             applyTransform(ctx);
@@ -79,141 +97,99 @@ export class CapitalShipSurfaceEmissiveRenderer {
         beginCanvas(offCtx, canvas);
 
         if (plan.lightPanels && plan.lightPanels.seeds.length > 0) {
-            beginCanvas(maskCtx, maskCanvas);
-
-            for (let i = plan.lightPanels.seeds.length - 1; i >= 0; i--) {
-                const seed = plan.lightPanels.seeds[i];
-                beginCanvas(tempCtx, tempCanvas);
-
-                const panel = new LightPanelGreebles(
-                    this.xUnits,
-                    this.yUnits,
-                    this.themeColor,
-                    1,
-                    plan.lightPanels.colors
-                );
-                panel.drawLights(tempCtx, new RNG(seed));
-
-                tempCtx.save();
-                tempCtx.globalCompositeOperation = 'destination-out';
-                if (typeof tempCtx.setTransform === 'function') {
-                    tempCtx.setTransform(1, 0, 0, 1, 0, 0);
+            const { seeds, colors } = plan.lightPanels;
+            this.compositeSeededLayer(
+                offCtx,
+                mask,
+                temp,
+                seeds,
+                beginCanvas,
+                endCanvas,
+                (ctx, seed) => {
+                    const panel = new LightPanelGreebles(
+                        this.xUnits,
+                        this.yUnits,
+                        this.themeColor,
+                        1,
+                        colors
+                    );
+                    panel.drawLights(ctx, new RNG(seed));
+                },
+                (ctx, seed) => {
+                    const panel = new LightPanelGreebles(
+                        this.xUnits,
+                        this.yUnits,
+                        this.themeColor,
+                        1,
+                        colors
+                    );
+                    panel.drawPanels(ctx, new RNG(seed));
                 }
-                tempCtx.drawImage(maskCanvas, 0, 0);
-                tempCtx.restore();
-
-                offCtx.save();
-                if (typeof offCtx.setTransform === 'function') {
-                    offCtx.setTransform(1, 0, 0, 1, 0, 0);
-                }
-                offCtx.drawImage(tempCanvas, 0, 0);
-                offCtx.restore();
-
-                endCanvas(tempCtx);
-
-                const panelMask = new LightPanelGreebles(
-                    this.xUnits,
-                    this.yUnits,
-                    this.themeColor,
-                    1,
-                    plan.lightPanels.colors
-                );
-                panelMask.drawPanels(maskCtx, new RNG(seed));
-            }
-
-            endCanvas(maskCtx);
+            );
             this.applyOccluders(offCtx, plan.occludersAfterLights);
         }
 
         if (plan.windows && plan.windows.seeds.length > 0) {
-            beginCanvas(maskCtx, maskCanvas);
-
-            for (let i = plan.windows.seeds.length - 1; i >= 0; i--) {
-                const seed = plan.windows.seeds[i];
-                beginCanvas(tempCtx, tempCanvas);
-
-                const windows = new CapitalShipWindowsGreebles(
-                    this.xUnits,
-                    this.yUnits,
-                    this.themeColor,
-                    1,
-                    plan.windows.color
-                );
-                windows.drawLights(tempCtx, new RNG(seed));
-
-                tempCtx.save();
-                tempCtx.globalCompositeOperation = 'destination-out';
-                if (typeof tempCtx.setTransform === 'function') {
-                    tempCtx.setTransform(1, 0, 0, 1, 0, 0);
+            const { seeds, color } = plan.windows;
+            this.compositeSeededLayer(
+                offCtx,
+                mask,
+                temp,
+                seeds,
+                beginCanvas,
+                endCanvas,
+                (ctx, seed) => {
+                    const windows = new CapitalShipWindowsGreebles(
+                        this.xUnits,
+                        this.yUnits,
+                        this.themeColor,
+                        1,
+                        color
+                    );
+                    windows.drawLights(ctx, new RNG(seed));
+                },
+                (ctx, seed) => {
+                    const windows = new CapitalShipWindowsGreebles(
+                        this.xUnits,
+                        this.yUnits,
+                        this.themeColor,
+                        1,
+                        color
+                    );
+                    windows.drawPanels(ctx, new RNG(seed));
                 }
-                tempCtx.drawImage(maskCanvas, 0, 0);
-                tempCtx.restore();
-
-                offCtx.save();
-                if (typeof offCtx.setTransform === 'function') {
-                    offCtx.setTransform(1, 0, 0, 1, 0, 0);
-                }
-                offCtx.drawImage(tempCanvas, 0, 0);
-                offCtx.restore();
-
-                endCanvas(tempCtx);
-
-                const windowMask = new CapitalShipWindowsGreebles(
-                    this.xUnits,
-                    this.yUnits,
-                    this.themeColor,
-                    1,
-                    plan.windows.color
-                );
-                windowMask.drawPanels(maskCtx, new RNG(seed));
-            }
-
-            endCanvas(maskCtx);
+            );
             this.applyOccluders(offCtx, plan.occludersAfterWindows);
         }
 
         if (plan.cutaways && plan.cutaways.seeds.length > 0) {
-            beginCanvas(maskCtx, maskCanvas);
-
-            for (let i = plan.cutaways.seeds.length - 1; i >= 0; i--) {
-                const seed = plan.cutaways.seeds[i];
-                beginCanvas(tempCtx, tempCanvas);
-
-                const cutaway = new CutawaySectionGreebles(
-                    this.xUnits,
-                    this.yUnits,
-                    this.themeColor,
-                    1
-                );
-                cutaway.drawGlow(tempCtx, new RNG(seed));
-
-                tempCtx.save();
-                tempCtx.globalCompositeOperation = 'destination-out';
-                if (typeof tempCtx.setTransform === 'function') {
-                    tempCtx.setTransform(1, 0, 0, 1, 0, 0);
+            const { seeds } = plan.cutaways;
+            this.compositeSeededLayer(
+                offCtx,
+                mask,
+                temp,
+                seeds,
+                beginCanvas,
+                endCanvas,
+                (ctx, seed) => {
+                    const cutaway = new CutawaySectionGreebles(
+                        this.xUnits,
+                        this.yUnits,
+                        this.themeColor,
+                        1
+                    );
+                    cutaway.drawGlow(ctx, new RNG(seed));
+                },
+                (ctx, seed) => {
+                    const cutaway = new CutawaySectionGreebles(
+                        this.xUnits,
+                        this.yUnits,
+                        this.themeColor,
+                        1
+                    );
+                    cutaway.drawMask(ctx, new RNG(seed));
                 }
-                tempCtx.drawImage(maskCanvas, 0, 0);
-                tempCtx.restore();
-
-                offCtx.save();
-                if (typeof offCtx.setTransform === 'function') {
-                    offCtx.setTransform(1, 0, 0, 1, 0, 0);
-                }
-                offCtx.drawImage(tempCanvas, 0, 0);
-                offCtx.restore();
-
-                endCanvas(tempCtx);
-
-                const cutawayMask = new CutawaySectionGreebles(
-                    this.xUnits,
-                    this.yUnits,
-                    this.themeColor,
-                    1
-                );
-                cutawayMask.drawMask(maskCtx, new RNG(seed));
-            }
-
-            endCanvas(maskCtx);
+            );
             this.applyOccluders(offCtx, plan.occludersAfterCutaways);
         }
 
@@ -226,11 +202,61 @@ export class CapitalShipSurfaceEmissiveRenderer {
             context.resetTransform();
         }
         context.globalCompositeOperation = 'source-over';
-        context.drawImage(canvas, 0, 0);
+        context.drawImage(canvas, bounds.left, bounds.top);
         context.restore();
     }
 
-    private drawEmissiveDirect(context: CanvasRenderingContext2D, plan: EmissivePlan): void {
+    private compositeSeededLayer(
+        outputContext: CanvasRenderingContext2D,
+        mask: ScratchSurface,
+        temp: ScratchSurface,
+        seeds: readonly number[],
+        beginCanvas: (context: CanvasRenderingContext2D, target: CanvasImageSource) => void,
+        endCanvas: (context: CanvasRenderingContext2D) => void,
+        drawGlow: (context: CanvasRenderingContext2D, seed: number) => void,
+        drawMask: (context: CanvasRenderingContext2D, seed: number) => void
+    ): void {
+        beginCanvas(mask.ctx, mask.canvas);
+
+        for (let i = seeds.length - 1; i >= 0; i--) {
+            const seed = seeds[i];
+            beginCanvas(temp.ctx, temp.canvas);
+            drawGlow(temp.ctx, seed);
+
+            temp.ctx.save();
+            temp.ctx.globalCompositeOperation = 'destination-out';
+            if (typeof temp.ctx.setTransform === 'function') {
+                temp.ctx.setTransform(1, 0, 0, 1, 0, 0);
+            }
+            temp.ctx.drawImage(mask.canvas, 0, 0);
+            temp.ctx.restore();
+
+            outputContext.save();
+            if (typeof outputContext.setTransform === 'function') {
+                outputContext.setTransform(1, 0, 0, 1, 0, 0);
+            }
+            outputContext.drawImage(temp.canvas, 0, 0);
+            outputContext.restore();
+
+            endCanvas(temp.ctx);
+            drawMask(mask.ctx, seed);
+        }
+
+        endCanvas(mask.ctx);
+    }
+
+    private hasEmissiveContent(plan: EmissivePlan): boolean {
+        return Boolean(
+            plan.lightPanels?.seeds.length
+            || plan.windows?.seeds.length
+            || plan.cutaways?.seeds.length
+        );
+    }
+
+    private drawEmissiveDirectWithoutOcclusion(
+        context: CanvasRenderingContext2D,
+        plan: EmissivePlan
+    ): void {
         if (plan.lightPanels) {
             for (const seed of plan.lightPanels.seeds) {
                 const panels = new LightPanelGreebles(
@@ -242,7 +268,6 @@ export class CapitalShipSurfaceEmissiveRenderer {
                 );
                 panels.drawLights(context, new RNG(seed));
             }
-            this.applyOccluders(context, plan.occludersAfterLights);
         }
 
         if (plan.windows) {
@@ -256,7 +281,6 @@ export class CapitalShipSurfaceEmissiveRenderer {
                 );
                 windows.drawLights(context, new RNG(seed));
             }
-            this.applyOccluders(context, plan.occludersAfterWindows);
         }
 
         if (plan.cutaways) {
@@ -269,8 +293,41 @@ export class CapitalShipSurfaceEmissiveRenderer {
                 );
                 cutaway.drawGlow(context, new RNG(seed));
             }
-            this.applyOccluders(context, plan.occludersAfterCutaways);
         }
+    }
+
+    private getDeviceBounds(
+        context: CanvasRenderingContext2D,
+        transform: DOMMatrix
+    ): { left: number; top: number; width: number; height: number } | null {
+        const canvas = (context as unknown as { canvas?: { width?: number; height?: number } }).canvas;
+        const canvasWidth = canvas?.width;
+        const canvasHeight = canvas?.height;
+        if (!canvasWidth || !canvasHeight) return null;
+
+        const points = [
+            [0, 0],
+            [this.xUnits, 0],
+            [0, this.yUnits],
+            [this.xUnits, this.yUnits],
+        ].map(([x, y]) => ({
+            x: transform.a * x + transform.c * y + transform.e,
+            y: transform.b * x + transform.d * y + transform.f,
+        }));
+        const padding = 2;
+        const left = Math.max(0, Math.floor(Math.min(...points.map((point) => point.x))) - padding);
+        const top = Math.max(0, Math.floor(Math.min(...points.map((point) => point.y))) - padding);
+        const right = Math.min(
+            canvasWidth,
+            Math.ceil(Math.max(...points.map((point) => point.x))) + padding
+        );
+        const bottom = Math.min(
+            canvasHeight,
+            Math.ceil(Math.max(...points.map((point) => point.y))) + padding
+        );
+
+        if (right <= left || bottom <= top) return null;
+        return { left, top, width: right - left, height: bottom - top };
     }
 
     private applyOccluders(context: CanvasRenderingContext2D, occluders: OccluderPlan[]): void {
@@ -366,7 +423,9 @@ export class CapitalShipSurfaceEmissiveRenderer {
     }
 
     private createOffscreenContext(
-        context: CanvasRenderingContext2D
+        context: CanvasRenderingContext2D,
+        width: number,
+        height: number
     ): { ctx: CanvasRenderingContext2D; canvas: CanvasImageSource } | null {
         type CanvasLike = {
             width?: number;
@@ -378,10 +437,7 @@ export class CapitalShipSurfaceEmissiveRenderer {
         };
 
         const baseCanvas = (context as unknown as { canvas?: CanvasLike }).canvas;
-        const width = baseCanvas?.width;
-        const height = baseCanvas?.height;
-
-        if (!width || !height) return null;
+        if (width <= 0 || height <= 0) return null;
 
         let canvas: OffscreenCanvas | HTMLCanvasElement | CanvasLike;
         if (typeof OffscreenCanvas !== 'undefined') {

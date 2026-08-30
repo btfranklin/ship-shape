@@ -5,6 +5,9 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "type": "module",
+    "files": [
+        "dist"
+    ],
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
@@ -21,15 +24,17 @@
         "./package.json": "./package.json"
     },
     "scripts": {
-        "clean": "rm -rf dist",
-        "test": "tsc -p tsconfig.tests.json && node --test dist/tests/*.test.js",
+        "clean": "rm -rf dist dist-tests",
+        "test": "npm run clean && tsc -p tsconfig.tests.json && node --test dist-tests/tests/*.test.js && node --test tests/legibility-generator.test.mjs",
+        "test:package": "node scripts/verify-package.mjs",
         "test:browser": "node --test tests/browser-rendering.test.mjs",
-        "build-and-test": "npm run clean && npm run build && npm test",
+        "validate": "npm run lint && npm run test && npm run test:package && npm run test:browser && npm run check:legibility && npm audit --audit-level=high",
         "build": "tsc",
         "lint": "eslint .",
         "dev": "vite",
         "generate:legibility": "node scripts/generate-legibility-artifacts.mjs",
-        "check:legibility": "node scripts/generate-legibility-artifacts.mjs --check"
+        "check:legibility": "node scripts/generate-legibility-artifacts.mjs --check",
+        "prepack": "npm run clean && npm run build"
     },
     "keywords": [],
     "author": "",

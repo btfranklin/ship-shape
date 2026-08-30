@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { collectEntrypointSymbols } from './typescript-export-inventory.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,76 +38,6 @@ const playgroundMetadata = {
 
 function readText(filePath) {
   return fs.readFileSync(filePath, 'utf8');
-}
-
-function resolveTsPath(importerPath, specifier) {
-  const resolved = path.resolve(path.dirname(importerPath), specifier);
-  if (resolved.endsWith('.js')) {
-    return resolved.slice(0, -3) + '.ts';
-  }
-  if (resolved.endsWith('.mjs')) {
-    return resolved.slice(0, -4) + '.ts';
-  }
-  if (fs.existsSync(resolved)) {
-    return resolved;
-  }
-  if (fs.existsSync(`${resolved}.ts`)) {
-    return `${resolved}.ts`;
-  }
-  return resolved;
-}
-
-function parseExportList(source) {
-  const matches = [];
-  const listPattern = /export\s+(?:type\s+)?\{([^}]+)\}(?:\s+from\s+['"][^'"]+['"])?/g;
-  for (const match of source.matchAll(listPattern)) {
-    const items = match[1]
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean);
-    for (const item of items) {
-      const aliasParts = item.split(/\s+as\s+/);
-      matches.push((aliasParts[1] ?? aliasParts[0]).trim());
-    }
-  }
-  return matches;
-}
-
-function parseNamedExports(filePath) {
-  const source = readText(filePath);
-  const symbolSet = new Set(parseExportList(source));
-  const declarationPattern =
-    /export\s+(?:declare\s+)?(?:abstract\s+)?(?:class|interface|type|function|const|let|var|enum)\s+([A-Za-z0-9_]+)/g;
-  for (const match of source.matchAll(declarationPattern)) {
-    symbolSet.add(match[1]);
-  }
-  return [...symbolSet].sort((a, b) => a.localeCompare(b));
-}
-
-function collectEntrypointSymbols(indexPath, seen = new Set()) {
-  if (seen.has(indexPath)) {
-    return [];
-  }
-  seen.add(indexPath);
-
-  const source = readText(indexPath);
-  const symbols = new Set(parseExportList(source));
-  const reexportPattern = /export\s+\*\s+from\s+['"]([^'"]+)['"]/g;
-
-  for (const match of source.matchAll(reexportPattern)) {
-    const targetPath = resolveTsPath(indexPath, match[1]);
-    if (path.basename(targetPath) === 'index.ts') {
-      for (const symbol of collectEntrypointSymbols(targetPath, seen)) {
-        symbols.add(symbol);
-      }
-      continue;
-    }
-    for (const symbol of parseNamedExports(targetPath)) {
-      symbols.add(symbol);
-    }
-  }
-
-  return [...symbols].sort((a, b) => a.localeCompare(b));
 }
 
 function titleForExportKey(exportKey) {

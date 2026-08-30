@@ -32,6 +32,23 @@ class FakeGradient {
 }
 
 const fakeGradient = new FakeGradient();
+const fakeCanvasSizes: Array<{ width: number; height: number }> = [];
+const compositeOperations: string[] = [];
+
+export function resetCanvasObservations(): void {
+  fakeCanvasSizes.length = 0;
+  compositeOperations.length = 0;
+}
+
+export function getCanvasObservations(): {
+  sizes: Array<{ width: number; height: number }>;
+  compositeOperations: string[];
+} {
+  return {
+    sizes: [...fakeCanvasSizes],
+    compositeOperations: [...compositeOperations],
+  };
+}
 
 export interface TestContextCall {
   name: string;
@@ -49,7 +66,9 @@ class FakeCanvas {
   constructor(
     public width: number = 300,
     public height: number = 150
-  ) {}
+  ) {
+    fakeCanvasSizes.push({ width, height });
+  }
 
   getContext(_contextId: '2d') {
     return createTestContext({
@@ -76,7 +95,6 @@ export function createTestContext(options: TestContextOptions = {}): CanvasRende
     shadowOffsetX: 0,
     shadowOffsetY: 0,
     globalAlpha: 1,
-    globalCompositeOperation: 'source-over',
 
     // Stack
     save() {},
@@ -154,6 +172,15 @@ export function createTestContext(options: TestContextOptions = {}): CanvasRende
       return fakeGradient;
     },
   };
+
+  let globalCompositeOperation = 'source-over';
+  Object.defineProperty(ctx, 'globalCompositeOperation', {
+    get: () => globalCompositeOperation,
+    set: (value: string) => {
+      globalCompositeOperation = value;
+      compositeOperations.push(value);
+    },
+  });
 
   return ctx as unknown as CanvasRenderingContext2D;
 }

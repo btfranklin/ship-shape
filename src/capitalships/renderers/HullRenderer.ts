@@ -1,10 +1,15 @@
 import { RNG, getPath2D } from '../../greebles/common.js';
-import { UNIT_SCALE } from '../../greebles/constants.js';
 import { ShipComponent } from '../ShipComponent.js';
-import { ComponentRenderer } from './ComponentRenderer.js';
+import { ComponentRenderer, ComponentShape } from './ComponentRenderer.js';
+import {
+    drawClippedSurfaceGreebles,
+    drawDeferredEmissiveGreebles,
+    drawInnerBevel,
+    drawOuterOutline,
+} from './componentPaintPasses.js';
 
 export class HullRenderer implements ComponentRenderer {
-    generateShape(component: ShipComponent, rng: RNG): void {
+    generateShape(component: ShipComponent, rng: RNG): ComponentShape {
         const Path2D = getPath2D();
         const p = new Path2D();
         const { x, y, w, h } = component.bounds;
@@ -18,8 +23,7 @@ export class HullRenderer implements ComponentRenderer {
             p.lineTo(x + w - taperX, y); // Top Right (In)
             p.lineTo(x + taperX, y); // Top Left (In)
             p.closePath();
-            component.shapePath = p;
-            return;
+            return { path: p };
         } 
         
         if (component.variant === 'taper-bottom') {
@@ -30,8 +34,7 @@ export class HullRenderer implements ComponentRenderer {
             p.lineTo(x + w - taperX, y + h); // Bottom Right (In)
             p.lineTo(x + taperX, y + h); // Bottom Left (In)
             p.closePath();
-            component.shapePath = p;
-            return;
+            return { path: p };
         }
 
         if (component.variant === 'taper-front') {
@@ -43,8 +46,7 @@ export class HullRenderer implements ComponentRenderer {
             p.lineTo(x + w, y + h - taperY); // Bottom Right (Up)
             p.lineTo(x, y + h); // Bottom Left
             p.closePath();
-            component.shapePath = p;
-            return;
+            return { path: p };
         }
 
         // Default: Hull specific shapes - Any combination of corners can be cropped
@@ -76,7 +78,7 @@ export class HullRenderer implements ComponentRenderer {
         let leftMaxY = y + h;
         if (cutTL) leftMinY += cutTL.cy;
         if (cutBL) leftMaxY -= cutBL.cy;
-        component.leftEdge = { minY: leftMinY, maxY: leftMaxY };
+        const leftEdge = { minY: leftMinY, maxY: leftMaxY };
 
         // Start from Top-Left corner
         if (cutTL) {
@@ -111,12 +113,10 @@ export class HullRenderer implements ComponentRenderer {
         }
 
         p.closePath();
-        component.shapePath = p;
+        return { path: p, leftEdge };
     }
 
     draw(ctx: CanvasRenderingContext2D, component: ShipComponent, rng: RNG): void {
-        if (!component.shapePath) return;
-
         // 1. Volume Fill (Gradient)
         // Light Top-Left to Dark Bottom-Right
         const grad = ctx.createLinearGradient(component.bounds.x, component.bounds.y, component.bounds.x + component.bounds.w, component.bounds.y + component.bounds.h);
@@ -130,44 +130,21 @@ export class HullRenderer implements ComponentRenderer {
         ctx.fill(component.shapePath);
 
         // 2. Draw Greebles (Clipped)
-        ctx.save();
-        ctx.clip(component.shapePath);
-        ctx.translate(component.bounds.x, component.bounds.y);
-        ctx.scale(UNIT_SCALE, UNIT_SCALE);
-        component.greebles.draw(ctx, rng, { skipEmissive: true });
-        ctx.restore();
+        drawClippedSurfaceGreebles(ctx, component, rng);
 
         // 2b. Lighting Overlays
         // Hulls always get top-down lighting
         this.drawLightingOverlay(ctx, component);
-        this.drawEmissiveGreebles(ctx, component, rng);
+        drawDeferredEmissiveGreebles(ctx, component, rng);
 
         // 3. Inner Highlight (Bevel)
-        ctx.save();
-        ctx.clip(component.shapePath);
-        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-        ctx.lineWidth = 4;
-        ctx.stroke(component.shapePath);
-        ctx.restore();
+        drawInnerBevel(ctx, component);
 
         // 4. Outer Stroke
-        ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-        ctx.lineWidth = 1;
-        ctx.stroke(component.shapePath);
-    }
-
-    private drawEmissiveGreebles(ctx: CanvasRenderingContext2D, component: ShipComponent, rng: RNG) {
-        if (!component.shapePath) return;
-        ctx.save();
-        ctx.clip(component.shapePath);
-        ctx.translate(component.bounds.x, component.bounds.y);
-        ctx.scale(UNIT_SCALE, UNIT_SCALE);
-        component.greebles.drawEmissive(ctx, rng, { clipPath: component.shapePath });
-        ctx.restore();
+        drawOuterOutline(ctx, component);
     }
 
     private drawLightingOverlay(ctx: CanvasRenderingContext2D, component: ShipComponent) {
-        if (!component.shapePath) return;
         ctx.save();
         ctx.clip(component.shapePath);
 

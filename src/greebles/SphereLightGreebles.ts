@@ -7,12 +7,19 @@ type SphereLightOptions = {
 };
 
 export class SphereLightGreebles implements Drawable {
+    public readonly lightColors: readonly HSBAColor[];
+
     constructor(
         public xUnits: number,
         public yUnits: number,
-        public lightColors: HSBAColor[] = [HSBAColor.fromRGBA(0, 255, 0)],
+        lightColors: readonly HSBAColor[] = [HSBAColor.fromRGBA(0, 255, 0)],
         public options: SphereLightOptions = {}
-    ) {}
+    ) {
+        const resolvedLightColors = lightColors.length > 0
+            ? lightColors
+            : [HSBAColor.fromRGBA(0, 255, 0)];
+        this.lightColors = Object.freeze([...resolvedLightColors]);
+    }
 
     draw(context: CanvasRenderingContext2D, rng: RNG): void {
         const radius = Math.min(this.xUnits, this.yUnits) / 2;

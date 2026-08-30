@@ -7,6 +7,21 @@ Ship Shape is a procedural Canvas 2D capital ship rendering toolkit. It has two 
 
 The package is deterministic when you keep a shared `RNG` instance for a single run.
 
+## Setup
+
+Install the project dependencies and the Chromium browser used by the runtime tests:
+
+```sh
+npm ci
+npx playwright install chromium
+```
+
+Run the full local validation gate:
+
+```sh
+npm run validate
+```
+
 ## Install And Import Surface
 
 Use the package entrypoints:
@@ -68,6 +83,8 @@ import { Path2D } from 'canvas';
 setPath2D(Path2D);
 ```
 
+TypeScript consumers must include the `DOM` library because the public drawing APIs use the standard Canvas 2D types. A Node renderer must supply compatible canvas and `Path2D` implementations at runtime.
+
 ## Stable Contracts
 
 - `CompositeShipGenerator.generate(...)` returns components sorted by `zIndex`.
@@ -77,12 +94,10 @@ setPath2D(Path2D);
 ## Developer Commands
 
 - `npm run dev`
-- `npm run lint`
-- `npm run build`
-- `npm run test`
-- `npm run test:browser`
+- `npm run validate`
 - `npm run generate:legibility`
-- `npm run check:legibility`
+
+See [`docs/QUALITY.md`](docs/QUALITY.md) for focused validation commands and recovery guidance.
 
 ## Docs
 

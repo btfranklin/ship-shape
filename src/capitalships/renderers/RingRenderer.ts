@@ -1,9 +1,9 @@
 import { RNG, getPath2D } from '../../greebles/common.js';
 import { ShipComponent } from '../ShipComponent.js';
-import { ComponentRenderer } from './ComponentRenderer.js';
+import { ComponentRenderer, ComponentShape } from './ComponentRenderer.js';
 
 export class RingRenderer implements ComponentRenderer {
-    generateShape(component: ShipComponent, _rng: RNG): void {
+    generateShape(component: ShipComponent, _rng: RNG): ComponentShape {
         const Path2D = getPath2D();
         const p = new Path2D();
         const { x, y, w, h } = component.bounds;
@@ -26,12 +26,10 @@ export class RingRenderer implements ComponentRenderer {
         p.quadraticCurveTo(x + w/2, y + h - capHeight + cpOffset, x, y + h - capHeight);
         
         p.closePath();
-        component.shapePath = p;
+        return { path: p };
     }
 
     draw(ctx: CanvasRenderingContext2D, component: ShipComponent, _rng: RNG): void {
-        if (!component.shapePath) return;
-
         // 1. Volume Fill (Cylindrical Gradient)
         // Top Dark -> Mid Light -> Bottom Dark
         const grad = ctx.createLinearGradient(component.bounds.x, component.bounds.y, component.bounds.x, component.bounds.y + component.bounds.h);

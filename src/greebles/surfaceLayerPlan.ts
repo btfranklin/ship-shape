@@ -15,8 +15,10 @@ export interface SurfaceLayerPlanConfig {
     skipBaseFill: boolean;
     isTrunk: boolean;
     lightColors?: HSBAColor[];
-    skipEmissive?: boolean;
+    emissiveMode: EmissiveMode;
 }
+
+export type EmissiveMode = 'inline' | 'separate';
 
 export interface SurfaceNoiseSpeck {
     x: number;
@@ -30,24 +32,34 @@ export type SurfaceLayerPlanLayer =
     | { kind: 'baseFill'; color: HSBAColor }
     | { kind: 'noise'; specks: SurfaceNoiseSpeck[] }
     | { kind: 'panels'; seed: number; panelCount: number; showRivets: boolean }
-    | { kind: 'lightPanels'; count: number; colors: HSBAColor[]; seed?: number; panelSeeds?: number[] }
+    | { kind: 'lightPanels'; emissiveMode: 'inline'; count: number; colors: HSBAColor[]; seed: number }
+    | { kind: 'lightPanels'; emissiveMode: 'separate'; count: number; colors: HSBAColor[]; seeds: number[] }
     | { kind: 'electronics'; seed: number; count: number }
-    | { kind: 'windows'; count: number; color: HSBAColor; seed?: number; panelSeeds?: number[] }
+    | { kind: 'windows'; emissiveMode: 'inline'; count: number; color: HSBAColor; seed: number }
+    | { kind: 'windows'; emissiveMode: 'separate'; count: number; color: HSBAColor; seeds: number[] }
     | { kind: 'trench'; seed: number; y: number; h: number }
-    | { kind: 'cutaways'; count: number; seed?: number; baseSeeds?: number[] }
+    | { kind: 'cutaways'; emissiveMode: 'inline'; count: number; seed: number }
+    | { kind: 'cutaways'; emissiveMode: 'separate'; count: number; seeds: number[] }
     | { kind: 'equipment'; seed: number; count: number }
     | { kind: 'pipes'; seed: number; count: number }
     | { kind: 'hoses'; seed: number; count: number };
 
-export interface SurfaceLayerPlan {
-    style: GreebleStyle;
-    layers: SurfaceLayerPlanLayer[];
-    emissivePlan?: EmissivePlan;
-}
+export type SurfaceLayerPlan =
+    | {
+        emissiveMode: 'inline';
+        style: GreebleStyle;
+        layers: SurfaceLayerPlanLayer[];
+    }
+    | {
+        emissiveMode: 'separate';
+        style: GreebleStyle;
+        layers: SurfaceLayerPlanLayer[];
+        emissivePlan: EmissivePlan;
+    };
 
 export function createSurfaceLayerPlan(config: SurfaceLayerPlanConfig, rng: RNG): SurfaceLayerPlan {
     const layers: SurfaceLayerPlanLayer[] = [];
-    const emissivePlan: EmissivePlan | undefined = config.skipEmissive
+    const emissivePlan: EmissivePlan | undefined = config.emissiveMode === 'separate'
         ? { occludersAfterLights: [], occludersAfterWindows: [], occludersAfterCutaways: [] }
         : undefined;
 
@@ -96,11 +108,17 @@ export function createSurfaceLayerPlan(config: SurfaceLayerPlanConfig, rng: RNG)
         const count = rng.intRange(knobs.lightRange[0], knobs.lightRange[1]);
         const colors = config.lightColors ?? [HSBAColor.fromRGBA(0, 255, 0)];
         if (emissivePlan) {
-            const panelSeeds = Array.from({ length: count }, nextSeed);
-            layers.push({ kind: 'lightPanels', count, colors, panelSeeds });
-            emissivePlan.lightPanels = { seeds: panelSeeds, colors };
+            const seeds = Array.from({ length: count }, nextSeed);
+            layers.push({ kind: 'lightPanels', emissiveMode: 'separate', count, colors, seeds });
+            emissivePlan.lightPanels = { seeds, colors };
         } else {
-            layers.push({ kind: 'lightPanels', count, colors, seed: nextSeed() });
+            layers.push({
+                kind: 'lightPanels',
+                emissiveMode: 'inline',
+                count,
+                colors,
+                seed: nextSeed()
+            });
         }
     }
 
@@ -116,13 +134,25 @@ export function createSurfaceLayerPlan(config: SurfaceLayerPlanConfig, rng: RNG)
     if (hasWindows) {
         const count = rng.intRange(knobs.windowRange[0], knobs.windowRange[1]);
         if (emissivePlan) {
-            const panelSeeds = Array.from({ length: count }, nextSeed);
-            layers.push({ kind: 'windows', count, color: windowColor, panelSeeds });
-            const plan = { kind: 'windows' as const, seeds: panelSeeds, color: windowColor };
-            emissivePlan.windows = { seeds: panelSeeds, color: windowColor };
+            const seeds = Array.from({ length: count }, nextSeed);
+            layers.push({
+                kind: 'windows',
+                emissiveMode: 'separate',
+                count,
+                color: windowColor,
+                seeds
+            });
+            const plan = { kind: 'windows' as const, seeds, color: windowColor };
+            emissivePlan.windows = { seeds, color: windowColor };
             emissivePlan.occludersAfterLights.push(plan);
         } else {
-            layers.push({ kind: 'windows', count, color: windowColor, seed: nextSeed() });
+            layers.push({
+                kind: 'windows',
+                emissiveMode: 'inline',
+                count,
+                color: windowColor,
+                seed: nextSeed()
+            });
         }
     }
 
@@ -138,13 +168,18 @@ export function createSurfaceLayerPlan(config: SurfaceLayerPlanConfig, rng: RNG)
     if (config.isTrunk && rng.bool(knobs.cutawayChance)) {
         const count = rng.intRange(1, 2);
         if (emissivePlan) {
-            const baseSeeds = Array.from({ length: count }, nextSeed);
-            layers.push({ kind: 'cutaways', count, baseSeeds });
-            const plan = { kind: 'cutaways' as const, seeds: baseSeeds };
-            emissivePlan.cutaways = { seeds: baseSeeds };
+            const seeds = Array.from({ length: count }, nextSeed);
+            layers.push({ kind: 'cutaways', emissiveMode: 'separate', count, seeds });
+            const plan = { kind: 'cutaways' as const, seeds };
+            emissivePlan.cutaways = { seeds };
             pushOccluder(emissivePlan, plan, ['lights', 'windows']);
         } else {
-            layers.push({ kind: 'cutaways', count, seed: nextSeed() });
+            layers.push({
+                kind: 'cutaways',
+                emissiveMode: 'inline',
+                count,
+                seed: nextSeed()
+            });
         }
     }
 
@@ -169,7 +204,10 @@ export function createSurfaceLayerPlan(config: SurfaceLayerPlanConfig, rng: RNG)
         pushOccluder(emissivePlan, { kind: 'hoses', seed, count }, ['lights', 'windows', 'cutaways']);
     }
 
-    return { style, layers, emissivePlan };
+    if (emissivePlan) {
+        return { emissiveMode: 'separate', style, layers, emissivePlan };
+    }
+    return { emissiveMode: 'inline', style, layers };
 }
 
 function createNoiseSpecks(config: SurfaceLayerPlanConfig, rng: RNG): SurfaceNoiseSpeck[] {

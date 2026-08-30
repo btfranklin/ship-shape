@@ -12,6 +12,7 @@ Deep `src/...` imports are internal-only and are intentionally excluded.
   - `CapitalShipSurfaceGreebles`
   - `CapitalShipWindowsGreebles`
   - `ComponentType`
+  - `ComponentVariant`
   - `CompositeShipGenerator`
   - `CutawaySectionGreebles`
   - `Drawable`
@@ -24,13 +25,12 @@ Deep `src/...` imports are internal-only and are intentionally excluded.
   - `LightPanelGreebles`
   - `PanelGreebles`
   - `PipeGreebles`
-  - `Point`
   - `RNG`
   - `setPath2D`
   - `ShipArchetype`
+  - `ShipBounds`
   - `ShipComponent`
-  - `ShipShapeData`
-  - `ShipShapeGenerator`
+  - `ShipComponentOptions`
   - `SphereLightGreebles`
   - `SphereWindowsGreebles`
   - `UnifiedTrunkComponent`
@@ -68,10 +68,10 @@ Deep `src/...` imports are internal-only and are intentionally excluded.
 - Types path: `./dist/capitalships/index.d.ts`
 - Supported symbols:
   - `ComponentType`
+  - `ComponentVariant`
   - `CompositeShipGenerator`
-  - `Point`
   - `ShipArchetype`
+  - `ShipBounds`
   - `ShipComponent`
-  - `ShipShapeData`
-  - `ShipShapeGenerator`
+  - `ShipComponentOptions`
   - `UnifiedTrunkComponent`

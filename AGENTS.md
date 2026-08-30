@@ -21,17 +21,15 @@ Start with the docs map, not random source files:
 - Library API work: start in [`README.md`](README.md), [`docs/INTERFACES.md`](docs/INTERFACES.md), and [`docs/generated/public-api-inventory.md`](docs/generated/public-api-inventory.md).
 - Generator internals: read [`docs/design-docs/capital-ship-generation.md`](docs/design-docs/capital-ship-generation.md) or [`docs/design-docs/greeble-surface-pipeline.md`](docs/design-docs/greeble-surface-pipeline.md) before editing the large source files.
 - Rendering/runtime work: review [`docs/PLAYGROUNDS.md`](docs/PLAYGROUNDS.md) and [`docs/generated/playground-inventory.md`](docs/generated/playground-inventory.md).
-- Quality or repo-shape work: use [`docs/QUALITY.md`](docs/QUALITY.md) and the legibility tests in [`tests/legibility.invariants.test.ts`](tests/legibility.invariants.test.ts).
+- Quality or repo-shape work: use [`docs/QUALITY.md`](docs/QUALITY.md) and the repository contract tests in [`tests/repository-contracts.test.ts`](tests/repository-contracts.test.ts).
 
 ## Commands
 
 - `npm run dev`
-- `npm run lint`
-- `npm run build`
-- `npm run test`
-- `npm run test:browser`
+- `npm run validate`
 - `npm run generate:legibility`
-- `npm run check:legibility`
+
+See [`docs/QUALITY.md`](docs/QUALITY.md) for focused validation commands and recovery guidance.
 
 ## Key Rules
 
