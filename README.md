@@ -1,10 +1,9 @@
 # Ship Shape
 
-Ship Shape is a procedural Canvas 2D rendering toolkit with three first-class subsystems:
+Ship Shape is a procedural Canvas 2D capital ship rendering toolkit. It has two public layers:
 
-- `ship-shape/greebles`: low-level panel, pipe, window, trench, light, and cutaway primitives.
 - `ship-shape/capitalships`: procedural capital ship composition and rendering.
-- `ship-shape/railway`: steam engine, rail car, and consist generation.
+- `ship-shape/greebles`: low-level surface primitives used by capital ships.
 
 The package is deterministic when you keep a shared `RNG` instance for a single run.
 
@@ -15,7 +14,6 @@ Use the package entrypoints:
 - `ship-shape`
 - `ship-shape/greebles`
 - `ship-shape/capitalships`
-- `ship-shape/railway`
 
 Deep imports from `src/...` are internal-only and should not be treated as supported API.
 
@@ -59,24 +57,6 @@ new PanelGreebles(1, 1, theme, 8, true).draw(ctx, rng);
 ctx.restore();
 ```
 
-## Railway Example
-
-```ts
-import { RNG, HSBAColor } from 'ship-shape/greebles';
-import { SteamEngineGenerator } from 'ship-shape/railway';
-
-const rng = new RNG(90210);
-const theme = new HSBAColor(0.12, 0.2, 0.6);
-const generator = new SteamEngineGenerator();
-
-const consist = generator.generateConsist(1400, 800, theme, rng, {
-  includeTender: true,
-  includeCowcatcher: true,
-  kind: 'mixed',
-  carCount: 3,
-});
-```
-
 ## Node / Server-Side Rendering
 
 Rendering uses `Path2D`. In Node, configure the implementation before drawing:
@@ -91,8 +71,6 @@ setPath2D(Path2D);
 ## Stable Contracts
 
 - `CompositeShipGenerator.generate(...)` returns components sorted by `zIndex`.
-- `SteamEngineGenerator.generate(...)` returns ready-to-draw components.
-- `SteamEngineGenerator.generateLayout(...)`, `generateCar(...)`, and `generateConsist(...)` return layout metadata as well as drawables.
 - `UnifiedTrunkComponent` groups trunk hull sections for capital ships.
 - Callers should keep using the same `RNG` instance within a single render.
 

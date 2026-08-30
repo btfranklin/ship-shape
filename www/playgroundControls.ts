@@ -174,45 +174,4 @@ function buildCapitalControls(): void {
     );
 }
 
-function buildEngineControls(): void {
-    const controls = requireElement<HTMLDivElement>('engineControls');
-    controls.replaceChildren(
-        createHeading('War Trains'),
-        createControlGroup('Seed', createSeedControl('engineSeedInput', 'engineRandomSeedBtn')),
-        createHueControl('Metal Hue', 'engineHueInput', 'engineHueRefreshBtn', 'Refresh engine color', '35'),
-        createSelectControl('View', 'engineViewModeSelect', [
-            { value: 'engine', label: 'Engine' },
-            { value: 'car', label: 'Single Car' },
-            { value: 'consist', label: 'Connected Consist' }
-        ]),
-        createSelectControl('Car Type', 'engineCarTypeSelect', [
-            { value: 'mixed', label: 'Mixed' },
-            { value: 'gun-car', label: 'Gun Car' },
-            { value: 'escort-car', label: 'Escort Car' },
-            { value: 'supply-car', label: 'Supply Car' },
-            { value: 'flatbed', label: 'Flatbed' }
-        ]),
-        createSelectControl('Wheel Style', 'engineWheelStyleSelect', [
-            { value: 'mixed', label: 'Mixed' },
-            { value: 'spoked', label: 'Spoked' },
-            { value: 'solid', label: 'Solid' },
-            { value: 'counterweight', label: 'Counterweight' }
-        ]),
-        createSelectControl('Tender', 'engineTenderSelect', [
-            { value: 'auto', label: 'Auto' },
-            { value: 'yes', label: 'Always' },
-            { value: 'no', label: 'Never' }
-        ]),
-        createSelectControl('Cowcatcher', 'engineCowcatcherSelect', [
-            { value: 'auto', label: 'Auto' },
-            { value: 'yes', label: 'Always' },
-            { value: 'no', label: 'Never' }
-        ]),
-        createCommandButton('engineGenerateBtn', 'Generate Train'),
-        createSpacer(),
-        createLinks([{ href: 'steam_engine_element_gallery.html', label: 'Railway Element Gallery' }])
-    );
-}
-
 buildCapitalControls();
-buildEngineControls();

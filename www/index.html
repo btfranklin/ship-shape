@@ -22,17 +22,6 @@
                 Capital Ships
             </button>
             <button
-                id="tab-steam-button"
-                class="tab-button"
-                type="button"
-                role="tab"
-                aria-selected="false"
-                aria-controls="tab-steam"
-                data-tab-target="tab-steam"
-            >
-                War Trains
-            </button>
-            <button
                 id="tab-greebles-button"
                 class="tab-button"
                 type="button"
@@ -57,16 +46,6 @@
                 </div>
             </section>
 
-            <section id="tab-steam" class="tab-panel" role="tabpanel" aria-labelledby="tab-steam-button">
-                <div class="panel-split">
-                    <div class="panel-main" id="engineMain">
-                        <canvas id="engineCanvas"></canvas>
-                    </div>
-
-                    <div class="panel-controls" id="engineControls"></div>
-                </div>
-            </section>
-
             <section id="tab-greebles" class="tab-panel greeble-panel" role="tabpanel" aria-labelledby="tab-greebles-button">
                 <div class="greeble-header">
                     <h2>Greeble Library</h2>
@@ -79,7 +58,6 @@
     <script type="module" src="/playgroundControls.ts"></script>
     <script type="module" src="/tabs.ts"></script>
     <script type="module" src="/main.ts"></script>
-    <script type="module" src="/steam_engine_showcase.ts"></script>
     <script type="module" src="/greeble_showcase.ts"></script>
 </body>
 </html>

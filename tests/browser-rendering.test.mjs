@@ -276,7 +276,7 @@ async function openAuditedPage(relativeUrl, run) {
   await page.addInitScript(installCanvasAudit);
 
   try {
-    await page.goto(`${baseUrl}${relativeUrl}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${baseUrl}${relativeUrl}`, { waitUntil: 'load' });
     await page.waitForFunction(() => Boolean(globalThis.__shipShapeCanvasAudit));
     await run(page);
     await page.waitForTimeout(50);
@@ -319,8 +319,6 @@ test('all documented playgrounds render through native Chromium canvas APIs', { 
   const pages = [
     ['/greeble_showcase.html', '#grid canvas', 14],
     ['/element_showcase.html', '#list canvas', 1],
-    ['/steam_engine_showcase.html', '#engineCanvas', 1],
-    ['/steam_engine_element_gallery.html', '#list canvas', 1],
   ];
 
   for (const [relativeUrl, selector, minimumCount] of pages) {
@@ -406,38 +404,4 @@ test('capital ship archetypes and emissive compositing render with fixed seeds',
     + (audit.calls['OffscreenCanvasRenderingContext2D.drawImage'] ?? 0);
   assert.ok(compositeCalls > 0, 'emissive rendering should composite native canvases with drawImage');
   assert.ok((audit.calls['Path2D.rect'] ?? 0) + (audit.calls['Path2D.lineTo'] ?? 0) > 0, 'native Path2D geometry should be exercised');
-});
-
-test('railway modes, car kinds, and wheel styles render with fixed seeds', { timeout: 120000 }, async () => {
-  await openAuditedPage('/steam_engine_showcase.html', async (page) => {
-    await page.locator('#engineCanvas').waitFor();
-    await page.locator('#engineSeedInput').fill('41277');
-
-    for (const wheelStyle of ['spoked', 'solid', 'counterweight']) {
-      await setControl(page, '#engineWheelStyleSelect', wheelStyle);
-      await setControl(page, '#engineTenderSelect', wheelStyle === 'solid' ? 'no' : 'yes');
-      await setControl(page, '#engineCowcatcherSelect', wheelStyle === 'counterweight' ? 'no' : 'yes');
-      await setControl(page, '#engineViewModeSelect', 'engine');
-      await page.locator('#engineGenerateBtn').click();
-      await assertCanvasHasMeaningfulOutput(page.locator('#engineCanvas'), `${wheelStyle} engine`);
-      await assertCanvasTransformIsIdentity(page.locator('#engineCanvas'), `${wheelStyle} engine`);
-    }
-
-    for (const kind of ['gun-car', 'escort-car', 'supply-car', 'flatbed']) {
-      await setControl(page, '#engineViewModeSelect', 'car');
-      await setControl(page, '#engineCarTypeSelect', kind);
-      await page.locator('#engineGenerateBtn').click();
-      await assertCanvasHasMeaningfulOutput(page.locator('#engineCanvas'), kind);
-      await assertCanvasTransformIsIdentity(page.locator('#engineCanvas'), kind);
-    }
-
-    await setControl(page, '#engineViewModeSelect', 'consist');
-    await setControl(page, '#engineCarTypeSelect', 'mixed');
-    await setControl(page, '#engineWheelStyleSelect', 'mixed');
-    await setControl(page, '#engineTenderSelect', 'yes');
-    await setControl(page, '#engineCowcatcherSelect', 'yes');
-    await page.locator('#engineGenerateBtn').click();
-    await assertCanvasHasMeaningfulOutput(page.locator('#engineCanvas'), 'mixed consist');
-    await assertCanvasTransformIsIdentity(page.locator('#engineCanvas'), 'mixed consist');
-  });
 });

@@ -10,7 +10,7 @@ const TEST_FILE = fileURLToPath(import.meta.url);
 const DIST_TESTS_DIR = path.dirname(TEST_FILE);
 const REPO_ROOT = path.resolve(DIST_TESTS_DIR, '../..');
 
-const CANONICAL_SUBSYSTEMS = ['greebles', 'capitalships', 'railway'];
+const CANONICAL_LIBRARY_LAYERS = ['greebles', 'capitalships'];
 const CANONICAL_COMMANDS = [
   'npm run dev',
   'npm run lint',
@@ -30,7 +30,6 @@ const REQUIRED_DOCS = [
   'docs/exec-plans/index.md',
   'docs/design-docs/greeble-surface-pipeline.md',
   'docs/design-docs/capital-ship-generation.md',
-  'docs/design-docs/railway-layout.md',
   'docs/generated/public-api-inventory.md',
   'docs/generated/playground-inventory.md',
 ];
@@ -62,16 +61,16 @@ test('required legibility docs exist', () => {
   }
 });
 
-test('README, AGENTS, and docs index agree on subsystems and commands', () => {
+test('README, AGENTS, and docs index agree on library layers and commands', () => {
   const files = ['README.md', 'AGENTS.md', 'docs/index.md'];
 
   for (const file of files) {
     const content = readRepoFile(file);
-    for (const subsystem of CANONICAL_SUBSYSTEMS) {
+    for (const layer of CANONICAL_LIBRARY_LAYERS) {
       assert.match(
         content,
-        new RegExp(`\\b${subsystem}\\b`),
-        `${file} must mention the ${subsystem} subsystem`
+        new RegExp(`\\b${layer}\\b`),
+        `${file} must mention the ${layer} library layer`
       );
     }
     for (const command of CANONICAL_COMMANDS) {
@@ -95,7 +94,6 @@ test('docs indexes point to required references', () => {
     'PLAYGROUNDS.md',
     'design-docs/greeble-surface-pipeline.md',
     'design-docs/capital-ship-generation.md',
-    'design-docs/railway-layout.md',
     'generated/public-api-inventory.md',
     'generated/playground-inventory.md',
     'exec-plans/index.md',
@@ -126,8 +124,8 @@ test('package exports define the supported public entrypoints', () => {
   const exportKeys = Object.keys(packageJson.exports).sort();
   assert.deepEqual(
     exportKeys,
-    ['.', './capitalships', './greebles', './package.json', './railway'],
-    'package.json exports must expose the root plus greebles, capitalships, and railway subpaths'
+    ['.', './capitalships', './greebles', './package.json'],
+    'package.json exports must expose the root plus greebles and capitalships subpaths'
   );
 });
 

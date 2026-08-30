@@ -2,11 +2,10 @@
 
 This directory is the repo-local system of record for architecture, supported interfaces, runtime surfaces, and quality expectations.
 
-## Subsystems
+## Library Layers
 
-- `greebles`: low-level normalized-unit Canvas 2D primitives and surface treatments.
-- `capitalships`: ship composition, renderer selection, and trunk merging built on greebles.
-- `railway`: steam engine, car, and consist generation built on the shared rendering utilities.
+- `capitalships`: capital ship composition, renderer selection, and trunk merging.
+- `greebles`: low-level normalized-unit primitives and surface treatments used by capital ships.
 
 ## Canonical Commands
 
@@ -29,7 +28,6 @@ This directory is the repo-local system of record for architecture, supported in
 
 - Greeble surface pipeline: [`design-docs/greeble-surface-pipeline.md`](design-docs/greeble-surface-pipeline.md)
 - Capital ship generation: [`design-docs/capital-ship-generation.md`](design-docs/capital-ship-generation.md)
-- Railway layout generation: [`design-docs/railway-layout.md`](design-docs/railway-layout.md)
 
 ## Generated References
 

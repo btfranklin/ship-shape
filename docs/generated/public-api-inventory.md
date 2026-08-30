@@ -25,9 +25,6 @@ Deep `src/...` imports are internal-only and are intentionally excluded.
   - `PanelGreebles`
   - `PipeGreebles`
   - `Point`
-  - `RailCarOptions`
-  - `RailVehicleKind`
-  - `RailVehicleLayout`
   - `RNG`
   - `setPath2D`
   - `ShipArchetype`
@@ -36,14 +33,7 @@ Deep `src/...` imports are internal-only and are intentionally excluded.
   - `ShipShapeGenerator`
   - `SphereLightGreebles`
   - `SphereWindowsGreebles`
-  - `SteamEngineComponent`
-  - `SteamEngineComponentOptions`
-  - `SteamEngineComponentType`
-  - `SteamEngineGenerator`
-  - `SteamEngineOptions`
   - `UnifiedTrunkComponent`
-  - `WarTrainConsistOptions`
-  - `WheelStyle`
   - `WireGreebles`
 
 ## `ship-shape/greebles`
@@ -85,20 +75,3 @@ Deep `src/...` imports are internal-only and are intentionally excluded.
   - `ShipShapeData`
   - `ShipShapeGenerator`
   - `UnifiedTrunkComponent`
-
-## `ship-shape/railway`
-
-- Import target: `ship-shape/railway`
-- Runtime path: `./dist/railway/index.js`
-- Types path: `./dist/railway/index.d.ts`
-- Supported symbols:
-  - `RailCarOptions`
-  - `RailVehicleKind`
-  - `RailVehicleLayout`
-  - `SteamEngineComponent`
-  - `SteamEngineComponentOptions`
-  - `SteamEngineComponentType`
-  - `SteamEngineGenerator`
-  - `SteamEngineOptions`
-  - `WarTrainConsistOptions`
-  - `WheelStyle`

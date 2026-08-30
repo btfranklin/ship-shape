@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
 
-type Domain = 'root' | 'shared' | 'greebles' | 'capitalships' | 'railway' | 'other';
+type Domain = 'root' | 'shared' | 'greebles' | 'capitalships' | 'other';
 
 export interface BoundaryViolation {
   filePath: string;
@@ -12,11 +12,10 @@ export interface BoundaryViolation {
 }
 
 const DOMAIN_TARGETS: Record<Exclude<Domain, 'other'>, readonly Domain[]> = {
-  root: ['root', 'greebles', 'capitalships', 'railway'],
+  root: ['root', 'greebles', 'capitalships'],
   shared: ['shared'],
   greebles: ['greebles', 'shared'],
   capitalships: ['capitalships', 'greebles', 'shared'],
-  railway: ['railway', 'greebles', 'shared'],
 };
 
 function canonicalPath(filePath: string): string {
@@ -35,7 +34,6 @@ function classifyDomain(srcDir: string, filePath: string): Domain {
   if (relativePath.startsWith('shared/')) return 'shared';
   if (relativePath.startsWith('greebles/')) return 'greebles';
   if (relativePath.startsWith('capitalships/')) return 'capitalships';
-  if (relativePath.startsWith('railway/')) return 'railway';
   return 'other';
 }
 
@@ -126,7 +124,7 @@ export function inspectDependencyBoundaries(repoRootInput: string, tsconfigPathI
         filePath: relativeSource,
         line: 1,
         column: 1,
-        message: `${relativeSource}:1:1 is outside the canonical src domains. Move it into src/shared, src/greebles, src/capitalships, or src/railway, or make it a documented public root entrypoint.`,
+        message: `${relativeSource}:1:1 is outside the canonical src domains. Move it into src/shared, src/greebles, or src/capitalships, or make it a documented public root entrypoint.`,
       });
       continue;
     }

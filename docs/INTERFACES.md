@@ -7,7 +7,6 @@ This document defines the supported import surfaces and the stable contracts age
 - `ship-shape`
 - `ship-shape/greebles`
 - `ship-shape/capitalships`
-- `ship-shape/railway`
 
 Deep `src/...` imports are internal-only, even when they work inside local development.
 
@@ -42,27 +41,6 @@ Contract notes:
 - Output components are draw-ready and should be drawn in order.
 - `UnifiedTrunkComponent` represents merged trunk hull sections and also exposes `draw(ctx, rng)`.
 
-## Railway
-
-Import from `ship-shape/railway` for:
-
-- `SteamEngineGenerator`
-- `SteamEngineComponent`
-- `SteamEngineOptions`
-- `RailCarOptions`
-- `WarTrainConsistOptions`
-- `RailVehicleLayout`
-- `SteamEngineComponentType`
-- `WheelStyle`
-- `RailVehicleKind`
-
-Contract notes:
-
-- `generate(...)` returns a ready-to-draw engine component list.
-- `generateLayout(...)` returns a single-vehicle layout with bounds and coupler metadata.
-- `generateCar(...)` returns a car layout with the same metadata shape.
-- `generateConsist(...)` returns ordered vehicle layouts suitable for deterministic whole-train rendering.
-
 ## Root Export
 
-`ship-shape` re-exports the public surfaces from all three subsystems. Prefer subsystem imports when you want a narrower contract and clearer intent in examples or downstream code.
+`ship-shape` re-exports the capital ship and greeble surfaces. Prefer a layer import when you want a narrower contract and clearer intent in examples or downstream code.

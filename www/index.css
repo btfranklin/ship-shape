@@ -95,18 +95,6 @@ body {
     overflow: hidden;
 }
 
-#engineMain {
-    display: block;
-    overflow: auto;
-    padding: 24px;
-}
-
-#engineCanvas {
-    display: block;
-    max-width: none;
-    max-height: none;
-}
-
 .panel-controls {
     width: 320px;
     background: linear-gradient(180deg, var(--panel), var(--panel-dark));

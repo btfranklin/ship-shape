@@ -1,7 +1,7 @@
 {
     "name": "ship-shape",
     "version": "0.1.0",
-    "description": "Procedural Canvas 2D ship, greeble, and railway generators.",
+    "description": "Procedural Canvas 2D capital ship and greeble generators.",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "type": "module",
@@ -17,10 +17,6 @@
         "./capitalships": {
             "types": "./dist/capitalships/index.d.ts",
             "import": "./dist/capitalships/index.js"
-        },
-        "./railway": {
-            "types": "./dist/railway/index.d.ts",
-            "import": "./dist/railway/index.js"
         },
         "./package.json": "./package.json"
     },

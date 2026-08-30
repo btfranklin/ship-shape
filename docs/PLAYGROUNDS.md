@@ -5,15 +5,11 @@ The `www/` directory is the local runtime surface for visual debugging. Use it w
 ## Pages
 
 - `www/index.html`
-  Combined tabbed playground covering the main ship, greeble, and railway surfaces.
+  Combined tabbed playground covering capital ship generation and its greeble library.
 - `www/greeble_showcase.html`
   Gallery of low-level greeble primitives and treatments.
 - `www/element_showcase.html`
   Capital ship component showcase for renderer-level debugging.
-- `www/steam_engine_showcase.html`
-  Steam engine and consist playground.
-- `www/steam_engine_element_gallery.html`
-  Railway element gallery for isolated component tuning.
 
 ## Debugging Guidance
 
@@ -21,7 +17,6 @@ The `www/` directory is the local runtime surface for visual debugging. Use it w
 - Use hue controls only after locking the seed; geometry bugs are easier to isolate when color changes are stable.
 - Capital ship work usually starts in `www/index.html` or `www/element_showcase.html`.
 - Greeble work usually starts in `www/greeble_showcase.html`.
-- Railway work usually starts in `www/steam_engine_showcase.html` and then narrows to `www/steam_engine_element_gallery.html` if the issue is component-specific.
 
 ## Generated Reference
 

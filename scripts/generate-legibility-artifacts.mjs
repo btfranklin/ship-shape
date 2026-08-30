@@ -15,12 +15,11 @@ const exportSourceByKey = {
   '.': path.join(rootDir, 'src', 'index.ts'),
   './greebles': path.join(rootDir, 'src', 'greebles', 'index.ts'),
   './capitalships': path.join(rootDir, 'src', 'capitalships', 'index.ts'),
-  './railway': path.join(rootDir, 'src', 'railway', 'index.ts'),
 };
 
 const playgroundMetadata = {
   'index.html': {
-    focus: 'Combined playground for greebles, capital ships, and railway tabs.',
+    focus: 'Combined playground for capital ship generation and its greeble library.',
     knobs:
       'Uses tabbed controls plus seed, hue, archetype, and mode selectors for quick visual debugging.',
   },
@@ -33,16 +32,6 @@ const playgroundMetadata = {
     focus: 'Capital ship component renderer showcase.',
     knobs:
       'Good for isolating hull, engine, weapon, storage, and tower rendering changes.',
-  },
-  'steam_engine_showcase.html': {
-    focus: 'Railway generator playground for engines, cars, and consists.',
-    knobs:
-      'Uses seed, hue, component options, and consist controls to reproduce layout bugs.',
-  },
-  'steam_engine_element_gallery.html': {
-    focus: 'Railway component gallery for individual steam engine elements.',
-    knobs:
-      'Useful when adjusting wheel, turret, chimney, cab, or tender geometry in isolation.',
   },
 };
 
@@ -136,7 +125,7 @@ function generatePublicApiInventory() {
     '',
   ];
 
-  for (const exportKey of ['.', './greebles', './capitalships', './railway']) {
+  for (const exportKey of ['.', './greebles', './capitalships']) {
     const exportConfig = packageJson.exports[exportKey];
     const symbols = collectEntrypointSymbols(exportSourceByKey[exportKey]);
     lines.push(`## ${titleForExportKey(exportKey)}`);
