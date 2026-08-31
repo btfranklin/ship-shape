@@ -21,6 +21,13 @@ const archetypeSelect = document.getElementById('archetypeSelect') as HTMLSelect
 const hueInput = document.getElementById('hueInput') as HTMLInputElement;
 const hueRefreshBtn = document.getElementById('hueRefreshBtn') as HTMLButtonElement;
 const rainbowCheck = document.getElementById('rainbowCheck') as HTMLInputElement;
+const ARCHETYPES: readonly ShipArchetype[] = [
+    'freight',
+    'science',
+    'industry',
+    'passenger',
+    'combat',
+];
 
 // State
 let mode = 'full';
@@ -66,6 +73,7 @@ function generate() {
         if (!Number.isFinite(seedValue)) {
             seedInput.value = seed.toString();
         }
+        const archetype = resolveArchetype(seed);
         const rng = new RNG(seed);
         const hue = parseInt(hueInput.value) / 360;
         
@@ -85,14 +93,20 @@ function generate() {
         if (mode === 'surface') {
             renderSurface(rng, theme);
         } else if (mode === 'shape') {
-            renderShape(rng);
+            renderShape(rng, archetype);
         } else {
-            renderFullShip(rng, theme);
+            renderFullShip(rng, theme, archetype);
         }
     } catch (e) {
         console.error("Generation Failed:", e);
         alert("Generation Error (check console): " + e);
     }
+}
+
+function resolveArchetype(seed: number): ShipArchetype {
+    const selected = archetypeSelect.value;
+    if (selected !== 'random') return selected as ShipArchetype;
+    return new RNG(seed).choice(ARCHETYPES);
 }
 
 function renderSurface(rng: RNG, theme: HSBAColor) {
@@ -109,21 +123,11 @@ function renderSurface(rng: RNG, theme: HSBAColor) {
     ctx.restore();
 }
 
-function renderShape(rng: RNG) {
+function renderShape(rng: RNG, archetype: ShipArchetype) {
     const generator = new CompositeShipGenerator();
     const theme = new HSBAColor(0,0,0); // Dummy
-    
-    // Pick archetype to match renderFullShip logic/RNG usage
-    let archVal = archetypeSelect.value;
-    let arch: ShipArchetype;
 
-    if (archVal === 'random') {
-        arch = rng.choice(['freight', 'science', 'industry', 'passenger', 'combat']);
-    } else {
-        arch = archVal as ShipArchetype;
-    }
-
-    const components = generator.generate(WIDTH, HEIGHT, theme, rng, arch, 600);
+    const components = generator.generate(WIDTH, HEIGHT, theme, rng, archetype, 600);
     
     ctx.strokeStyle = '#0f0';
     ctx.lineWidth = 2;
@@ -147,23 +151,13 @@ function renderShape(rng: RNG) {
     }
 }
 
-function renderFullShip(rng: RNG, theme: HSBAColor) {
+function renderFullShip(rng: RNG, theme: HSBAColor, archetype: ShipArchetype) {
     const generator = new CompositeShipGenerator();
-    // Pick archetype
-    let archVal = archetypeSelect.value;
-    let arch: ShipArchetype;
-
-    if (archVal === 'random') {
-        arch = rng.choice(['freight', 'science', 'industry', 'passenger', 'combat']);
-    } else {
-        arch = archVal as ShipArchetype;
-    }
-
-    archetypeDisplay.innerText = "Archetype: " + arch.toUpperCase();
+    archetypeDisplay.innerText = "Archetype: " + archetype.toUpperCase();
     
     // Use 600 as the reference height for ship scaling, regardless of actual canvas height (800)
     // This keeps the ship size consistent and centered.
-    const components = generator.generate(WIDTH, HEIGHT, theme, rng, arch, 600);
+    const components = generator.generate(WIDTH, HEIGHT, theme, rng, archetype, 600);
     
     // Draw components (sorted by Z-Index inside generator)
     for (const comp of components) {

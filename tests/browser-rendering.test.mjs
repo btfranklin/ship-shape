@@ -84,6 +84,28 @@ test('capital ship archetypes and emissive compositing render with fixed seeds',
       await assertCanvasTransformIsIdentity(page.locator('#appCanvas'), `${archetype} capital ship`);
     }
 
+    await page.locator('#seedInput').fill('7185');
+    await setControl(page, '#archetypeSelect', 'random');
+    await page.locator('#generateBtn').click();
+    await assert.strictEqual(
+      await page.locator('#archetypeDisplay').textContent(),
+      'Archetype: FREIGHT'
+    );
+    const randomArchetypePixels = await page.locator('#appCanvas').evaluate(
+      (canvas) => canvas.toDataURL()
+    );
+
+    await setControl(page, '#archetypeSelect', 'freight');
+    await page.locator('#generateBtn').click();
+    const selectedArchetypePixels = await page.locator('#appCanvas').evaluate(
+      (canvas) => canvas.toDataURL()
+    );
+    assert.equal(
+      randomArchetypePixels,
+      selectedArchetypePixels,
+      'seed 7185 must render the same Freight ship in Random and Freight modes'
+    );
+
     await setControl(page, '#archetypeSelect', 'science');
     await setControl(page, '#modeSelect', 'shape');
     await page.locator('#generateBtn').click();
@@ -93,8 +115,8 @@ test('capital ship archetypes and emissive compositing render with fixed seeds',
     await page.locator('#seedInput').fill('90125');
     await setControl(page, '#modeSelect', 'surface');
     await page.locator('#generateBtn').click();
-    await assertCanvasHasMeaningfulOutput(page.locator('#appCanvas'), 'surface detail mode');
-    await assertCanvasTransformIsIdentity(page.locator('#appCanvas'), 'surface detail mode');
+    await assertCanvasHasMeaningfulOutput(page.locator('#appCanvas'), 'surface texture sample');
+    await assertCanvasTransformIsIdentity(page.locator('#appCanvas'), 'surface texture sample');
 
     const greeblesModuleUrl = new URL(
       `/@fs${path.join(REPO_ROOT, 'src/greebles/index.ts')}`,
