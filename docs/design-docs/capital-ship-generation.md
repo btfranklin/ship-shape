@@ -43,3 +43,18 @@ The default is `0.5` (half the ship). The range is `0` through `0.95`; `0` makes
 holes only. The jagged edge varies around this cut position. Holes can cross the
 top or bottom hull edge or stay inside the hull. The playground has a percentage
 control for the cut.
+
+### Damage depth
+
+The main cut slopes in either direction, with an overall angle of 15 to 42 degrees
+from vertical. Larger local bends and small tears interrupt the diagonal.
+
+Each breach has separate edges for the facing hull, interior machinery, and far
+hull. Their offsets can extend into the opening or break behind the facing edge.
+The renderer paints the dark far hull first, then open framing, pipes, and equipment,
+then the original facing hull and its torn edge. Each layer uses its own damage
+mask. Gaps through all layers still show the caller's background.
+
+The solid interior and edge shading stay inside the original hull. Fragment roots
+must touch that hull, but plates, beams, and wires can bend beyond it. Their reach
+is limited and scales down for small ships. This applies to all three depth layers.

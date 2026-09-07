@@ -2,7 +2,7 @@ import { getPath2D, RNG } from '../greebles/common.js';
 import type { ShipComponent } from './ShipComponent.js';
 import type { UnifiedTrunkComponent } from './UnifiedTrunkComponent.js';
 import { withShipPower } from './renderPower.js';
-import { clipOutsideDamage, drawDamageEdges, planShipDamage } from './shipDamage.js';
+import { clipOutsideDamage, drawDamageEdges, drawDamageInterior, planShipDamage } from './shipDamage.js';
 
 export type ShipCondition = 'normal' | 'ghost' | 'derelict';
 
@@ -44,6 +44,7 @@ export function drawCapitalShip(
             const Path = getPath2D();
             const silhouette = new Path();
             for (const component of components) silhouette.addPath(component.shapePath);
+            drawDamageInterior(ctx, damage, silhouette, bounds, damageRng);
             ctx.save();
             try {
                 clipOutsideDamage(ctx, damage, bounds);

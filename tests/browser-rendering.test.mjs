@@ -278,3 +278,42 @@ test('unpowered window openings stay visible without bloom', { timeout: 120000 }
     }
   });
 });
+
+test('attached wreckage extends beyond the old hull with a bounded reach', { timeout: 120000 }, async () => {
+  await auditPage('/index.html', async (page) => {
+    const results = await page.evaluate(async (repoRoot) => {
+      const { planShipDamage, drawDamageEdges, drawDamageInterior } = await import(`/@fs${repoRoot}/src/capitalships/shipDamage.ts`);
+      const { RNG } = await import(`/@fs${repoRoot}/src/greebles/index.ts`);
+      const bounds = { x: 150, y: 150, w: 700, h: 200 };
+      const silhouette = new Path2D();
+      silhouette.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+      const results = [];
+      for (const cutAway of [0, 0.5]) {
+        const damage = planShipDamage(bounds, [bounds], new RNG(42), cutAway);
+        for (const layer of ['front', 'interior']) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 1000;
+          canvas.height = 500;
+          const ctx = canvas.getContext('2d');
+          if (layer === 'front') drawDamageEdges(ctx, damage, silhouette, bounds, new RNG(42));
+          else drawDamageInterior(ctx, damage, silhouette, bounds, new RNG(42));
+          const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+          let outside = 0, tooFar = 0;
+          for (let i = 3; i < pixels.length; i += 4) {
+            if (pixels[i] < 30) continue;
+            const x = ((i - 3) / 4) % canvas.width;
+            const y = Math.floor((i - 3) / 4 / canvas.width);
+            if (x < 148 || x > 852 || y < 148 || y > 352) outside++;
+            if (x < 50 || x > 950 || y < 50 || y > 450) tooFar++;
+          }
+          results.push({ cutAway, layer, outside, tooFar });
+        }
+      }
+      return results;
+    }, REPO_ROOT);
+    for (const result of results) {
+      assert.ok(result.outside > 20, `${result.layer}, cut ${result.cutAway}: fragments must extend outside the hull`);
+      assert.equal(result.tooFar, 0, `${result.layer}, cut ${result.cutAway}: fragments must stay near their roots`);
+    }
+  });
+});
