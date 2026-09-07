@@ -1,3 +1,4 @@
+import { drawDamagedRings, drawRingBacks } from './ringDamage.js';
 import { getPath2D, RNG } from '../greebles/common.js';
 import type { ShipComponent } from './ShipComponent.js';
 import type { UnifiedTrunkComponent } from './UnifiedTrunkComponent.js';
@@ -31,28 +32,34 @@ export function drawCapitalShip(
                 for (const component of components) component.draw(ctx, rng);
                 return;
             }
-            const x = Math.min(...components.map(c => c.bounds.x));
-            const y = Math.min(...components.map(c => c.bounds.y));
+            const rings = components.filter((component): component is ShipComponent => 'type' in component && component.type === 'ring');
+            const body = components.filter(component => !('type' in component) || component.type !== 'ring');
+            if (body.length === 0) return;
+            const x = Math.min(...body.map(c => c.bounds.x));
+            const y = Math.min(...body.map(c => c.bounds.y));
             const bounds = {
                 x, y,
-                w: Math.max(...components.map(c => c.bounds.x + c.bounds.w)) - x,
-                h: Math.max(...components.map(c => c.bounds.y + c.bounds.h)) - y
+                w: Math.max(...body.map(c => c.bounds.x + c.bounds.w)) - x,
+                h: Math.max(...body.map(c => c.bounds.y + c.bounds.h)) - y
             };
             const damageRng = new RNG(damageSeed);
-            const hulls = components.filter(c => !('type' in c) || c.type === 'hull').map(c => c.bounds);
+            const supportHulls = body.filter(c => !('type' in c) || c.type === 'hull');
+            const hulls = supportHulls.map(c => c.bounds);
             const damage = planShipDamage(bounds, hulls, damageRng, cutAway);
             const Path = getPath2D();
             const silhouette = new Path();
-            for (const component of components) silhouette.addPath(component.shapePath);
+            for (const component of body) silhouette.addPath(component.shapePath);
+            drawRingBacks(ctx, rings, supportHulls, damage, rng);
             drawDamageInterior(ctx, damage, silhouette, bounds, damageRng);
             ctx.save();
             try {
                 clipOutsideDamage(ctx, damage, bounds);
-                for (const component of components) component.draw(ctx, rng);
+                for (const component of body) component.draw(ctx, rng);
             } finally {
                 ctx.restore();
             }
             drawDamageEdges(ctx, damage, silhouette, bounds, damageRng);
+            drawDamagedRings(ctx, rings, supportHulls, damage, bounds, damageRng, rng);
         });
     } finally {
         ctx.restore();

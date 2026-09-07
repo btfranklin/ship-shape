@@ -63,3 +63,21 @@ Some cut seeds add a broad depth step of 8 to 18 percent of ship length before
 small-ship scaling. The machinery edge lies partway between the front and far
 hull edges. Most deep steps expose more of the far hull; some reverse the offset.
 Other seeds keep a shallow break. Small tears remain independent on each layer.
+
+### Ring damage
+
+Derelict rendering separates rings from the body before planning hull damage.
+Rings do not add to the body silhouette or supply material for its interior layers.
+The renderer draws supported rings after all hull layers and torn edges.
+
+`ringDamage` samples each ring's original hull attachment. It removes the ring if
+no sampled attachment remains in any hull depth layer. A nearby cut or hole can
+make up to three local breaks in the ring band. These use separate paths and do
+not cut the hull. Remote rings keep their original rendering. Torn fragments
+attach to the ring and can extend beyond its outline.
+
+Supported rings also have a continuous dark far side, drawn before the hull and
+all damage layers. It uses the same ring shape and segment detail. Front ring
+breaks reveal this far side, which visually connects the remaining sections.
+The hull hides it where the hull remains intact. Unsupported rings have neither
+a front nor a far side.

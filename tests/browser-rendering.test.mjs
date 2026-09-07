@@ -317,3 +317,72 @@ test('attached wreckage extends beyond the old hull with a bounded reach', { tim
     }
   });
 });
+
+test('rings retain their own structure, break locally, and disappear without support', { timeout: 120000 }, async () => {
+  await auditPage('/index.html', async (page) => {
+    const result = await page.evaluate(async (repoRoot) => {
+      const { ShipComponent } = await import(`/@fs${repoRoot}/src/capitalships/index.ts`);
+      const { drawDamagedRings, drawRingBacks, planRingDamage } = await import(`/@fs${repoRoot}/src/capitalships/ringDamage.ts`);
+      const { RNG, HSBAColor } = await import(`/@fs${repoRoot}/src/greebles/index.ts`);
+      const ring = new ShipComponent({ type: 'ring', bounds: { x: 400, y: 100, w: 60, h: 300 }, color: new HSBAColor(0.55, 0.1, 0.6), rng: new RNG(1), zIndex: 1000, shipArchetype: 'science' });
+      const bounds = { x: 100, y: 200, w: 650, h: 100 };
+      const hullPath = new Path2D();
+      hullPath.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+      const support = [{ shapePath: hullPath, bounds }];
+      const breach = (x, y, w, h, kind = 'hole') => {
+        const path = new Path2D();
+        path.rect(x, y, w, h);
+        const edge = [{ x, y }, { x: x + w, y }, { x: x + w, y: y + h }, { x, y: y + h }, { x, y }];
+        const face = { kind, path, edge, center: { x: x + w / 2, y: y + h / 2 } };
+        return { ...face, farHull: face, machinery: face };
+      };
+      const render = (damage, ordinary = false, back = false) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 900;
+        canvas.height = 500;
+        const ctx = canvas.getContext('2d');
+        if (back) drawRingBacks(ctx, [ring], support, damage, new RNG(1));
+        if (ordinary) ring.draw(ctx, new RNG(1));
+        else drawDamagedRings(ctx, [ring], support, damage, bounds, new RNG(42), new RNG(1));
+        return ctx.getImageData(0, 0, 900, 500).data;
+      };
+      const intact = render([], true);
+      const remote = render([breach(650, 220, 40, 40)]);
+      const hole = render([breach(412, 230, 36, 40)]);
+      const nearby = render([breach(470, 0, 400, 500, 'cut')]);
+      const unsupported = render([breach(350, 0, 500, 500, 'cut')], false, true);
+      const connected = render([breach(412, 230, 36, 40)], false, true);
+      let rearPixels = 0;
+      for (let i = 3; i < hole.length; i += 4) {
+        if (intact[i] > 240 && hole[i] === 0 && connected[i] > 240
+          && connected[i - 1] < intact[i - 1] * 0.5) rearPixels++;
+      }
+      const frontCut = breach(350, 0, 500, 500, 'cut');
+      frontCut.farHull = breach(650, 0, 200, 500, 'cut');
+      const farSupported = render([frontCut]);
+      const probe = document.createElement('canvas').getContext('2d');
+      probe.translate(17, 23);
+      probe.scale(0.75, 0.75);
+      const transformedSupported = planRingDamage(probe, ring, support, [frontCut], new RNG(42)) !== null;
+      const transformedRemoved = planRingDamage(probe, ring, support, [breach(350, 0, 500, 500, 'cut')], new RNG(42)) === null;
+      const count = pixels => pixels.reduce((sum, value, i) => sum + (i % 4 === 3 && value > 100 ? 1 : 0), 0);
+      const removed = pixels => intact.reduce((sum, value, i) => sum + (i % 4 === 3 && value > 200 && pixels[i] === 0 ? 1 : 0), 0);
+      return {
+        remoteUnchanged: intact.every((value, i) => value === remote[i]),
+        rearPixels,
+        detachedPixels: count(unsupported), farSupportedPixels: count(farSupported),
+        transformedSupported, transformedRemoved,
+        holeRemoved: removed(hole), nearRemoved: removed(nearby),
+        retained: count(hole),
+        topRetained: hole[(130 * 900 + 430) * 4 + 3] === intact[(130 * 900 + 430) * 4 + 3]
+      };
+    }, REPO_ROOT);
+    assert.ok(result.remoteUnchanged, 'remote hull damage must leave the ring unchanged');
+    assert.ok(result.rearPixels > 20, 'front ring gaps must reveal an opaque darker far side');
+    assert.equal(result.detachedPixels, 0, 'an unsupported ring must be fully removed');
+    assert.ok(result.farSupportedPixels > 1000, 'a remaining far hull can support a ring');
+    assert.ok(result.transformedSupported && result.transformedRemoved, 'support checks must honor caller transforms');
+    assert.ok(result.holeRemoved > 20 && result.nearRemoved > 20, 'nearby cuts and hull holes must create ring-specific gaps');
+    assert.ok(result.retained > 1000 && result.topRetained, 'local ring damage must preserve remote ring sections');
+  });
+});
