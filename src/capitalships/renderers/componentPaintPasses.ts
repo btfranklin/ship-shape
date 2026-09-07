@@ -4,6 +4,7 @@ import type {
     CapitalShipSurfaceGreebles,
     PreparedCapitalShipSurface
 } from '../../greebles/CapitalShipSurfaceGreebles.js';
+import { isShipPowered } from '../renderPower.js';
 
 interface SurfaceGreebleComponent {
     readonly bounds: Readonly<{ x: number; y: number; w: number; h: number }>;
@@ -21,7 +22,7 @@ export function drawClippedSurfaceGreebles(
     context.clip(component.shapePath);
     context.translate(component.bounds.x, component.bounds.y);
     context.scale(UNIT_SCALE, UNIT_SCALE);
-    preparedSurface.drawBase(context);
+    preparedSurface.drawBase(context, { darkWindows: !isShipPowered(context) });
     context.restore();
     return preparedSurface;
 }
@@ -31,6 +32,10 @@ export function drawDeferredEmissiveGreebles(
     component: SurfaceGreebleComponent,
     preparedSurface: PreparedCapitalShipSurface
 ): void {
+    if (!isShipPowered(context)) {
+        return;
+    }
+
     context.save();
     context.clip(component.shapePath);
     context.translate(component.bounds.x, component.bounds.y);

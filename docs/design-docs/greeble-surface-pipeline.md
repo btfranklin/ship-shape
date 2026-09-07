@@ -27,3 +27,8 @@ Each prepared surface owns its plan. Preparing the same `CapitalShipSurfaceGreeb
 - Treat style planning, surface layer planning, draw execution, and emissive compositing as separate concerns.
 - When adding a new surface treatment, update both the base draw pass and any matching emissive or occlusion behavior.
 - Keep `CapitalShipSurfaceGreebles` as the public facade and put new planning or drawing behavior in internal helpers.
+
+For unpowered ships, call `drawBase(context, { darkWindows: true })`. This paints
+dark window openings in the base layer before later equipment and pipes. It uses
+the existing window seeds and adds no glow. Flat and spherical window greebles
+also accept `drawPanels(context, rng, true)` to paint their dark openings.

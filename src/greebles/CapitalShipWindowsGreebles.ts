@@ -1,3 +1,4 @@
+import { drawDarkWindow } from './drawDarkWindow.js';
 import { HSBAColor, RNG } from './common.js';
 import type { Drawable } from './common.js';
 
@@ -22,8 +23,8 @@ export class CapitalShipWindowsGreebles implements Drawable {
         this.drawInternal(context, rng, true, true);
     }
 
-    drawPanels(context: CanvasRenderingContext2D, rng: RNG): void {
-        this.drawInternal(context, rng, true, false);
+    drawPanels(context: CanvasRenderingContext2D, rng: RNG, darkWindows = false): void {
+        this.drawInternal(context, rng, true, false, darkWindows);
     }
 
     drawLights(context: CanvasRenderingContext2D, rng: RNG): void {
@@ -34,7 +35,8 @@ export class CapitalShipWindowsGreebles implements Drawable {
         context: CanvasRenderingContext2D,
         rng: RNG,
         drawPanels: boolean,
-        drawLights: boolean
+        drawLights: boolean,
+        darkWindows = false
     ): void {
         context.save();
 
@@ -79,7 +81,11 @@ export class CapitalShipWindowsGreebles implements Drawable {
                         const cy = wy + CapitalShipWindowsGreebles.WINDOW_SIZE / 2;
                         const radius = CapitalShipWindowsGreebles.WINDOW_SIZE * 1.5;
 
-                        if (drawLights) {
+                        if (darkWindows) {
+                            drawDarkWindow(context, wx, wy, CapitalShipWindowsGreebles.WINDOW_SIZE, CapitalShipWindowsGreebles.WINDOW_SIZE);
+                        }
+
+                        if (drawLights && lit) {
                             // 1. Soft Bloom (Radial Gradient)
                             // Use normal blending for a subtle diffuse look, instead of additive
                             context.globalCompositeOperation = 'source-over'; 

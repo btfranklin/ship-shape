@@ -1,3 +1,4 @@
+import { isShipPowered } from '../renderPower.js';
 import { HSBAColor, RNG, getPath2D } from '../../greebles/common.js';
 import { ShipComponent } from '../ShipComponent.js';
 import { ComponentRenderer, ComponentShape } from './ComponentRenderer.js';
@@ -301,7 +302,7 @@ export class SensorRenderer implements ComponentRenderer {
             ctx.stroke();
         }
 
-        ctx.fillStyle = 'red';
+        ctx.fillStyle = isShipPowered(ctx) ? 'red' : '#292626';
         ctx.beginPath();
         ctx.arc(length, crossPosition, 2, 0, Math.PI * 2);
         ctx.fill();
@@ -392,7 +393,7 @@ export class SensorRenderer implements ComponentRenderer {
         ctx.fillRect(poleLength, crossStart, outwardSize, crossSize);
         ctx.strokeStyle = baseColor.adjustBrightness(-0.4).toRGBAString();
         ctx.strokeRect(poleLength, crossStart, outwardSize, crossSize);
-        ctx.fillStyle = '#00ffff';
+        ctx.fillStyle = isShipPowered(ctx) ? '#00ffff' : '#263030';
         ctx.fillRect(
             poleLength + outwardSize * orientation.highlightOffset,
             crossStart + crossSize * 0.2,

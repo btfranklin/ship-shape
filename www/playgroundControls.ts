@@ -155,6 +155,16 @@ function buildCapitalControls(): void {
         'Rainbow Background (Test Transparency)'
     );
     rainbowControl.id = 'rainbowControl';
+    const cutInput = createElement('input');
+    cutInput.id = 'cutAwayInput';
+    cutInput.type = 'range';
+    cutInput.min = '0';
+    cutInput.max = '95';
+    cutInput.step = '5';
+    cutInput.value = '50';
+    const cutControl = createControlGroup('Cut Away: 50% of Length', cutInput, cutInput.id);
+    cutControl.id = 'cutAwayControl';
+
 
     controls.replaceChildren(
         createHeading('Capital Ships'),
@@ -170,8 +180,11 @@ function buildCapitalControls(): void {
         ]),
         createSelectControl('Mode', 'modeSelect', [
             { value: 'full', label: 'Full Ship' },
+            { value: 'ghost', label: 'Ghost Ship' },
+            { value: 'derelict', label: 'Ruined Derelict' },
             { value: 'shape', label: 'Structure (Wireframe)' }
         ]),
+        cutControl,
         rainbowControl,
         createCommandButton('generateBtn', 'Generate Ship'),
         createSpacer(),

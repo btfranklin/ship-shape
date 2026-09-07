@@ -1,5 +1,5 @@
 import { HSBAColor, RNG } from '../src/greebles/index.js';
-import { CompositeShipGenerator } from '../src/capitalships/index.js';
+import { CompositeShipGenerator, drawCapitalShip } from '../src/capitalships/index.js';
 import { ShipArchetype } from '../src/capitalships/shipTypes.js';
 import { UnifiedTrunkComponent } from '../src/capitalships/UnifiedTrunkComponent.js';
 
@@ -22,6 +22,8 @@ const hueInput = document.getElementById('hueInput') as HTMLInputElement;
 const hueRefreshBtn = document.getElementById('hueRefreshBtn') as HTMLButtonElement;
 const rainbowCheck = document.getElementById('rainbowCheck') as HTMLInputElement;
 const rainbowControl = document.getElementById('rainbowControl') as HTMLDivElement;
+const cutAwayInput = document.getElementById('cutAwayInput') as HTMLInputElement;
+const cutAwayControl = document.getElementById('cutAwayControl') as HTMLDivElement;
 const ARCHETYPES: readonly ShipArchetype[] = [
     'freight',
     'science',
@@ -35,7 +37,8 @@ let mode = 'full';
 
 function updateUI() {
     mode = modeSelect.value;
-    const showRainbowControl = mode === 'full';
+    cutAwayControl.hidden = mode !== 'derelict';
+    const showRainbowControl = mode !== 'shape';
     rainbowControl.hidden = !showRainbowControl;
     if (!showRainbowControl) {
         rainbowCheck.checked = false;
@@ -73,7 +76,7 @@ function drawChaoticBackground(ctx: CanvasRenderingContext2D, w: number, h: numb
 }
 
 function drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number) {
-    if (mode === 'full' && rainbowCheck.checked) {
+    if (mode !== 'shape' && rainbowCheck.checked) {
         drawChaoticBackground(ctx, w, h);
         return;
     }
@@ -157,12 +160,18 @@ function renderFullShip(rng: RNG, theme: HSBAColor, archetype: ShipArchetype) {
     const components = generator.generate(WIDTH, HEIGHT, theme, rng, archetype, 600);
     
     // Draw components (sorted by Z-Index inside generator)
-    for (const comp of components) {
-        comp.draw(ctx, rng);
-    }
+    drawCapitalShip(ctx, components, rng, {
+        condition: mode === 'ghost' ? 'ghost' : mode === 'derelict' ? 'derelict' : 'normal',
+        damageSeed: Number.parseInt(seedInput.value, 10),
+        cutAway: Number(cutAwayInput.value) / 100
+    });
 }
 
 // Event Listeners
+cutAwayInput.addEventListener('input', () => {
+    cutAwayControl.querySelector('label')!.textContent = `Cut Away: ${cutAwayInput.value}% of Length`;
+    generate();
+});
 modeSelect.addEventListener('change', () => { updateUI(); generate(); });
 archetypeSelect.addEventListener('change', () => { generate(); });
 generateBtn.addEventListener('click', generate);

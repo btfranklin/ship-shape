@@ -5,6 +5,7 @@ import { ComponentRenderer, ComponentShape } from './ComponentRenderer.js';
 import { SphereWindowsGreebles } from '../../greebles/SphereWindowsGreebles.js';
 import { SphereLightGreebles } from '../../greebles/SphereLightGreebles.js';
 import { CapitalShipWindowsGreebles } from '../../greebles/CapitalShipWindowsGreebles.js';
+import { isShipPowered } from '../renderPower.js';
 
 export class SphereRenderer implements ComponentRenderer {
     generateShape(component: ShipComponent, _rng: RNG): ComponentShape {
@@ -70,9 +71,9 @@ export class SphereRenderer implements ComponentRenderer {
         ctx.translate(x, y);
         ctx.scale(UNIT_SCALE, UNIT_SCALE);
         const preparedSurface = component.greebles.prepare(rng);
-        preparedSurface.drawBase(ctx);
+        preparedSurface.drawBase(ctx, { darkWindows: !isShipPowered(ctx) });
         if (windows) {
-            windows.drawPanels(ctx, new RNG(windowSeed));
+            windows.drawPanels(ctx, new RNG(windowSeed), !isShipPowered(ctx));
         }
         ctx.restore();
         
@@ -90,18 +91,20 @@ export class SphereRenderer implements ComponentRenderer {
         ctx.fill(component.shapePath);
         ctx.restore();
         
-        ctx.save();
-        ctx.clip(component.shapePath);
-        ctx.translate(x, y);
-        ctx.scale(UNIT_SCALE, UNIT_SCALE);
-        preparedSurface.drawEmissive(ctx, { clipPath: component.shapePath });
-        if (lights) {
-            lights.draw(ctx, new RNG(dotSeed));
+        if (isShipPowered(ctx)) {
+            ctx.save();
+            ctx.clip(component.shapePath);
+            ctx.translate(x, y);
+            ctx.scale(UNIT_SCALE, UNIT_SCALE);
+            preparedSurface.drawEmissive(ctx, { clipPath: component.shapePath });
+            if (lights) {
+                lights.draw(ctx, new RNG(dotSeed));
+            }
+            if (windows) {
+                windows.drawLights(ctx, new RNG(windowSeed));
+            }
+            ctx.restore();
         }
-        if (windows) {
-            windows.drawLights(ctx, new RNG(windowSeed));
-        }
-        ctx.restore();
         
         // 4. Rim Stroke
         ctx.strokeStyle = 'rgba(0,0,0,0.6)';

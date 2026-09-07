@@ -109,3 +109,27 @@ See [`docs/QUALITY.md`](docs/QUALITY.md) for focused validation commands and rec
 - Playgrounds: [`docs/PLAYGROUNDS.md`](docs/PLAYGROUNDS.md)
 - Public API inventory: [`docs/generated/public-api-inventory.md`](docs/generated/public-api-inventory.md)
 - Playground inventory: [`docs/generated/playground-inventory.md`](docs/generated/playground-inventory.md)
+
+### Ghost ships and derelicts
+
+Use the same generated components to draw a ship with its power off or its hull damaged:
+
+```ts
+import { drawCapitalShip } from 'ship-shape/capitalships';
+
+drawCapitalShip(ctx, components, rng, { condition: 'ghost' });
+// Or draw a damaged hull with a repeatable damage pattern:
+drawCapitalShip(ctx, components, rng, { condition: 'derelict', damageSeed: 42 });
+```
+
+Restore the same render RNG state before each draw to keep the surface detail the same.
+The `normal` condition is the default. Ghost ships keep their structure with lights
+and engine glow off. Derelicts add jagged breaks, holes, torn plates, beams, and wires.
+Damage does not change the components. Holes show the background behind the ship.
+The playground includes **Ghost Ship** and **Ruined Derelict** in its Mode control.
+
+Set `cutAway` to the fraction of ship length to remove from the forward end.
+The default is `0.5` (half the ship). The range is `0` through `0.95`; `0` makes
+holes only. The jagged edge varies around this cut position. Holes can cross the
+top or bottom hull edge or stay inside the hull. The playground has a percentage
+control for the cut.

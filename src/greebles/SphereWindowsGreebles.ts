@@ -1,3 +1,4 @@
+import { drawDarkWindow } from './drawDarkWindow.js';
 import { HSBAColor, RNG } from './common.js';
 import type { Drawable } from './common.js';
 
@@ -20,8 +21,8 @@ export class SphereWindowsGreebles implements Drawable {
         this.drawInternal(context, rng, true, true);
     }
 
-    drawPanels(context: CanvasRenderingContext2D, rng: RNG): void {
-        this.drawInternal(context, rng, true, false);
+    drawPanels(context: CanvasRenderingContext2D, rng: RNG, darkWindows = false): void {
+        this.drawInternal(context, rng, true, false, darkWindows);
     }
 
     drawLights(context: CanvasRenderingContext2D, rng: RNG): void {
@@ -32,7 +33,8 @@ export class SphereWindowsGreebles implements Drawable {
         context: CanvasRenderingContext2D,
         rng: RNG,
         drawPanels: boolean,
-        drawLights: boolean
+        drawLights: boolean,
+        darkWindows = false
     ): void {
         const radius = Math.min(this.xUnits, this.yUnits) / 2;
         if (radius <= 0) return;
@@ -91,6 +93,10 @@ export class SphereWindowsGreebles implements Drawable {
 
                 if (drawPanels) {
                     this.drawPanel(context, x, y, panelW, panelH);
+                }
+
+                if (darkWindows && lit) {
+                    drawDarkWindow(context, x - width / 2, y - height / 2, width, height);
                 }
 
                 if (drawLights && lit) {

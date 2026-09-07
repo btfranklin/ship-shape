@@ -15,6 +15,7 @@ Deep `src/...` imports are internal-only and are intentionally excluded.
   - `CompositeShipGenerator`
   - `CutawaySectionGreebles`
   - `Drawable`
+  - `drawCapitalShip`
   - `ElectronicsPanelGreebles`
   - `EngineStyle`
   - `EquipmentGreebles`
@@ -34,6 +35,8 @@ Deep `src/...` imports are internal-only and are intentionally excluded.
   - `ShipBounds`
   - `ShipComponent`
   - `ShipComponentOptions`
+  - `ShipCondition`
+  - `ShipRenderOptions`
   - `SphereLightGreebles`
   - `SphereVariant`
   - `SphereWindowsGreebles`
@@ -76,6 +79,7 @@ Deep `src/...` imports are internal-only and are intentionally excluded.
 - Supported symbols:
   - `ComponentType`
   - `CompositeShipGenerator`
+  - `drawCapitalShip`
   - `EngineStyle`
   - `HullVariant`
   - `SensorVariant`
@@ -83,6 +87,8 @@ Deep `src/...` imports are internal-only and are intentionally excluded.
   - `ShipBounds`
   - `ShipComponent`
   - `ShipComponentOptions`
+  - `ShipCondition`
+  - `ShipRenderOptions`
   - `SphereVariant`
   - `StorageVariant`
   - `UnifiedTrunkComponent`

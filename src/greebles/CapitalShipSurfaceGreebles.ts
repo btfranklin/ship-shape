@@ -7,7 +7,7 @@ import type { EmissiveMode, SurfaceLayerPlanConfig } from './surfaceLayerPlan.js
 import { drawSurfaceLayerPlan } from './surfaceLayerRenderer.js';
 
 export interface PreparedCapitalShipSurface {
-    drawBase(context: CanvasRenderingContext2D): void;
+    drawBase(context: CanvasRenderingContext2D, options?: { darkWindows?: boolean }): void;
     drawEmissive(
         context: CanvasRenderingContext2D,
         options?: { clipPath?: Path2D }
@@ -52,8 +52,8 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         );
 
         return {
-            drawBase(context: CanvasRenderingContext2D): void {
-                drawSurfaceLayerPlan(context, plan, config);
+            drawBase(context: CanvasRenderingContext2D, options?: { darkWindows?: boolean }): void {
+                drawSurfaceLayerPlan(context, plan, config, options?.darkWindows);
             },
             drawEmissive(
                 context: CanvasRenderingContext2D,

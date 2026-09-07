@@ -53,3 +53,20 @@ Contract notes:
 ## Root Export
 
 `ship-shape` re-exports the capital ship and greeble surfaces. Prefer a layer import when you want a narrower contract and clearer intent in examples or downstream code.
+
+## Ship Conditions
+
+`drawCapitalShip(ctx, components, rng, options?)` draws generated components in order.
+Set `options.condition` to `normal` (default), `ghost`, or `derelict`.
+A ghost ship keeps its hull and surface detail with its lights and engines off.
+A derelict uses that unpowered hull with torn ends, holes, beams, plates, and wires.
+Set `options.damageSeed` to repeat a damage pattern (default: `0`).
+Damage uses a separate RNG and does not change the components or the surface RNG sequence.
+Reuse the generation seed and render RNG state to compare conditions of the same ship.
+The caller's canvas state is restored after drawing. Holes expose the existing background.
+
+Set `cutAway` to the fraction of ship length to remove from the forward end.
+The default is `0.5` (half the ship). The range is `0` through `0.95`; `0` makes
+holes only. The jagged edge varies around this cut position. Holes can cross the
+top or bottom hull edge or stay inside the hull. The playground has a percentage
+control for the cut.

@@ -26,3 +26,20 @@
 - Preserve the post-order traversal semantics unless the draw contract changes intentionally.
 - If you add a new component type, update the renderer selection path, the relevant planner, and the docs inventory if it becomes public surface.
 - Keep `CompositeShipGenerator.generate(...)` as orchestration over internal planners rather than folding stage details back into the public generator.
+
+## Ship Conditions
+
+`drawCapitalShip` applies the selected condition after generation. Normal and ghost
+ships use the same component shapes and surface plans. A scoped power state turns
+off light passes and engine heat without changing the surface RNG sequence.
+
+`shipDamage` plans damage from a separate seed. It places irregular holes in hull
+sections and can remove the forward end along a jagged line. The renderer clips
+all components against the damage paths before it draws torn edges, plates, beams,
+and wires. It does not erase the caller's background or change component geometry.
+
+Set `cutAway` to the fraction of ship length to remove from the forward end.
+The default is `0.5` (half the ship). The range is `0` through `0.95`; `0` makes
+holes only. The jagged edge varies around this cut position. Holes can cross the
+top or bottom hull edge or stay inside the hull. The playground has a percentage
+control for the cut.

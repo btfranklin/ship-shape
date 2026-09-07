@@ -162,3 +162,119 @@ test('capital ship archetypes and emissive compositing render with fixed seeds',
   assert.ok(compositeCalls > 0, 'emissive rendering should composite native canvases with drawImage');
   assert.ok((audit.calls['Path2D.rect'] ?? 0) + (audit.calls['Path2D.lineTo'] ?? 0) > 0, 'native Path2D geometry should be exercised');
 });
+
+test('ship conditions preserve seeded surfaces and expose real holes', { timeout: 120000 }, async () => {
+  await auditPage('/index.html', async (page) => {
+    const results = await page.evaluate(async (repoRoot) => {
+      const { CompositeShipGenerator, drawCapitalShip } = await import(`/@fs${repoRoot}/src/capitalships/index.ts`);
+      const { RNG, HSBAColor } = await import(`/@fs${repoRoot}/src/greebles/index.ts`);
+      const results = [];
+      for (const archetype of ['freight', 'science', 'industry', 'passenger', 'combat']) {
+        const render = (condition, legacy = false, damageSeed = 42, cutAway = 0.5) => {
+          const canvas = document.createElement('canvas');
+          canvas.width = 1800;
+          canvas.height = 1200;
+          const ctx = canvas.getContext('2d');
+          const rng = new RNG(12345);
+          const components = new CompositeShipGenerator().generate(1800, 1200, new HSBAColor(0.55, 0.1, 0.6), rng, archetype, 600);
+          if (legacy) for (const component of components) component.draw(ctx, rng);
+          else drawCapitalShip(ctx, components, rng, { condition, damageSeed, cutAway });
+          return { pixels: ctx.getImageData(0, 0, 1800, 1200).data, next: rng.next() };
+        };
+        const normal = render('normal');
+        const legacy = render('normal', true);
+        const ghost = render('ghost');
+        const derelict = render('derelict');
+        const repeat = render('derelict');
+        const different = render('derelict', false, 12345);
+        const holesOnly = render('derelict', false, 42, 0);
+        const mostlyGone = render('derelict', false, 42, 0.8);
+        const rightEdge = (pixels) => {
+          let edge = 0;
+          for (let i = 3; i < pixels.length; i += 4) {
+            if (pixels[i] > 240) edge = Math.max(edge, ((i - 3) / 4) % 1800);
+          }
+          return edge;
+        };
+        let removed = 0, retained = 0, lit = 0, dark = 0;
+        for (let i = 0; i < ghost.pixels.length; i += 4) {
+          if (ghost.pixels[i + 3] > 240 && derelict.pixels[i + 3] === 0) removed++;
+          if (ghost.pixels[i + 3] > 240 && ghost.pixels.slice(i, i + 4).every((v, j) => v === derelict.pixels[i + j])) retained++;
+          lit += normal.pixels[i] + normal.pixels[i + 1] + normal.pixels[i + 2];
+          dark += ghost.pixels[i] + ghost.pixels[i + 1] + ghost.pixels[i + 2];
+        }
+        results.push({ archetype, removed, retained, lit, dark,
+          cutLengths: rightEdge(mostlyGone.pixels) < rightEdge(derelict.pixels) - 100 && rightEdge(derelict.pixels) < rightEdge(holesOnly.pixels) - 200,
+          normalUnchanged: normal.pixels.every((v, i) => v === legacy.pixels[i]),
+          repeatable: derelict.pixels.every((v, i) => v === repeat.pixels[i]),
+          different: derelict.pixels.some((v, i) => v !== different.pixels[i]),
+          rngUnchanged: normal.next === ghost.next && ghost.next === derelict.next
+        });
+      }
+      return results;
+    }, REPO_ROOT);
+    for (const result of results) {
+      assert.ok(result.cutLengths, `${result.archetype}: larger cuts must remove more ship length`);
+      assert.ok(result.normalUnchanged, `${result.archetype}: normal rendering changed`);
+      assert.ok(result.repeatable && result.different, `${result.archetype}: damage seed must control output`);
+      assert.ok(result.rngUnchanged, `${result.archetype}: condition changed the surface RNG`);
+      assert.ok(result.dark < result.lit, `${result.archetype}: ghost lights must be off`);
+      assert.ok(result.removed > 1000, `${result.archetype}: damage must remove hull pixels`);
+      assert.ok(result.retained > 1000, `${result.archetype}: damage must retain hull detail`);
+    }
+    await page.locator('#seedInput').fill('42');
+    for (const condition of ['ghost', 'derelict']) {
+      await setControl(page, '#modeSelect', condition);
+      await page.locator('#rainbowCheck').check();
+      await assertCanvasHasMeaningfulOutput(page.locator('#appCanvas'), condition);
+      await assertCanvasTransformIsIdentity(page.locator('#appCanvas'), condition);
+    }
+  });
+});
+
+test('unpowered window openings stay visible without bloom', { timeout: 120000 }, async () => {
+  await auditPage('/index.html', async (page) => {
+    const results = await page.evaluate(async (repoRoot) => {
+      const { CapitalShipWindowsGreebles, SphereWindowsGreebles, RNG, HSBAColor } = await import(`/@fs${repoRoot}/src/greebles/index.ts`);
+      return [CapitalShipWindowsGreebles, SphereWindowsGreebles].map((Windows) => {
+        const theme = new HSBAColor(0.55, 0.1, 0.6);
+        const windows = Windows === CapitalShipWindowsGreebles
+          ? new Windows(2, 2, theme, 3)
+          : new Windows(2, 2, theme, CapitalShipWindowsGreebles.BLUE_LIGHT);
+        const draw = (mode) => {
+          const canvas = document.createElement('canvas');
+          canvas.width = canvas.height = 600;
+          const ctx = canvas.getContext('2d');
+          ctx.scale(300, 300);
+          const rng = new RNG(12345);
+          if (mode === 'lights') windows.drawLights(ctx, rng);
+          else windows.drawPanels(ctx, rng, mode === 'dark');
+          return { pixels: ctx.getImageData(0, 0, 600, 600).data, next: rng.next() };
+        };
+        const panels = draw('panels');
+        const dark = draw('dark');
+        const lights = draw('lights');
+        let litCores = 0, darkCores = 0, changedPanelPixels = 0;
+        for (let i = 0; i < lights.pixels.length; i += 4) {
+          if (lights.pixels[i + 3] === 0 && panels.pixels.slice(i, i + 4).some((value, channel) => value !== dark.pixels[i + channel])) {
+            changedPanelPixels++;
+          }
+          if (lights.pixels[i + 3] > 150 && lights.pixels[i + 2] > 200) {
+            litCores++;
+            if (dark.pixels[i] < 65 && dark.pixels[i + 1] < 75 && dark.pixels[i + 2] < 85 && dark.pixels[i + 3] === 255) darkCores++;
+          }
+        }
+        return { name: Windows.name, litCores, darkCores, changedPanelPixels,
+          visible: panels.pixels.some((value, i) => value !== dark.pixels[i]),
+          sameRng: panels.next === dark.next && dark.next === lights.next };
+      });
+    }, REPO_ROOT);
+    for (const result of results) {
+      assert.equal(result.changedPanelPixels, 0, `${result.name}: panel gaps must stay unchanged`);
+      assert.ok(result.visible, `${result.name}: dark openings must differ from blank panels`);
+      assert.ok(result.sameRng, `${result.name}: window positions must retain their RNG sequence`);
+      assert.ok(result.litCores > 10, `${result.name}: fixture must contain lit windows`);
+      assert.ok(result.darkCores / result.litCores > 0.9, `${result.name}: lit cores must become opaque dark openings`);
+    }
+  });
+});

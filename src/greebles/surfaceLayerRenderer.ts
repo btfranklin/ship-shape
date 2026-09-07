@@ -13,7 +13,8 @@ import type { SurfaceLayerPlanConfig } from './surfaceLayerPlan.js';
 export function drawSurfaceLayerPlan(
     context: CanvasRenderingContext2D,
     plan: SurfaceLayerPlan,
-    config: SurfaceLayerPlanConfig
+    config: SurfaceLayerPlanConfig,
+    darkWindows = false
 ): void {
     context.save();
 
@@ -82,7 +83,7 @@ export function drawSurfaceLayerPlan(
                             config.themeColor,
                             1,
                             layer.color
-                        ).drawPanels(context, new RNG(seed));
+                        ).drawPanels(context, new RNG(seed), darkWindows);
                     }
                 } else {
                     new CapitalShipWindowsGreebles(

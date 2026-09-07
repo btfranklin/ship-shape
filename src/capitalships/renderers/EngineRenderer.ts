@@ -1,6 +1,7 @@
 import { RNG, HSBAColor, getPath2D } from '../../greebles/common.js';
 import { ShipComponent } from '../ShipComponent.js';
 import { ComponentRenderer, ComponentShape } from './ComponentRenderer.js';
+import { isShipPowered } from '../renderPower.js';
 
 export class EngineRenderer implements ComponentRenderer {
     generateShape(component: ShipComponent, rng: RNG): ComponentShape {
@@ -88,29 +89,36 @@ export class EngineRenderer implements ComponentRenderer {
 
         // 3. Glowing Slats
         // Heat Gradient: HOT (Left) -> COOL (Right)
+        const powered = isShipPowered(ctx);
         const baseHeat = component.color.adjustSaturation(0.9).adjustBrightness(0.8);
         const coreHeat = component.color.adjustSaturation(0.3).adjustBrightness(1.0);
 
         const slatCount = Math.floor(ih / 8);
         const slatH = Math.max(3, ih / slatCount * 0.6);
 
-        ctx.shadowBlur = 4; 
+        if (powered) {
+            ctx.shadowBlur = 4;
+        }
         
         for (let i = 0; i < slatCount; i++) {
             const sy = iy + (ih / slatCount) * i + (ih/slatCount - slatH)/2;
             
             // Gradient: Hot Left -> Cold Right
             const slatGrad = ctx.createLinearGradient(ix, sy, ix + iw, sy);
-            slatGrad.addColorStop(0, coreHeat.toRGBAString());       // White hot output
-            slatGrad.addColorStop(0.3, baseHeat.toRGBAString());
-            slatGrad.addColorStop(1, baseHeat.adjustBrightness(0.2).toRGBAString()); // Darker at back
+            slatGrad.addColorStop(0, powered ? coreHeat.toRGBAString() : '#444');
+            slatGrad.addColorStop(0.3, powered ? baseHeat.toRGBAString() : '#292929');
+            slatGrad.addColorStop(1, powered ? baseHeat.adjustBrightness(0.2).toRGBAString() : '#161616');
 
             ctx.fillStyle = slatGrad;
-            ctx.shadowColor = baseHeat.toRGBAString();
+            if (powered) {
+                ctx.shadowColor = baseHeat.toRGBAString();
+            }
             
             ctx.fillRect(ix, sy, iw - 4, slatH);
         }
-        ctx.shadowBlur = 0;
+        if (powered) {
+            ctx.shadowBlur = 0;
+        }
 
         // Inner Shadow Top/Bottom
         const depthGrad = ctx.createLinearGradient(ix, iy, ix, iy + ih);
@@ -184,28 +192,27 @@ export class EngineRenderer implements ComponentRenderer {
         ctx.fillStyle = '#000';
         ctx.fillRect(ix, iy, iw, ih);
 
-        // 3. Plasma Stream
-        const energyColor = new HSBAColor(component.energyGlowHue, 1.0, 1.0);
-        
-        // Stream Gradient (Hot Left -> Stable Right)
-        const streamGrad = ctx.createLinearGradient(ix, iy, ix + iw, iy);
-        streamGrad.addColorStop(0, '#fff'); // White hot nozzle
-        streamGrad.addColorStop(0.1, energyColor.adjustBrightness(1.0).toRGBAString());
-        streamGrad.addColorStop(0.5, energyColor.adjustBrightness(0.8).toRGBAString());
-        streamGrad.addColorStop(1, energyColor.adjustBrightness(0.4).toRGBAString()); // Fade out back
+        if (isShipPowered(ctx)) {
+            // 3. Plasma Stream
+            const energyColor = new HSBAColor(component.energyGlowHue, 1.0, 1.0);
+            const streamGrad = ctx.createLinearGradient(ix, iy, ix + iw, iy);
+            streamGrad.addColorStop(0, '#fff');
+            streamGrad.addColorStop(0.1, energyColor.adjustBrightness(1.0).toRGBAString());
+            streamGrad.addColorStop(0.5, energyColor.adjustBrightness(0.8).toRGBAString());
+            streamGrad.addColorStop(1, energyColor.adjustBrightness(0.4).toRGBAString());
 
-        ctx.fillStyle = streamGrad;
-        ctx.shadowColor = energyColor.toRGBAString();
-        ctx.shadowBlur = 15;
-        ctx.fillRect(ix, iy + ih*0.1, iw, ih*0.8);
-        ctx.shadowBlur = 0;
+            ctx.fillStyle = streamGrad;
+            ctx.shadowColor = energyColor.toRGBAString();
+            ctx.shadowBlur = 15;
+            ctx.fillRect(ix, iy + ih*0.1, iw, ih*0.8);
+            ctx.shadowBlur = 0;
 
-        // Nozzle Flare
-        const nozzleGrad = ctx.createRadialGradient(ix, iy + ih/2, 0, ix, iy + ih/2, ih);
-        nozzleGrad.addColorStop(0, energyColor.adjustBrightness(1.0).withAlpha(0.8).toRGBAString());
-        nozzleGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = nozzleGrad;
-        ctx.fillRect(ix - ih/2, iy, ih, ih); // Draw flare slightly outside
+            const nozzleGrad = ctx.createRadialGradient(ix, iy + ih/2, 0, ix, iy + ih/2, ih);
+            nozzleGrad.addColorStop(0, energyColor.adjustBrightness(1.0).withAlpha(0.8).toRGBAString());
+            nozzleGrad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = nozzleGrad;
+            ctx.fillRect(ix - ih/2, iy, ih, ih);
+        }
 
         // 4. Greebles
         const segW = 15; 
@@ -289,13 +296,14 @@ export class EngineRenderer implements ComponentRenderer {
         ctx.fillStyle = nozzleGrad;
         ctx.fillRect(x, y, nozzleW, h);
         
-        // Nozzle Heat Glow (Left edge fade)
-        const exhaustGrad = ctx.createLinearGradient(x, y, x + nozzleW, y);
-        exhaustGrad.addColorStop(0, 'rgba(255, 220, 150, 0.9)'); // Hot tip
-        exhaustGrad.addColorStop(0.3, 'rgba(255, 100, 50, 0.4)');
-        exhaustGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = exhaustGrad;
-        ctx.fillRect(x, y + 1, nozzleW, h - 2);
+        if (isShipPowered(ctx)) {
+            const exhaustGrad = ctx.createLinearGradient(x, y, x + nozzleW, y);
+            exhaustGrad.addColorStop(0, 'rgba(255, 220, 150, 0.9)');
+            exhaustGrad.addColorStop(0.3, 'rgba(255, 100, 50, 0.4)');
+            exhaustGrad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = exhaustGrad;
+            ctx.fillRect(x, y + 1, nozzleW, h - 2);
+        }
         
         // Nozzle Rim Detail
         ctx.fillStyle = '#111';
