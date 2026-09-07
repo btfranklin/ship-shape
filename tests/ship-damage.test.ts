@@ -35,9 +35,29 @@ test('damage depth layers repeat and can break on either side of the facing edge
         const shifted = breach[layer].edge[index];
         return (shifted.x - point.x) * dx + (shifted.y - point.y) * dy;
       });
-      assert.ok(offsets.some(value => value > 0), `${layer} must extend into the opening`);
-      assert.ok(offsets.some(value => value < 0), `${layer} must also break behind the facing edge`);
+      if (breach.kind === 'hole') {
+        assert.ok(offsets.some(value => value > 0), `${layer} must extend into the opening`);
+        assert.ok(offsets.some(value => value < 0), `${layer} must also break behind the facing edge`);
+      }
     }
     assert.notDeepEqual(breach.farHull.edge, breach.machinery.edge);
   }
+});
+
+
+test('some seeds expose long depth steps while others reverse or reduce them', () => {
+  let exposed = 0, reversed = 0, shallow = 0;
+  for (let seed = 1; seed <= 40; seed++) {
+    const [cut] = planShipDamage(bounds, [bounds], new RNG(seed), 0.5);
+    const meanOffset = (edge: typeof cut.edge) => edge.reduce((sum, point, i) => sum + point.x - cut.edge[i].x, 0) / edge.length;
+    const far = meanOffset(cut.farHull.edge);
+    const middle = meanOffset(cut.machinery.edge);
+    if (far > bounds.w * 0.07) {
+      exposed++;
+      assert.ok(middle > 20 && middle < far - 20, 'machinery must form a distinct intermediate step');
+    } else if (far < -bounds.w * 0.07) reversed++;
+    else shallow++;
+    assert.ok(Math.abs(far) < bounds.w * 0.22, 'the depth step must remain bounded');
+  }
+  assert.ok(exposed > 0 && reversed > 0 && shallow > 0);
 });

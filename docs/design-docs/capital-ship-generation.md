@@ -58,3 +58,8 @@ mask. Gaps through all layers still show the caller's background.
 The solid interior and edge shading stay inside the original hull. Fragment roots
 must touch that hull, but plates, beams, and wires can bend beyond it. Their reach
 is limited and scales down for small ships. This applies to all three depth layers.
+
+Some cut seeds add a broad depth step of 8 to 18 percent of ship length before
+small-ship scaling. The machinery edge lies partway between the front and far
+hull edges. Most deep steps expose more of the far hull; some reverse the offset.
+Other seeds keep a shallow break. Small tears remain independent on each layer.

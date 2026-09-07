@@ -64,11 +64,20 @@ export function planShipDamage(bounds: ShipBounds, hulls: readonly ShipBounds[],
         });
         damage.push({ kind: 'hole', path: polygon(edge), edge: [...edge, edge[0]], center });
     }
-    return damage.map(breach => ({
-        ...breach,
-        farHull: offsetDamageEdge(breach, bounds, rng, 18),
-        machinery: offsetDamageEdge(breach, bounds, rng, 9)
-    }));
+    return damage.map(breach => {
+        // A broad offset makes some cuts pass diagonally through the ship's depth.
+        // Other seeds keep a shallow break or reverse which skin extends further.
+        const deepCut = breach.kind === 'cut' && rng.bool(0.7);
+        const depth = deepCut
+            ? bounds.w * rng.range(0.08, 0.18) * (rng.bool(0.8) ? 1 : -1)
+            : 18;
+        const middleDepth = deepCut ? depth * rng.range(0.35, 0.65) : 9;
+        return {
+            ...breach,
+            farHull: offsetDamageEdge(breach, bounds, rng, depth),
+            machinery: offsetDamageEdge(breach, bounds, rng, middleDepth)
+        };
+    });
 }
 
 function offsetDamageEdge(breach: DamageEdge, bounds: ShipBounds, rng: RNG, depth: number): DamageEdge {
