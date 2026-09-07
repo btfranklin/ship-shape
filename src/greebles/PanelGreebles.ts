@@ -29,7 +29,7 @@ export class PanelGreebles implements Drawable {
                 const overlayColor = lightnessVar > 0 ? `rgba(255,255,255,${lightnessVar})` : `rgba(0,0,0,${-lightnessVar})`;
                 context.fillStyle = overlayColor;
             } else {
-                const panelColor = this.themeColor.withSaturation(rng.range(-0.1, 0.1));
+                const panelColor = this.themeColor.adjustSaturation(rng.range(-0.1, 0.1));
                 context.fillStyle = panelColor.toRGBAString();
             }
             

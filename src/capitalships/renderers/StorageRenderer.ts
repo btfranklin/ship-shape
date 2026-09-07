@@ -8,10 +8,10 @@ export class StorageRenderer implements ComponentRenderer {
         const path = new Path2D();
         const { x, y, w, h } = component.bounds;
 
-        if (component.variant.includes('sphere')) {
+        if (component.variant === 'sphere') {
             const r = Math.min(w, h) / 2;
             path.arc(x + w / 2, y + h / 2, r, 0, Math.PI * 2);
-        } else if (component.variant.includes('goods')) {
+        } else if (component.variant === 'goods') {
             // Rectangular Shipping Container
             path.rect(x, y, w, h);
         } else {
@@ -19,7 +19,7 @@ export class StorageRenderer implements ComponentRenderer {
             // Determine cap depth factor
             // Standard: 0.5 (Full semi-circle)
             // Liquid: 0.15 (Shallow dish/cap)
-            const isLiquid = component.variant.includes('liquid');
+            const isLiquid = component.variant === 'liquid';
             const depthFactor = isLiquid ? 0.15 : 0.5; 
             const minDim = Math.min(w, h);
             const capDepth = minDim * depthFactor;
@@ -126,9 +126,9 @@ export class StorageRenderer implements ComponentRenderer {
             ctx.clip(component.shapePath);
         }
 
-        if (component.variant.includes('sphere')) {
+        if (component.variant === 'sphere') {
             this.drawSphereTank(ctx, component);
-        } else if (component.variant.includes('goods')) {
+        } else if (component.variant === 'goods') {
             this.drawContainer(ctx, component);
         } else {
             this.drawCapsule(ctx, component, rng);
@@ -164,8 +164,8 @@ export class StorageRenderer implements ComponentRenderer {
         // Inner Shadow / Darker Metal Gradient
         // Diagonal gradient for a flat, angular look
         const grad = ctx.createLinearGradient(insetX, insetY, insetX + insetW, insetY + insetH);
-        grad.addColorStop(0, color.withBrightness(-0.05).toCSS()); // TL: Subtle shadow (almost base color)
-        grad.addColorStop(1, color.withBrightness(-0.25).toCSS()); // BR: Darker shadow
+        grad.addColorStop(0, color.adjustBrightness(-0.05).toCSS()); // TL: Subtle shadow (almost base color)
+        grad.addColorStop(1, color.adjustBrightness(-0.25).toCSS()); // BR: Darker shadow
         
         ctx.fillStyle = grad;
         ctx.fillRect(insetX, insetY, insetW, insetH);
@@ -189,7 +189,7 @@ export class StorageRenderer implements ComponentRenderer {
                     const pos = (isHorizontal ? insetX : insetY) + i * spacing;
                     
                     // Rib Shadow
-                    ctx.strokeStyle = color.withBrightness(-0.6).toCSS();
+                    ctx.strokeStyle = color.adjustBrightness(-0.6).toCSS();
                     ctx.beginPath();
                     if (isHorizontal) {
                         ctx.moveTo(pos, insetY); ctx.lineTo(pos, insetY + insetH);
@@ -199,7 +199,7 @@ export class StorageRenderer implements ComponentRenderer {
                     ctx.stroke();
                     
                     // Rib Highlight (Brighter for contrast against flat background)
-                    ctx.strokeStyle = color.withBrightness(0.1).toCSS();
+                    ctx.strokeStyle = color.adjustBrightness(0.1).toCSS();
                     ctx.beginPath();
                     if (isHorizontal) {
                         ctx.moveTo(pos + 1, insetY); ctx.lineTo(pos + 1, insetY + insetH);
@@ -253,12 +253,12 @@ export class StorageRenderer implements ComponentRenderer {
 
             // Pass 1: Dark Border (Total Width)
             ctx.lineWidth = 6;
-            ctx.strokeStyle = color.withBrightness(-0.6).toCSS();
+            ctx.strokeStyle = color.adjustBrightness(-0.6).toCSS();
             ctx.stroke(structurePath);
 
             // Pass 2: Gray Fill (Inner Width)
             ctx.lineWidth = 4;
-            ctx.strokeStyle = color.withBrightness(0.0).toCSS();
+            ctx.strokeStyle = color.adjustBrightness(0.0).toCSS();
             ctx.stroke(structurePath);
 
             ctx.restore();
@@ -267,12 +267,12 @@ export class StorageRenderer implements ComponentRenderer {
         // 5. Frame Bevel/Highlight
         // Outer Highlight
         ctx.lineWidth = 4; // Thicker outer frame
-        ctx.strokeStyle = color.withBrightness(0.3).toCSS();
+        ctx.strokeStyle = color.adjustBrightness(0.3).toCSS();
         ctx.strokeRect(x, y, w, h); 
         
         // Inner Shadow (Inset border)
         ctx.lineWidth = 2; // Thicker inner shadow
-        ctx.strokeStyle = color.withBrightness(-0.6).toCSS();
+        ctx.strokeStyle = color.adjustBrightness(-0.6).toCSS();
         ctx.strokeRect(insetX, insetY, insetW, insetH);
     }
 
@@ -285,18 +285,18 @@ export class StorageRenderer implements ComponentRenderer {
         let grad: CanvasGradient;
         if (isHorizontal) {
             grad = ctx.createLinearGradient(x, y, x, y + h);
-            grad.addColorStop(0, color.withBrightness(-0.4).toCSS());
-            grad.addColorStop(0.3, color.withBrightness(0.1).toCSS());
-            grad.addColorStop(0.5, color.withBrightness(0.3).toCSS());
-            grad.addColorStop(0.8, color.withBrightness(-0.1).toCSS());
-            grad.addColorStop(1, color.withBrightness(-0.4).toCSS());
+            grad.addColorStop(0, color.adjustBrightness(-0.4).toCSS());
+            grad.addColorStop(0.3, color.adjustBrightness(0.1).toCSS());
+            grad.addColorStop(0.5, color.adjustBrightness(0.3).toCSS());
+            grad.addColorStop(0.8, color.adjustBrightness(-0.1).toCSS());
+            grad.addColorStop(1, color.adjustBrightness(-0.4).toCSS());
         } else {
             grad = ctx.createLinearGradient(x, y, x + w, y);
-            grad.addColorStop(0, color.withBrightness(-0.4).toCSS());
-            grad.addColorStop(0.3, color.withBrightness(0.1).toCSS());
-            grad.addColorStop(0.5, color.withBrightness(0.3).toCSS());
-            grad.addColorStop(0.8, color.withBrightness(-0.1).toCSS());
-            grad.addColorStop(1, color.withBrightness(-0.4).toCSS());
+            grad.addColorStop(0, color.adjustBrightness(-0.4).toCSS());
+            grad.addColorStop(0.3, color.adjustBrightness(0.1).toCSS());
+            grad.addColorStop(0.5, color.adjustBrightness(0.3).toCSS());
+            grad.addColorStop(0.8, color.adjustBrightness(-0.1).toCSS());
+            grad.addColorStop(1, color.adjustBrightness(-0.4).toCSS());
         }
 
         ctx.fillStyle = grad;
@@ -309,11 +309,11 @@ export class StorageRenderer implements ComponentRenderer {
             const spacing = w / (numBands + 1);
             for (let i = 1; i <= numBands; i++) {
                 const bx = x + spacing * i;
-                ctx.strokeStyle = color.withBrightness(-0.5).toCSS();
+                ctx.strokeStyle = color.adjustBrightness(-0.5).toCSS();
                 ctx.beginPath();
                 ctx.moveTo(bx, y); ctx.lineTo(bx, y + h); ctx.stroke();
                 
-                ctx.strokeStyle = color.withBrightness(0.2).toCSS();
+                ctx.strokeStyle = color.adjustBrightness(0.2).toCSS();
                 ctx.beginPath();
                 ctx.moveTo(bx + 2, y); ctx.lineTo(bx + 2, y + h); ctx.stroke();
             }
@@ -321,11 +321,11 @@ export class StorageRenderer implements ComponentRenderer {
             const spacing = h / (numBands + 1);
             for (let i = 1; i <= numBands; i++) {
                 const by = y + spacing * i;
-                ctx.strokeStyle = color.withBrightness(-0.5).toCSS();
+                ctx.strokeStyle = color.adjustBrightness(-0.5).toCSS();
                 ctx.beginPath();
                 ctx.moveTo(x, by); ctx.lineTo(x + w, by); ctx.stroke();
                 
-                ctx.strokeStyle = color.withBrightness(0.2).toCSS();
+                ctx.strokeStyle = color.adjustBrightness(0.2).toCSS();
                 ctx.beginPath();
                 ctx.moveTo(x, by + 2); ctx.lineTo(x + w, by + 2); ctx.stroke();
             }
@@ -340,9 +340,9 @@ export class StorageRenderer implements ComponentRenderer {
         const base = component.color;
 
         const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
-        grad.addColorStop(0, base.withBrightness(0.3).toRGBAString());
-        grad.addColorStop(0.5, base.withBrightness(-0.1).toRGBAString());
-        grad.addColorStop(1, base.withBrightness(-0.2).toRGBAString());
+        grad.addColorStop(0, base.adjustBrightness(0.3).toRGBAString());
+        grad.addColorStop(0.5, base.adjustBrightness(-0.1).toRGBAString());
+        grad.addColorStop(1, base.adjustBrightness(-0.2).toRGBAString());
         ctx.fillStyle = grad;
         if (component.shapePath) {
             ctx.fill(component.shapePath);

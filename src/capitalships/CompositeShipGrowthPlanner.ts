@@ -1,5 +1,5 @@
 import { HSBAColor, RNG } from '../greebles/common.js';
-import { ComponentVariant, ShipBounds, ShipComponent } from './ShipComponent.js';
+import { ShipBounds, ShipComponent } from './ShipComponent.js';
 import { ComponentType, ShipArchetype } from './shipTypes.js';
 import type { ShipNode } from './compositeTypes.js';
 
@@ -12,6 +12,15 @@ interface GrowthContext {
     shipCenterY: number;
     lightColors: HSBAColor[];
 }
+
+type SideComponentChoice =
+    | { type: 'weapon'; variant: 'default' }
+    | { type: 'sensor'; variant: 'default' }
+    | { type: 'hull'; variant: 'default' | 'taper-top' | 'taper-bottom' }
+    | { type: 'sphere'; variant: 'default' }
+    | { type: 'tower'; variant: 'default' };
+
+type NoseChoice = 'taper' | 'sphere-large' | 'sphere-small' | 'sensor';
 
 export class CompositeShipGrowthPlanner {
     grow(node: ShipNode, depth: number, maxDepth: number, context: GrowthContext): void {
@@ -114,7 +123,7 @@ export class CompositeShipGrowthPlanner {
                 bounds: { x, y, w, h },
                 zIndex: 500,
                 type: 'weapon',
-                color: theme.withBrightness(-0.15),
+                color: theme.adjustBrightness(-0.15),
                 rng,
                 shipArchetype: archetype,
                 variant: 'top-view',
@@ -133,21 +142,20 @@ export class CompositeShipGrowthPlanner {
     ): ShipNode {
         const { totalW, theme, rng, archetype, shipCenterY, lightColors } = context;
         const parent = parentNode.component;
-        const { type, variant } = this.chooseSideComponent(side, archetype, rng);
-        const { w, h } = this.sizeSideComponent(side, type, parent.bounds, rng);
+        const choice = this.chooseSideComponent(side, archetype, rng);
+        const { w, h } = this.sizeSideComponent(side, choice.type, parent.bounds, rng);
         const x = parent.bounds.x + rng.range(0, parent.bounds.w - w);
-        const y = this.placeSideComponent(side, type, parent.bounds, h);
+        const y = this.placeSideComponent(side, choice.type, parent.bounds, h);
 
         const component = new ShipComponent({
+            ...choice,
             bounds: { x, y, w, h },
             zIndex: parent.zIndex - 1,
-            type,
-            color: theme.withBrightness(side === 'top' ? 0.1 : -0.1),
+            color: theme.adjustBrightness(side === 'top' ? 0.1 : -0.1),
             rng,
             shipArchetype: archetype,
-            variant,
             invertLighting: side === 'bottom',
-            facing: type === 'weapon' && x < totalW / 3 ? 'backward' : 'forward',
+            facing: choice.type === 'weapon' && x < totalW / 3 ? 'backward' : 'forward',
             shipCenterY,
             lightColors,
         });
@@ -160,7 +168,7 @@ export class CompositeShipGrowthPlanner {
         side: 'top' | 'bottom',
         archetype: ShipArchetype,
         rng: RNG
-    ): { type: ComponentType; variant: ComponentVariant } {
+    ): SideComponentChoice {
         const roll = rng.next();
         const weaponThreshold = archetype === 'combat' ? 0.3 : 0;
         const sensorThreshold = weaponThreshold
@@ -241,7 +249,7 @@ export class CompositeShipGrowthPlanner {
         
         if (maxW < 10) return;
 
-        const noseChoices = ['taper', 'sphere-large', 'sphere-small'];
+        const noseChoices: NoseChoice[] = ['taper', 'sphere-large', 'sphere-small'];
         if (archetype === 'science' || archetype === 'combat') {
             noseChoices.push('sensor');
             noseChoices.push('sensor'); 

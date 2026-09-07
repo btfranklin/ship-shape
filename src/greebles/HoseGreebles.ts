@@ -20,7 +20,7 @@ export class HoseGreebles implements Drawable {
         }
 
         // 2. Draw Endpoints (Fixtures)
-        const fixtureColor = this.themeColor.withSaturation(-0.25).toRGBAString();
+        const fixtureColor = this.themeColor.adjustSaturation(-0.25).toRGBAString();
         const endpointRadius = 0.025;
 
         context.lineWidth = 0.003;
@@ -34,7 +34,7 @@ export class HoseGreebles implements Drawable {
                 context.fill();
                 context.stroke();
                 
-                // Inner detail (from Swift code implied double circle or just simple fixture)
+                // Add a smaller inner ring to define the fixture center.
                 context.beginPath();
                 context.ellipse(pt.x, pt.y, endpointRadius * 0.5, endpointRadius * 0.5, 0, 0, Math.PI * 2);
                 context.stroke();
@@ -51,7 +51,7 @@ export class HoseGreebles implements Drawable {
         context.lineCap = 'round';
         context.lineJoin = 'round';
         context.lineWidth = 0.025; // Thinner hose
-        context.strokeStyle = this.themeColor.withBrightness(-0.4).toRGBAString();
+        context.strokeStyle = this.themeColor.adjustBrightness(-0.4).toRGBAString();
 
         for (const hose of hoses) {
             context.stroke(hose.path);

@@ -102,8 +102,8 @@ export class SphereWindowsGreebles implements Drawable {
     }
 
     private drawPanel(context: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
-        const panelColor = this.themeColor.withSaturation(-0.1).withBrightness(-0.2).toRGBAString();
-        const edgeColor = this.themeColor.withBrightness(-0.4).toRGBAString();
+        const panelColor = this.themeColor.adjustSaturation(-0.1).adjustBrightness(-0.2).toRGBAString();
+        const edgeColor = this.themeColor.adjustBrightness(-0.4).toRGBAString();
         context.save();
         context.fillStyle = panelColor;
         context.strokeStyle = edgeColor;

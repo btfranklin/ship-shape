@@ -53,20 +53,20 @@ export class TowerRenderer implements ComponentRenderer {
         const grad = ctx.createLinearGradient(component.bounds.x, component.bounds.y, component.bounds.x + component.bounds.w, component.bounds.y);
         const base = component.color;
 
-        grad.addColorStop(0, base.withBrightness(0.2).toRGBAString()); // Highlight
-        grad.addColorStop(0.6, base.withBrightness(-0.1).toRGBAString()); // Mid
-        grad.addColorStop(1, base.withBrightness(-0.4).toRGBAString()); // Shadow
+        grad.addColorStop(0, base.adjustBrightness(0.2).toRGBAString()); // Highlight
+        grad.addColorStop(0.6, base.adjustBrightness(-0.1).toRGBAString()); // Mid
+        grad.addColorStop(1, base.adjustBrightness(-0.4).toRGBAString()); // Shadow
 
         ctx.fillStyle = grad;
         ctx.fill(component.shapePath);
 
         // 2. Draw Greebles (Clipped)
-        drawClippedSurfaceGreebles(ctx, component, rng);
+        const preparedSurface = drawClippedSurfaceGreebles(ctx, component, rng);
 
         // 2b. Lighting Overlays
         // Towers get Side Lighting (Shadow Right)
         this.drawLightingOverlay(ctx, component);
-        drawDeferredEmissiveGreebles(ctx, component, rng);
+        drawDeferredEmissiveGreebles(ctx, component, preparedSurface);
 
         // 3. Inner Highlight (Bevel)
         drawInnerBevel(ctx, component);

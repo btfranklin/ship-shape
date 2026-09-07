@@ -13,21 +13,19 @@ import { WeaponRenderer } from './renderers/WeaponRenderer.js';
 import { StorageRenderer } from './renderers/StorageRenderer.js';
 import { ShipArchetype, ComponentType } from './shipTypes.js';
 
-export type ComponentVariant =
-    | 'default'
-    | 'taper-top'
-    | 'taper-bottom'
-    | 'taper-front'
-    | 'front'
-    | 'back'
-    | 'top-view'
-    | 'nose'
-    | 'goods'
-    | 'goods vertical'
-    | 'liquid'
-    | 'liquid vertical'
-    | 'sphere'
-    | 'vertical';
+export type HullVariant = 'default' | 'taper-top' | 'taper-bottom' | 'taper-front';
+export type SensorVariant = 'default' | 'front' | 'back';
+export type WeaponVariant = 'default' | 'top-view';
+export type SphereVariant = 'default' | 'nose';
+export type StorageVariant = 'default' | 'goods' | 'liquid' | 'sphere';
+export type EngineStyle = 'standard' | 'radiator' | 'energy';
+
+type ShipComponentVariant =
+    | HullVariant
+    | SensorVariant
+    | WeaponVariant
+    | SphereVariant
+    | StorageVariant;
 
 export interface ShipBounds {
     x: number;
@@ -36,31 +34,72 @@ export interface ShipBounds {
     h: number;
 }
 
-export interface ShipComponentOptions {
+interface CommonShipComponentOptions {
     bounds: ShipBounds;
     zIndex: number;
-    type: ComponentType;
     color: HSBAColor;
     rng: RNG;
     shipArchetype: ShipArchetype;
-    variant?: ComponentVariant;
     isTrunk?: boolean;
     invertLighting?: boolean;
-    engineStyle?: 'standard' | 'radiator' | 'energy';
     facing?: 'forward' | 'backward';
     shipCenterY?: number;
     shipCenterX?: number;
     lightColors?: readonly HSBAColor[];
-    storageBands?: number;
 }
+
+export type ShipComponentOptions = CommonShipComponentOptions & (
+    | {
+        type: 'hull';
+        variant?: HullVariant;
+        engineStyle?: never;
+        storageBands?: never;
+    }
+    | {
+        type: 'sensor';
+        variant?: SensorVariant;
+        engineStyle?: never;
+        storageBands?: never;
+    }
+    | {
+        type: 'weapon';
+        variant?: WeaponVariant;
+        engineStyle?: never;
+        storageBands?: never;
+    }
+    | {
+        type: 'sphere';
+        variant?: SphereVariant;
+        engineStyle?: never;
+        storageBands?: never;
+    }
+    | {
+        type: 'storage';
+        variant?: StorageVariant;
+        engineStyle?: never;
+        storageBands?: number;
+    }
+    | {
+        type: 'engine';
+        variant?: 'default';
+        engineStyle?: EngineStyle;
+        storageBands?: never;
+    }
+    | {
+        type: 'ring' | 'trench' | 'tower';
+        variant?: 'default';
+        engineStyle?: never;
+        storageBands?: never;
+    }
+);
 
 export class ShipComponent {
     public readonly zIndex: number;
     public readonly type: ComponentType;
     public readonly color: HSBAColor;
-    public readonly engineStyle: 'standard' | 'radiator' | 'energy';
+    public readonly engineStyle: EngineStyle;
     public readonly energyGlowHue: number;
-    public readonly variant: ComponentVariant;
+    public readonly variant: ShipComponentVariant;
     public readonly shipArchetype: ShipArchetype;
     public readonly isTrunk: boolean;
     public readonly invertLighting: boolean;
@@ -87,13 +126,13 @@ export class ShipComponent {
             variant = 'default',
             isTrunk = false,
             invertLighting = false,
-            engineStyle: forcedEngineStyle,
             facing = 'forward',
             shipCenterY,
             shipCenterX,
             lightColors,
-            storageBands,
         } = options;
+        const forcedEngineStyle = options.type === 'engine' ? options.engineStyle : undefined;
+        const storageBands = options.type === 'storage' ? options.storageBands : undefined;
 
         this._bounds = Object.freeze({ ...bounds });
         this.zIndex = zIndex;
@@ -112,7 +151,7 @@ export class ShipComponent {
         this.storageBands = storageBands;
         this._facing = facing;
 
-        let engineStyle: 'standard' | 'radiator' | 'energy' = 'standard';
+        let engineStyle: EngineStyle = 'standard';
         let energyGlowHue = 0;
 
         // Select Renderer

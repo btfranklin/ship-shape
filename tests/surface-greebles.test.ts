@@ -42,8 +42,9 @@ test('surface emissive rendering composites through an offscreen canvas', () => 
 
   ctx.save();
   ctx.scale(SIZE, SIZE);
-  surface.draw(ctx, rng, { skipEmissive: true });
-  surface.drawEmissive(ctx, rng);
+  const preparedSurface = surface.prepare(rng);
+  preparedSurface.drawBase(ctx);
+  preparedSurface.drawEmissive(ctx);
   ctx.restore();
 
   assert.ok(
@@ -54,6 +55,64 @@ test('surface emissive rendering composites through an offscreen canvas', () => 
     calls.some((call) => call.name === 'drawImage'),
     'offscreen emissive path should composite its canvas back onto the target context'
   );
+});
+
+test('prepared surfaces own independent plans and painting does not consume caller randomness', () => {
+  class CountingRNG extends RNG {
+    calls = 0;
+
+    override next(): number {
+      this.calls += 1;
+      return super.next();
+    }
+  }
+
+  const recordPainting = (
+    paint: (context: CanvasRenderingContext2D) => void
+  ) => {
+    const calls: Array<{ name: PropertyKey; args: unknown[] }> = [];
+    const target = createTestContext();
+    const context = new Proxy(target, {
+      get(object, property) {
+        const value = Reflect.get(object, property);
+        if (typeof value !== 'function') return value;
+        return (...args: unknown[]) => {
+          calls.push({ name: property, args });
+          return Reflect.apply(value, object, args);
+        };
+      },
+      set(object, property, value) {
+        calls.push({ name: property, args: [value] });
+        return Reflect.set(object, property, value);
+      },
+    });
+    paint(context);
+    return JSON.stringify(calls);
+  };
+
+  const surface = new CapitalShipSurfaceGreebles(1, 1, THEME, 'science', 'hull');
+  const firstRng = new CountingRNG(90125);
+  const secondRng = new CountingRNG(90127);
+  const first = surface.prepare(firstRng);
+  const firstPlanningCalls = firstRng.calls;
+  const second = surface.prepare(secondRng);
+  const secondPlanningCalls = secondRng.calls;
+
+  const firstEmissiveBeforeBase = recordPainting(first.drawEmissive);
+  const firstBaseRendering = recordPainting(first.drawBase);
+  const secondBaseRendering = recordPainting(second.drawBase);
+  const repeatedFirstBaseRendering = recordPainting(first.drawBase);
+  const secondEmissiveRendering = recordPainting(second.drawEmissive);
+  const firstEmissiveAfterBase = recordPainting(first.drawEmissive);
+
+  assert.notEqual(firstBaseRendering, secondBaseRendering, 'different preparations should own different base plans');
+  assert.equal(repeatedFirstBaseRendering, firstBaseRendering, 'a later preparation must not replace an earlier base plan');
+  assert.notEqual(firstEmissiveBeforeBase, '[]', 'the first preparation should include emissive painting');
+  assert.notEqual(secondEmissiveRendering, '[]', 'the second preparation should include emissive painting');
+  assert.notEqual(firstEmissiveBeforeBase, secondEmissiveRendering, 'different preparations should own different emissive plans');
+  assert.equal(firstEmissiveAfterBase, firstEmissiveBeforeBase, 'emissive painting must not depend on a prior base paint');
+  assert.equal(firstRng.calls, firstPlanningCalls, 'painting must not consume the first caller RNG');
+  assert.equal(secondRng.calls, secondPlanningCalls, 'painting must not consume the second caller RNG');
 });
 
 test('emissive fallback never erases pixels from the target canvas', () => {

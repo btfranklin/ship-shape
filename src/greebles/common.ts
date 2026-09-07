@@ -54,11 +54,11 @@ export class HSBAColor {
         return `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${this.a})`;
     }
 
-    withBrightness(adjustment: number): HSBAColor {
+    adjustBrightness(adjustment: number): HSBAColor {
         return new HSBAColor(this.h, this.s, Math.max(0, Math.min(1, this.b + adjustment)), this.a);
     }
 
-    withSaturation(adjustment: number): HSBAColor {
+    adjustSaturation(adjustment: number): HSBAColor {
         return new HSBAColor(this.h, Math.max(0, Math.min(1, this.s + adjustment)), this.b, this.a);
     }
     
@@ -66,7 +66,7 @@ export class HSBAColor {
         return new HSBAColor(this.h, this.s, this.b, newAlpha);
     }
 
-    withHueShift(shift: number): HSBAColor {
+    shiftHue(shift: number): HSBAColor {
         let newH = (this.h + shift) % 1.0;
         if (newH < 0) newH += 1.0;
         return new HSBAColor(newH, this.s, this.b, this.a);

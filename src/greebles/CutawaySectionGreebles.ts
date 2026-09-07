@@ -60,7 +60,7 @@ export class CutawaySectionGreebles implements Drawable {
         context.strokeStyle = 'black';
         const Path2D = getPath2D();
 
-        const innardsFillColor = this.themeColor.withBrightness(-0.35);
+        const innardsFillColor = this.themeColor.adjustBrightness(-0.35);
         const useLegacyGlow = options.drawBase && options.drawGlow && options.useLegacyGlow;
         const shouldDrawGlow = options.drawGlow || useLegacyGlow;
 
@@ -82,15 +82,15 @@ export class CutawaySectionGreebles implements Drawable {
                 this.drawBacklight(
                     context,
                     { x, y, w, h },
-                    this.backlightColor.withBrightness(-0.2),
-                    this.backlightColor.withBrightness(-0.8),
+                    this.backlightColor.adjustBrightness(-0.2),
+                    this.backlightColor.adjustBrightness(-0.8),
                     path
                 );
             }
 
             if (shouldDrawGlow) {
-                const glowInner = this.backlightColor.withBrightness(0.2).withAlpha(0.4);
-                const glowOuter = this.backlightColor.withBrightness(-0.5).withAlpha(0.0);
+                const glowInner = this.backlightColor.adjustBrightness(0.2).withAlpha(0.4);
+                const glowOuter = this.backlightColor.adjustBrightness(-0.5).withAlpha(0.0);
                 this.drawBacklight(
                     context,
                     { x, y, w, h },

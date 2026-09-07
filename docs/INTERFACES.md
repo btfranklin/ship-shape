@@ -15,12 +15,17 @@ Deep `src/...` imports are internal-only, even when they work inside local devel
 Import from `ship-shape/greebles` for:
 
 - `RNG`, `HSBAColor`, `setPath2D`, `getPath2D`
-- low-level greebles such as `PanelGreebles`, `PipeGreebles`, `LightPanelGreebles`, `EquipmentGreebles`, `EquipmentTrenchGreebles`, `CapitalShipWindowsGreebles`, and `CapitalShipSurfaceGreebles`
+- `CapitalShipSurfaceGreebles` and `PreparedCapitalShipSurface`
+- low-level greebles such as `PanelGreebles`, `PipeGreebles`, `LightPanelGreebles`, `EquipmentGreebles`, `EquipmentTrenchGreebles`, and `CapitalShipWindowsGreebles`
 
 Contract notes:
 
 - Greebles use normalized units.
+- `HSBAColor.adjustBrightness(adjustment)` returns a new color with brightness changed by the delta and clamped to `0..1`.
+- `HSBAColor.adjustSaturation(adjustment)` returns a new color with saturation changed by the delta and clamped to `0..1`.
+- `HSBAColor.shiftHue(shift)` wraps the hue after applying the delta. `HSBAColor.withAlpha(alpha)` replaces alpha with the supplied value.
 - Most drawables expose `draw(ctx, rng)`.
+- `CapitalShipSurfaceGreebles.prepare(rng)` returns a `PreparedCapitalShipSurface`. Use `drawBase(ctx)` and then `drawEmissive(ctx, { clipPath? })` when base and emissive rendering need separate passes.
 - In Node, call `setPath2D()` before any rendering path that creates a `Path2D`.
 
 ## Capital Ships
@@ -29,7 +34,9 @@ Import from `ship-shape/capitalships` for:
 
 - `CompositeShipGenerator`
 - `ShipComponent`
-- `ShipComponentOptions`, `ShipBounds`, and `ComponentVariant`
+- `ShipComponentOptions` and `ShipBounds`
+- `HullVariant`, `SensorVariant`, `WeaponVariant`, `SphereVariant`, and `StorageVariant`
+- `EngineStyle`
 - `UnifiedTrunkComponent`
 - `ShipArchetype`
 - `ComponentType`
@@ -39,7 +46,8 @@ Contract notes:
 - `CompositeShipGenerator.generate(width, height, themeColor, rng, shipArchetype?, referenceHeight?)`
   returns components already sorted by `zIndex`.
 - Output components are draw-ready and should be drawn in order.
-- Direct `ShipComponent` construction uses one `ShipComponentOptions` object. Construction creates the initial shape, so the component is draw-ready when the constructor returns.
+- Direct `ShipComponent` construction uses one `ShipComponentOptions` object. Its `type` selects the valid `variant` values and type-specific fields. `engineStyle` is valid only for engines, and `storageBands` is valid only for storage components.
+- Construction creates the initial shape, so the component is draw-ready when the constructor returns.
 - `UnifiedTrunkComponent` represents merged trunk hull sections and also exposes `draw(ctx, rng)`.
 
 ## Root Export

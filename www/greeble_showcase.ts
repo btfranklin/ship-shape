@@ -44,7 +44,7 @@ const demos: DemoConfig[] = [
         desc: "Simple pipe network.",
         render: (ctx, rng, theme) => {
             // Draw base first so pipes are visible
-            ctx.fillStyle = theme.withBrightness(-0.2).toRGBAString();
+            ctx.fillStyle = theme.adjustBrightness(-0.2).toRGBAString();
             ctx.fillRect(0,0,1,1);
             const g = new PipeGreebles(1, 1, theme, 3);
             g.draw(ctx, rng);
@@ -54,9 +54,9 @@ const demos: DemoConfig[] = [
         title: "Pipes & Conduits (Dense)",
         desc: "Complex heavy machinery piping.",
         render: (ctx, rng, theme) => {
-            ctx.fillStyle = theme.withBrightness(-0.2).toRGBAString();
+            ctx.fillStyle = theme.adjustBrightness(-0.2).toRGBAString();
             ctx.fillRect(0,0,1,1);
-            const g = new PipeGreebles(1, 1, theme.withSaturation(0.5), 10);
+            const g = new PipeGreebles(1, 1, theme.adjustSaturation(0.5), 10);
             g.draw(ctx, rng);
         }
     },
@@ -129,7 +129,7 @@ const demos: DemoConfig[] = [
         title: "Hose Connectors",
         desc: "Heavy duty fluid transfer hoses.",
         render: (ctx, rng, theme) => {
-            ctx.fillStyle = theme.withBrightness(-0.1).toRGBAString();
+            ctx.fillStyle = theme.adjustBrightness(-0.1).toRGBAString();
             ctx.fillRect(0,0,1,1);
             const g = new HoseGreebles(1, 1, theme, 3);
             g.draw(ctx, rng);
@@ -139,7 +139,7 @@ const demos: DemoConfig[] = [
         title: "Wiring Bundles",
         desc: "Exposed technical wiring.",
         render: (ctx, rng, theme) => {
-            ctx.fillStyle = theme.withBrightness(-0.2).toRGBAString();
+            ctx.fillStyle = theme.adjustBrightness(-0.2).toRGBAString();
             ctx.fillRect(0,0,1,1);
             const g = new WireGreebles(1, 1, 25, undefined, 2);
             g.draw(ctx, rng);

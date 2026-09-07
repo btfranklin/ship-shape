@@ -35,7 +35,7 @@ export class CompositeShipRingPlanner {
                 bounds: { x: ringX, y: ringY, w: ringW, h: ringH },
                 zIndex: 1000,
                 type: 'ring',
-                color: themeColor.withBrightness(-0.2),
+                color: themeColor.adjustBrightness(-0.2),
                 rng,
                 shipArchetype: archetype,
                 shipCenterY: centerY,

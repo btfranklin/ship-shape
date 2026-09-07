@@ -52,7 +52,7 @@ export class EquipmentGreebles implements Drawable {
             ctx.strokeRect(x, y, w, h);
         }
         
-        ctx.fillStyle = this.themeColor.withBrightness(0.1).toRGBAString();
+        ctx.fillStyle = this.themeColor.adjustBrightness(0.1).toRGBAString();
         
         // Stronger Shadow settings
         ctx.shadowColor = 'rgba(0,0,0,0.7)';
@@ -74,7 +74,7 @@ export class EquipmentGreebles implements Drawable {
 
     private drawRowOfItems(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, rng: RNG) {
         ctx.save();
-        ctx.fillStyle = this.themeColor.withBrightness(0.1).toRGBAString();
+        ctx.fillStyle = this.themeColor.adjustBrightness(0.1).toRGBAString();
         
         // Shadow
         ctx.shadowColor = 'rgba(0,0,0,0.7)';
@@ -125,28 +125,21 @@ export class EquipmentGreebles implements Drawable {
         
         // 3. Slats
         ctx.fillStyle = this.themeColor.toRGBAString();
-        ctx.shadowColor = 'transparent'; // No shadow in original Swift code for slats
+        ctx.shadowColor = 'transparent';
         
         const horizontal = rng.bool();
         const slatWidth = 0.01;
         const gap = 0.01; // Stride is 0.02 (0.01 slat + 0.01 gap)
         
         if (horizontal) {
-            // Draw vertical slats across the horizontal width? 
-            // Swift code: if horizontal, iterates slatX. So vertical lines.
-            // Wait, Swift: `rect.orientation == .horizontal`.
-            // If rect is wider than tall, usually horizontal.
-            // If horizontal, it draws slats at `slatX`. `CGRect(x: slatX... width: 0.01, height: height)`.
-            // So horizontal vent has VERTICAL slats (like a fence).
-            
-            // Ensure we cover the inset area
+            // A horizontal vent uses vertical slats across its width.
             for (let sx = ix; sx < ix + iw; sx += (slatWidth + gap)) {
                 // Clip the last slat if it exceeds
                 const curW = Math.min(slatWidth, ix + iw - sx);
                 ctx.fillRect(sx, iy, curW, ih);
             }
         } else {
-            // Vertical vent has HORIZONTAL slats (like a shutter)
+            // A vertical vent uses horizontal slats across its height.
             for (let sy = iy; sy < iy + ih; sy += (slatWidth + gap)) {
                 const curH = Math.min(slatWidth, iy + ih - sy);
                 ctx.fillRect(ix, sy, iw, curH);
@@ -160,7 +153,7 @@ export class EquipmentGreebles implements Drawable {
             ctx.fillRect(x, y, w, h);
             ctx.strokeRect(x, y, w, h);
         }
-        ctx.fillStyle = this.themeColor.withBrightness(0.1).toRGBAString();
+        ctx.fillStyle = this.themeColor.adjustBrightness(0.1).toRGBAString();
         ctx.shadowColor = 'rgba(0,0,0,0.7)';
         ctx.shadowBlur = 0.01; 
         ctx.shadowOffsetX = 0.015; 
@@ -229,7 +222,7 @@ export class EquipmentTrenchGreebles implements Drawable {
         }
 
         // Base fill for the trench
-        context.fillStyle = this.themeColor.withBrightness(-0.3).toRGBAString();
+        context.fillStyle = this.themeColor.adjustBrightness(-0.3).toRGBAString();
         context.fillRect(trenchX, trenchY, trenchW, trenchH);
 
         // Clip to trench area for equipment and inner shadowing

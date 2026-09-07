@@ -2,13 +2,19 @@ import { HSBAColor, RNG } from './common.js';
 import type { Drawable } from './common.js';
 import type { ShipArchetype, ComponentType } from '../shared/shipTypes.js';
 import { CapitalShipSurfaceEmissiveRenderer } from './CapitalShipSurfaceEmissiveRenderer.js';
-import type { EmissivePlan } from './CapitalShipSurfaceEmissiveRenderer.js';
 import { createSurfaceLayerPlan } from './surfaceLayerPlan.js';
 import type { EmissiveMode, SurfaceLayerPlanConfig } from './surfaceLayerPlan.js';
 import { drawSurfaceLayerPlan } from './surfaceLayerRenderer.js';
 
+export interface PreparedCapitalShipSurface {
+    drawBase(context: CanvasRenderingContext2D): void;
+    drawEmissive(
+        context: CanvasRenderingContext2D,
+        options?: { clipPath?: Path2D }
+    ): void;
+}
+
 export class CapitalShipSurfaceGreebles implements Drawable {
-    private emissivePlan?: EmissivePlan;
     public readonly lightColors: readonly HSBAColor[];
 
     constructor(
@@ -27,9 +33,39 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         this.lightColors = Object.freeze([...resolvedLightColors]);
     }
 
-    draw(context: CanvasRenderingContext2D, rng: RNG, options?: { skipEmissive?: boolean }): void {
-        const emissiveMode: EmissiveMode = options?.skipEmissive ? 'separate' : 'inline';
-        const config: SurfaceLayerPlanConfig = {
+    draw(context: CanvasRenderingContext2D, rng: RNG): void {
+        const config = this.createPlanConfig('inline');
+        const plan = createSurfaceLayerPlan(config, rng);
+        drawSurfaceLayerPlan(context, plan, config);
+    }
+
+    prepare(rng: RNG): PreparedCapitalShipSurface {
+        const config = this.createPlanConfig('separate');
+        const plan = createSurfaceLayerPlan(config, rng);
+        if (plan.emissiveMode !== 'separate') {
+            throw new Error('Prepared capital ship surfaces require a separate emissive plan.');
+        }
+        const emissiveRenderer = new CapitalShipSurfaceEmissiveRenderer(
+            this.xUnits,
+            this.yUnits,
+            this.themeColor
+        );
+
+        return {
+            drawBase(context: CanvasRenderingContext2D): void {
+                drawSurfaceLayerPlan(context, plan, config);
+            },
+            drawEmissive(
+                context: CanvasRenderingContext2D,
+                options?: { clipPath?: Path2D }
+            ): void {
+                emissiveRenderer.draw(context, plan.emissivePlan, options);
+            }
+        };
+    }
+
+    private createPlanConfig(emissiveMode: EmissiveMode): SurfaceLayerPlanConfig {
+        return {
             xUnits: this.xUnits,
             yUnits: this.yUnits,
             themeColor: this.themeColor,
@@ -40,20 +76,5 @@ export class CapitalShipSurfaceGreebles implements Drawable {
             lightColors: [...this.lightColors],
             emissiveMode
         };
-        const plan = createSurfaceLayerPlan(config, rng);
-
-        this.emissivePlan = plan.emissiveMode === 'separate' ? plan.emissivePlan : undefined;
-        drawSurfaceLayerPlan(context, plan, config);
-    }
-
-    drawEmissive(context: CanvasRenderingContext2D, _rng: RNG, options?: { clipPath?: Path2D }): void {
-        if (!this.emissivePlan) return;
-
-        const renderer = new CapitalShipSurfaceEmissiveRenderer(
-            this.xUnits,
-            this.yUnits,
-            this.themeColor
-        );
-        renderer.draw(context, this.emissivePlan, options);
     }
 }

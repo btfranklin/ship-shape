@@ -12,28 +12,34 @@ Deep `src/...` imports are internal-only and are intentionally excluded.
   - `CapitalShipSurfaceGreebles`
   - `CapitalShipWindowsGreebles`
   - `ComponentType`
-  - `ComponentVariant`
   - `CompositeShipGenerator`
   - `CutawaySectionGreebles`
   - `Drawable`
   - `ElectronicsPanelGreebles`
+  - `EngineStyle`
   - `EquipmentGreebles`
   - `EquipmentTrenchGreebles`
   - `getPath2D`
   - `HoseGreebles`
   - `HSBAColor`
+  - `HullVariant`
   - `LightPanelGreebles`
   - `PanelGreebles`
   - `PipeGreebles`
+  - `PreparedCapitalShipSurface`
   - `RNG`
+  - `SensorVariant`
   - `setPath2D`
   - `ShipArchetype`
   - `ShipBounds`
   - `ShipComponent`
   - `ShipComponentOptions`
   - `SphereLightGreebles`
+  - `SphereVariant`
   - `SphereWindowsGreebles`
+  - `StorageVariant`
   - `UnifiedTrunkComponent`
+  - `WeaponVariant`
   - `WireGreebles`
 
 ## `ship-shape/greebles`
@@ -55,6 +61,7 @@ Deep `src/...` imports are internal-only and are intentionally excluded.
   - `LightPanelGreebles`
   - `PanelGreebles`
   - `PipeGreebles`
+  - `PreparedCapitalShipSurface`
   - `RNG`
   - `setPath2D`
   - `SphereLightGreebles`
@@ -68,10 +75,15 @@ Deep `src/...` imports are internal-only and are intentionally excluded.
 - Types path: `./dist/capitalships/index.d.ts`
 - Supported symbols:
   - `ComponentType`
-  - `ComponentVariant`
   - `CompositeShipGenerator`
+  - `EngineStyle`
+  - `HullVariant`
+  - `SensorVariant`
   - `ShipArchetype`
   - `ShipBounds`
   - `ShipComponent`
   - `ShipComponentOptions`
+  - `SphereVariant`
+  - `StorageVariant`
   - `UnifiedTrunkComponent`
+  - `WeaponVariant`

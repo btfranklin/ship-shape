@@ -57,9 +57,9 @@ export class SphereRenderer implements ComponentRenderer {
         // 1. Base Fill (Radial)
         const grad = ctx.createRadialGradient(cx - r*0.3, cy - r*0.3, r*0.1, cx, cy, r);
         const base = component.color;
-        grad.addColorStop(0, base.withBrightness(0.3).toRGBAString()); 
-        grad.addColorStop(0.5, base.withBrightness(-0.1).toRGBAString()); 
-        grad.addColorStop(1, base.withBrightness(-0.2).toRGBAString()); 
+        grad.addColorStop(0, base.adjustBrightness(0.3).toRGBAString());
+        grad.addColorStop(0.5, base.adjustBrightness(-0.1).toRGBAString());
+        grad.addColorStop(1, base.adjustBrightness(-0.2).toRGBAString());
         
         ctx.fillStyle = grad;
         ctx.fill(component.shapePath);
@@ -69,7 +69,8 @@ export class SphereRenderer implements ComponentRenderer {
         ctx.clip(component.shapePath);
         ctx.translate(x, y);
         ctx.scale(UNIT_SCALE, UNIT_SCALE);
-        component.greebles.draw(ctx, rng, { skipEmissive: true });
+        const preparedSurface = component.greebles.prepare(rng);
+        preparedSurface.drawBase(ctx);
         if (windows) {
             windows.drawPanels(ctx, new RNG(windowSeed));
         }
@@ -93,7 +94,7 @@ export class SphereRenderer implements ComponentRenderer {
         ctx.clip(component.shapePath);
         ctx.translate(x, y);
         ctx.scale(UNIT_SCALE, UNIT_SCALE);
-        component.greebles.drawEmissive(ctx, rng, { clipPath: component.shapePath });
+        preparedSurface.drawEmissive(ctx, { clipPath: component.shapePath });
         if (lights) {
             lights.draw(ctx, new RNG(dotSeed));
         }

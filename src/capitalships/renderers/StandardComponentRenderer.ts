@@ -107,19 +107,19 @@ export class StandardComponentRenderer implements ComponentRenderer {
         )
         const base = component.color
 
-        grad.addColorStop(0, base.withBrightness(0.1).toRGBAString()) // Highlight
-        grad.addColorStop(0.5, base.withBrightness(-0.2).toRGBAString()) // Mid
-        grad.addColorStop(1, base.withBrightness(-0.5).toRGBAString()) // Shadow
+        grad.addColorStop(0, base.adjustBrightness(0.1).toRGBAString()) // Highlight
+        grad.addColorStop(0.5, base.adjustBrightness(-0.2).toRGBAString()) // Mid
+        grad.addColorStop(1, base.adjustBrightness(-0.5).toRGBAString()) // Shadow
 
         ctx.fillStyle = grad
         ctx.fill(component.shapePath)
 
         // 2. Draw Greebles (Clipped)
-        drawClippedSurfaceGreebles(ctx, component, rng)
+        const preparedSurface = drawClippedSurfaceGreebles(ctx, component, rng)
 
         // 2b. Lighting Overlays (Post-Greeble Volume)
         this.drawLightingOverlay(ctx, component)
-        drawDeferredEmissiveGreebles(ctx, component, rng)
+        drawDeferredEmissiveGreebles(ctx, component, preparedSurface)
 
         // 3. Inner Highlight (Bevel)
         drawInnerBevel(ctx, component)

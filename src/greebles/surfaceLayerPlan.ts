@@ -216,7 +216,7 @@ function createNoiseSpecks(config: SurfaceLayerPlanConfig, rng: RNG): SurfaceNoi
 
     for (let i = 0; i < count; i++) {
         specks.push({
-            color: config.themeColor.withSaturation(rng.range(-0.05, 0.05)),
+            color: config.themeColor.adjustSaturation(rng.range(-0.05, 0.05)),
             w: rng.range(0.01, 0.03),
             h: rng.range(0.01, 0.03),
             x: rng.range(0, config.xUnits),

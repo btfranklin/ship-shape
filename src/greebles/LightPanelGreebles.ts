@@ -42,7 +42,7 @@ export class LightPanelGreebles implements Drawable {
         context.save();
         context.lineWidth = 0.002;
         context.strokeStyle = 'black';
-        const bgColor = this.themeColor.withBrightness(-0.1).toRGBAString();
+        const bgColor = this.themeColor.adjustBrightness(-0.1).toRGBAString();
 
         for (let i = 0; i < this.panelCount; i++) {
             const cols = rng.intRange(2, 8);

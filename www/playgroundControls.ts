@@ -150,6 +150,12 @@ function createSpacer(): DocumentFragment {
 
 function buildCapitalControls(): void {
     const controls = requireElement<HTMLDivElement>('controls');
+    const rainbowControl = createCheckboxControl(
+        'rainbowCheck',
+        'Rainbow Background (Test Transparency)'
+    );
+    rainbowControl.id = 'rainbowControl';
+
     controls.replaceChildren(
         createHeading('Capital Ships'),
         createControlGroup('Seed', createSeedControl('seedInput', 'randomSeedBtn')),
@@ -164,10 +170,9 @@ function buildCapitalControls(): void {
         ]),
         createSelectControl('Mode', 'modeSelect', [
             { value: 'full', label: 'Full Ship' },
-            { value: 'shape', label: 'Structure (Wireframe)' },
-            { value: 'surface', label: 'Surface Detail' }
+            { value: 'shape', label: 'Structure (Wireframe)' }
         ]),
-        createCheckboxControl('rainbowCheck', 'Rainbow Background (Test Transparency)'),
+        rainbowControl,
         createCommandButton('generateBtn', 'Generate Ship'),
         createSpacer(),
         createLinks([{ href: 'element_showcase.html', label: 'Capital Ship Element Gallery' }])

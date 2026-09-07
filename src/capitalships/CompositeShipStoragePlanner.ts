@@ -1,7 +1,25 @@
 import { HSBAColor, RNG } from '../greebles/common.js';
-import { ComponentVariant, ShipComponent } from './ShipComponent.js';
+import { ShipComponent, StorageVariant } from './ShipComponent.js';
 import { ShipArchetype } from './shipTypes.js';
 import type { ShipNode } from './compositeTypes.js';
+
+interface StorageRowOptions {
+    root: ShipNode;
+    count: number;
+    startX: number;
+    y: number;
+    width: number;
+    height: number;
+    gap: number;
+    zIndex: number;
+    color: HSBAColor;
+    rng: RNG;
+    archetype: ShipArchetype;
+    variant: StorageVariant;
+    isEdge: boolean;
+    shipCenterY: number;
+    lightColors: HSBAColor[];
+}
 
 export class CompositeShipStoragePlanner {
     addGlobalStorage(root: ShipNode, theme: HSBAColor, rng: RNG, archetype: ShipArchetype, shipCenterY: number, lightColors: HSBAColor[]) {
@@ -50,7 +68,7 @@ export class CompositeShipStoragePlanner {
                     const isVertical = rng.bool(); 
                     let storageW, storageH;
                     
-                    const variant = rng.choice<ComponentVariant>([
+                    const variant = rng.choice<StorageVariant>([
                         'goods',
                         'liquid',
                         'default',
@@ -105,15 +123,23 @@ export class CompositeShipStoragePlanner {
                             (rowIndex - (rowCount - 1) / 2) * (storageH + rowGap);
                         const y = baseY + offset;
                         if (y < minY || y + storageH > maxY) continue;
-                        this.createStorageLoop(root, count, startX, y, storageW, storageH, gap, 
-                            500, 
-                            theme.withBrightness(0.05), 
-                            rng, archetype, 
-                            variant, 
-                            false, 
+                        this.addStorageRow({
+                            root,
+                            count,
+                            startX,
+                            y,
+                            width: storageW,
+                            height: storageH,
+                            gap,
+                            zIndex: 500,
+                            color: theme.adjustBrightness(0.05),
+                            rng,
+                            archetype,
+                            variant,
+                            isEdge: false,
                             shipCenterY,
-                            lightColors
-                        );
+                            lightColors,
+                        });
                     }
                     
                 } else {
@@ -137,15 +163,23 @@ export class CompositeShipStoragePlanner {
                         y = maxY - storageH * 0.3;
                     }
                     
-                    this.createStorageLoop(root, count, startX, y, storageW, storageH, gap,
-                        10, 
-                        theme.withBrightness(-0.1),
-                        rng, archetype,
-                        'liquid', 
-                        true, 
+                    this.addStorageRow({
+                        root,
+                        count,
+                        startX,
+                        y,
+                        width: storageW,
+                        height: storageH,
+                        gap,
+                        zIndex: 10,
+                        color: theme.adjustBrightness(-0.1),
+                        rng,
+                        archetype,
+                        variant: 'liquid',
+                        isEdge: true,
                         shipCenterY,
-                        lightColors
-                    );
+                        lightColors,
+                    });
                 }
 
                 i += spanCount;
@@ -155,13 +189,30 @@ export class CompositeShipStoragePlanner {
         }
     }
 
-    private createStorageLoop(root: ShipNode, count: number, startX: number, y: number, w: number, h: number, gap: number, zIndex: number, color: HSBAColor, rng: RNG, archetype: ShipArchetype, variant: ComponentVariant, isEdge: boolean, shipCenterY: number, lightColors: HSBAColor[]) {
+    private addStorageRow(options: StorageRowOptions): void {
+        const {
+            root,
+            count,
+            startX,
+            y,
+            width,
+            height,
+            gap,
+            zIndex,
+            color,
+            rng,
+            archetype,
+            variant,
+            isEdge,
+            shipCenterY,
+            lightColors,
+        } = options;
         const sharedBands = rng.intRange(1, 3);
         for (let i = 0; i < count; i++) {
-            const cx = startX + i * (w + gap);
+            const cx = startX + i * (width + gap);
             
             const storage = new ShipComponent({
-                bounds: { x: cx, y, w, h },
+                bounds: { x: cx, y, w: width, h: height },
                 zIndex,
                 type: 'storage',
                 color,

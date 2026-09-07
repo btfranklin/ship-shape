@@ -1,4 +1,4 @@
-import { HSBAColor, RNG, CapitalShipSurfaceGreebles } from '../src/greebles/index.js';
+import { HSBAColor, RNG } from '../src/greebles/index.js';
 import { CompositeShipGenerator } from '../src/capitalships/index.js';
 import { ShipArchetype } from '../src/capitalships/shipTypes.js';
 import { UnifiedTrunkComponent } from '../src/capitalships/UnifiedTrunkComponent.js';
@@ -21,6 +21,7 @@ const archetypeSelect = document.getElementById('archetypeSelect') as HTMLSelect
 const hueInput = document.getElementById('hueInput') as HTMLInputElement;
 const hueRefreshBtn = document.getElementById('hueRefreshBtn') as HTMLButtonElement;
 const rainbowCheck = document.getElementById('rainbowCheck') as HTMLInputElement;
+const rainbowControl = document.getElementById('rainbowControl') as HTMLDivElement;
 const ARCHETYPES: readonly ShipArchetype[] = [
     'freight',
     'science',
@@ -34,6 +35,11 @@ let mode = 'full';
 
 function updateUI() {
     mode = modeSelect.value;
+    const showRainbowControl = mode === 'full';
+    rainbowControl.hidden = !showRainbowControl;
+    if (!showRainbowControl) {
+        rainbowCheck.checked = false;
+    }
 }
 
 function drawChaoticBackground(ctx: CanvasRenderingContext2D, w: number, h: number) {
@@ -66,6 +72,16 @@ function drawChaoticBackground(ctx: CanvasRenderingContext2D, w: number, h: numb
     ctx.restore();
 }
 
+function drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number) {
+    if (mode === 'full' && rainbowCheck.checked) {
+        drawChaoticBackground(ctx, w, h);
+        return;
+    }
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, w, h);
+}
+
 function generate() {
     try {
         const seedValue = Number.parseInt(seedInput.value, 10);
@@ -81,18 +97,13 @@ function generate() {
         canvas.height = HEIGHT;
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
         
-        // Draw Rainbow Background if enabled
-        if (rainbowCheck && rainbowCheck.checked) {
-            drawChaoticBackground(ctx, WIDTH, HEIGHT);
-        }
+        drawBackground(ctx, WIDTH, HEIGHT);
         
         archetypeDisplay.innerText = ""; // Clear prev
 
         const theme = new HSBAColor(hue, 0.1, 0.6); // Blue-ish grey default
 
-        if (mode === 'surface') {
-            renderSurface(rng, theme);
-        } else if (mode === 'shape') {
+        if (mode === 'shape') {
             renderShape(rng, archetype);
         } else {
             renderFullShip(rng, theme, archetype);
@@ -107,20 +118,6 @@ function resolveArchetype(seed: number): ShipArchetype {
     const selected = archetypeSelect.value;
     if (selected !== 'random') return selected as ShipArchetype;
     return new RNG(seed).choice(ARCHETYPES);
-}
-
-function renderSurface(rng: RNG, theme: HSBAColor) {
-    // Draw full canvas surface sample
-    const aspect = WIDTH / HEIGHT;
-    
-    ctx.save();
-    ctx.scale(HEIGHT, HEIGHT); // 1.0 = Height
-    
-    // Draw a standard industrial surface
-    const surf = new CapitalShipSurfaceGreebles(aspect, 1.0, theme, 'industry', 'hull');
-    surf.draw(ctx, rng);
-    
-    ctx.restore();
 }
 
 function renderShape(rng: RNG, archetype: ShipArchetype) {
@@ -170,9 +167,7 @@ modeSelect.addEventListener('change', () => { updateUI(); generate(); });
 archetypeSelect.addEventListener('change', () => { generate(); });
 generateBtn.addEventListener('click', generate);
 hueRefreshBtn.addEventListener('click', generate);
-if (rainbowCheck) {
-    rainbowCheck.addEventListener('change', generate);
-}
+rainbowCheck.addEventListener('change', generate);
 randomSeedBtn.addEventListener('click', () => {
     seedInput.value = Math.floor(Math.random() * 100000).toString();
     generate();

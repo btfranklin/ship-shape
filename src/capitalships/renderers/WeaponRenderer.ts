@@ -153,24 +153,21 @@ export class WeaponRenderer implements ComponentRenderer {
              
              // Apply gradient shading similar to turret body, but horizontal for cylindrical look
              const connGrad = ctx.createLinearGradient(connX, connY, connX + connW, connY);
-             connGrad.addColorStop(0, baseColor.withBrightness(0.1).toRGBAString());
+             connGrad.addColorStop(0, baseColor.adjustBrightness(0.1).toRGBAString());
              connGrad.addColorStop(0.5, baseColor.toRGBAString());
-             connGrad.addColorStop(1, baseColor.withBrightness(-0.2).toRGBAString());
+             connGrad.addColorStop(1, baseColor.adjustBrightness(-0.2).toRGBAString());
              
              ctx.fillStyle = connGrad;
              ctx.fillRect(connX, connY, connW, connH);
         }
 
-        // 1. Draw Barrels (First, so they are behind the turret body if needed, 
-        //    but wait, if side view, barrels stick out front. If top view, same.
-        //    Usually barrels are attached to the body.
-        //    Let's draw barrels FIRST so the body covers their root.)
+        // Draw barrels before the turret body so their roots are covered.
         
         const barrelCount = rng.intRange(1, 3);
         const barrelLen = w * rng.range(1.0, 1.4); // Extend at least the length of the turret
         const barrelW = rng.range(3, 8); // Fixed pixel width
         // Cannon color: Similar to turret, but slightly darker
-        const barrelColor = baseColor.withBrightness(-0.3).toRGBAString(); 
+        const barrelColor = baseColor.adjustBrightness(-0.3).toRGBAString();
         
         ctx.fillStyle = barrelColor;
         
@@ -214,15 +211,15 @@ export class WeaponRenderer implements ComponentRenderer {
         // 2. Draw Turret Body
         // Gradient Fill
         const grad = ctx.createLinearGradient(x, y, x+w, y+h);
-        grad.addColorStop(0, baseColor.withBrightness(0.1).toRGBAString());
+        grad.addColorStop(0, baseColor.adjustBrightness(0.1).toRGBAString());
         grad.addColorStop(0.5, baseColor.toRGBAString());
-        grad.addColorStop(1, baseColor.withBrightness(-0.2).toRGBAString());
+        grad.addColorStop(1, baseColor.adjustBrightness(-0.2).toRGBAString());
         
         ctx.fillStyle = grad;
         ctx.fill(component.shapePath);
         
         // Panel lines / Detail
-        ctx.strokeStyle = baseColor.withBrightness(-0.3).toRGBAString();
+        ctx.strokeStyle = baseColor.adjustBrightness(-0.3).toRGBAString();
         ctx.lineWidth = 1;
         ctx.stroke(component.shapePath);
         

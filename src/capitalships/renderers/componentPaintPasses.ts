@@ -1,36 +1,47 @@
 import type { RNG } from '../../greebles/common.js';
 import { UNIT_SCALE } from '../../greebles/constants.js';
-import type { ShipComponent } from '../ShipComponent.js';
+import type {
+    CapitalShipSurfaceGreebles,
+    PreparedCapitalShipSurface
+} from '../../greebles/CapitalShipSurfaceGreebles.js';
+
+interface SurfaceGreebleComponent {
+    readonly bounds: Readonly<{ x: number; y: number; w: number; h: number }>;
+    readonly shapePath: Path2D;
+    readonly greebles: CapitalShipSurfaceGreebles;
+}
 
 export function drawClippedSurfaceGreebles(
     context: CanvasRenderingContext2D,
-    component: ShipComponent,
+    component: SurfaceGreebleComponent,
     rng: RNG
-): void {
+): PreparedCapitalShipSurface {
+    const preparedSurface = component.greebles.prepare(rng);
     context.save();
     context.clip(component.shapePath);
     context.translate(component.bounds.x, component.bounds.y);
     context.scale(UNIT_SCALE, UNIT_SCALE);
-    component.greebles.draw(context, rng, { skipEmissive: true });
+    preparedSurface.drawBase(context);
     context.restore();
+    return preparedSurface;
 }
 
 export function drawDeferredEmissiveGreebles(
     context: CanvasRenderingContext2D,
-    component: ShipComponent,
-    rng: RNG
+    component: SurfaceGreebleComponent,
+    preparedSurface: PreparedCapitalShipSurface
 ): void {
     context.save();
     context.clip(component.shapePath);
     context.translate(component.bounds.x, component.bounds.y);
     context.scale(UNIT_SCALE, UNIT_SCALE);
-    component.greebles.drawEmissive(context, rng, { clipPath: component.shapePath });
+    preparedSurface.drawEmissive(context, { clipPath: component.shapePath });
     context.restore();
 }
 
 export function drawInnerBevel(
     context: CanvasRenderingContext2D,
-    component: ShipComponent
+    component: SurfaceGreebleComponent
 ): void {
     context.save();
     context.clip(component.shapePath);
@@ -42,7 +53,7 @@ export function drawInnerBevel(
 
 export function drawOuterOutline(
     context: CanvasRenderingContext2D,
-    component: ShipComponent
+    component: SurfaceGreebleComponent
 ): void {
     context.strokeStyle = 'rgba(0,0,0,0.8)';
     context.lineWidth = 1;

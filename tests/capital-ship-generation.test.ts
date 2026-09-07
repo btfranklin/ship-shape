@@ -4,6 +4,7 @@ import { RNG, HSBAColor, setPath2D } from '../src/greebles/common.js';
 import { CompositeShipGenerator } from '../src/capitalships/CompositeShipGenerator.js';
 import { UnifiedTrunkComponent } from '../src/capitalships/UnifiedTrunkComponent.js';
 import { ShipComponent } from '../src/capitalships/ShipComponent.js';
+import type { ShipComponentOptions } from '../src/capitalships/ShipComponent.js';
 import type { ShipArchetype } from '../src/capitalships/shipTypes.js';
 import { FakePath2D } from './test-helpers.js';
 
@@ -19,6 +20,28 @@ const ARCHETYPES: ShipArchetype[] = [
   'passenger',
   'combat',
 ];
+
+function acceptComponentOptions(_options: ShipComponentOptions): void {}
+
+const TYPE_CHECK_OPTIONS = {
+  bounds: { x: 0, y: 0, w: 10, h: 10 },
+  zIndex: 1,
+  color: THEME,
+  rng: new RNG(1),
+  shipArchetype: 'science' as const,
+};
+
+acceptComponentOptions({ ...TYPE_CHECK_OPTIONS, type: 'hull', variant: 'taper-front' });
+acceptComponentOptions({ ...TYPE_CHECK_OPTIONS, type: 'engine', engineStyle: 'energy' });
+acceptComponentOptions({ ...TYPE_CHECK_OPTIONS, type: 'storage', variant: 'liquid', storageBands: 2 });
+// @ts-expect-error Hull components do not accept storage variants.
+acceptComponentOptions({ ...TYPE_CHECK_OPTIONS, type: 'hull', variant: 'liquid' });
+// @ts-expect-error Hull components do not accept engine settings.
+acceptComponentOptions({ ...TYPE_CHECK_OPTIONS, type: 'hull', engineStyle: 'energy' });
+// @ts-expect-error Engine components do not accept storage settings.
+acceptComponentOptions({ ...TYPE_CHECK_OPTIONS, type: 'engine', storageBands: 2 });
+// @ts-expect-error Storage components do not accept engine settings.
+acceptComponentOptions({ ...TYPE_CHECK_OPTIONS, type: 'storage', engineStyle: 'radiator' });
 
 function assertFiniteNumber(value: number, label: string) {
   assert.ok(Number.isFinite(value), `${label} must be finite`);

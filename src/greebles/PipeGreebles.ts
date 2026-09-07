@@ -21,7 +21,7 @@ export class PipeGreebles implements Drawable {
 
         // Draw Endpoints first (underneath)
         const endpointRadius = 0.008; // Normalized scale
-        const endpointFill = this.themeColor.withSaturation(-0.25).toRGBAString();
+        const endpointFill = this.themeColor.adjustSaturation(-0.25).toRGBAString();
 
         for (const pipe of pipes) {
             if (!pipe || pipe.length < 2) continue;
@@ -42,7 +42,7 @@ export class PipeGreebles implements Drawable {
         }
 
         // Draw Pipes
-        const pipeColor = this.themeColor.withSaturation(0.1).toRGBAString();
+        const pipeColor = this.themeColor.adjustSaturation(0.1).toRGBAString();
         let pipeNum = 0;
         
         for (const pipe of pipes) {

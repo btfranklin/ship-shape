@@ -29,7 +29,7 @@ export class ElectronicsPanelGreebles implements Drawable {
         context.save();
         context.translate(shape.offset.x, shape.offset.y);
 
-        const baseColor = this.themeColor.withBrightness(-0.25).toRGBAString();
+        const baseColor = this.themeColor.adjustBrightness(-0.25).toRGBAString();
         context.fillStyle = baseColor;
         context.strokeStyle = 'black';
         context.lineWidth = 0.003;
@@ -148,8 +148,8 @@ export class ElectronicsPanelGreebles implements Drawable {
             const y = rng.range(0, Math.max(0, bounds.h - h));
 
             const tone = this.themeColor
-                .withBrightness(rng.range(-0.35, -0.05))
-                .withSaturation(rng.range(-0.1, 0.05))
+                .adjustBrightness(rng.range(-0.35, -0.05))
+                .adjustSaturation(rng.range(-0.1, 0.05))
                 .toRGBAString();
             context.fillStyle = tone;
             context.fillRect(x, y, w, h);

@@ -114,7 +114,7 @@ export class CapitalShipWindowsGreebles implements Drawable {
     private drawFlat(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
         ctx.save();
         ctx.lineWidth = 0.002;
-        ctx.strokeStyle = this.themeColor.withBrightness(-0.1).toRGBAString();
+        ctx.strokeStyle = this.themeColor.adjustBrightness(-0.1).toRGBAString();
         ctx.fillStyle = this.themeColor.toRGBAString();
         ctx.fillRect(x, y, w, h);
         ctx.strokeRect(x, y, w, h);
@@ -123,7 +123,7 @@ export class CapitalShipWindowsGreebles implements Drawable {
 
     private drawRecessed(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
         ctx.save();
-        ctx.fillStyle = this.themeColor.withSaturation(-0.2).withBrightness(-0.2).toRGBAString();
+        ctx.fillStyle = this.themeColor.adjustSaturation(-0.2).adjustBrightness(-0.2).toRGBAString();
         ctx.fillRect(x, y, w, h);
         
         ctx.save();

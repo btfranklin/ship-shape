@@ -89,6 +89,7 @@ TypeScript consumers must include the `DOM` library because the public drawing A
 
 - `CompositeShipGenerator.generate(...)` returns components sorted by `zIndex`.
 - `UnifiedTrunkComponent` groups trunk hull sections for capital ships.
+- `ShipComponentOptions` uses `type` to select valid variants and type-specific settings.
 - Callers should keep using the same `RNG` instance within a single render.
 
 ## Developer Commands

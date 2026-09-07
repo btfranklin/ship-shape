@@ -2,6 +2,10 @@ import { CapitalShipSurfaceGreebles } from '../greebles/CapitalShipSurfaceGreebl
 import { HSBAColor, RNG, getPath2D } from '../greebles/common.js';
 import { UNIT_SCALE } from '../greebles/constants.js';
 import { ShipBounds, ShipComponent } from './ShipComponent.js';
+import {
+    drawClippedSurfaceGreebles,
+    drawDeferredEmissiveGreebles
+} from './renderers/componentPaintPasses.js';
 
 export class UnifiedTrunkComponent {
     public readonly bounds: Readonly<ShipBounds>;
@@ -11,7 +15,7 @@ export class UnifiedTrunkComponent {
     public readonly color: HSBAColor;
     public readonly lightColors: readonly HSBAColor[];
 
-    private readonly shapePath: Path2D;
+    public readonly shapePath: Path2D;
 
     constructor(components: readonly ShipComponent[]) {
         const first = components[0];
@@ -73,18 +77,13 @@ export class UnifiedTrunkComponent {
             this.bounds.x,
             this.bounds.y + this.bounds.h
         );
-        fill.addColorStop(0, this.color.withBrightness(0.1).toRGBAString());
-        fill.addColorStop(0.5, this.color.withBrightness(-0.2).toRGBAString());
-        fill.addColorStop(1, this.color.withBrightness(-0.5).toRGBAString());
+        fill.addColorStop(0, this.color.adjustBrightness(0.1).toRGBAString());
+        fill.addColorStop(0.5, this.color.adjustBrightness(-0.2).toRGBAString());
+        fill.addColorStop(1, this.color.adjustBrightness(-0.5).toRGBAString());
         ctx.fillStyle = fill;
         ctx.fill(this.shapePath);
 
-        ctx.save();
-        ctx.clip(this.shapePath);
-        ctx.translate(this.bounds.x, this.bounds.y);
-        ctx.scale(UNIT_SCALE, UNIT_SCALE);
-        this.greebles.draw(ctx, rng, { skipEmissive: true });
-        ctx.restore();
+        const preparedSurface = drawClippedSurfaceGreebles(ctx, this, rng);
 
         ctx.save();
         ctx.clip(this.shapePath);
@@ -101,11 +100,6 @@ export class UnifiedTrunkComponent {
         ctx.fillRect(this.bounds.x, this.bounds.y, this.bounds.w, this.bounds.h);
         ctx.restore();
 
-        ctx.save();
-        ctx.clip(this.shapePath);
-        ctx.translate(this.bounds.x, this.bounds.y);
-        ctx.scale(UNIT_SCALE, UNIT_SCALE);
-        this.greebles.drawEmissive(ctx, rng, { clipPath: this.shapePath });
-        ctx.restore();
+        drawDeferredEmissiveGreebles(ctx, this, preparedSurface);
     }
 }

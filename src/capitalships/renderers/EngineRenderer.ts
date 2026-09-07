@@ -88,8 +88,8 @@ export class EngineRenderer implements ComponentRenderer {
 
         // 3. Glowing Slats
         // Heat Gradient: HOT (Left) -> COOL (Right)
-        const baseHeat = component.color.withSaturation(0.9).withBrightness(0.8); 
-        const coreHeat = component.color.withSaturation(0.3).withBrightness(1.0); 
+        const baseHeat = component.color.adjustSaturation(0.9).adjustBrightness(0.8);
+        const coreHeat = component.color.adjustSaturation(0.3).adjustBrightness(1.0);
 
         const slatCount = Math.floor(ih / 8);
         const slatH = Math.max(3, ih / slatCount * 0.6);
@@ -103,7 +103,7 @@ export class EngineRenderer implements ComponentRenderer {
             const slatGrad = ctx.createLinearGradient(ix, sy, ix + iw, sy);
             slatGrad.addColorStop(0, coreHeat.toRGBAString());       // White hot output
             slatGrad.addColorStop(0.3, baseHeat.toRGBAString());
-            slatGrad.addColorStop(1, baseHeat.withBrightness(0.2).toRGBAString()); // Darker at back
+            slatGrad.addColorStop(1, baseHeat.adjustBrightness(0.2).toRGBAString()); // Darker at back
 
             ctx.fillStyle = slatGrad;
             ctx.shadowColor = baseHeat.toRGBAString();
@@ -190,9 +190,9 @@ export class EngineRenderer implements ComponentRenderer {
         // Stream Gradient (Hot Left -> Stable Right)
         const streamGrad = ctx.createLinearGradient(ix, iy, ix + iw, iy);
         streamGrad.addColorStop(0, '#fff'); // White hot nozzle
-        streamGrad.addColorStop(0.1, energyColor.withBrightness(1.0).toRGBAString());
-        streamGrad.addColorStop(0.5, energyColor.withBrightness(0.8).toRGBAString());
-        streamGrad.addColorStop(1, energyColor.withBrightness(0.4).toRGBAString()); // Fade out back
+        streamGrad.addColorStop(0.1, energyColor.adjustBrightness(1.0).toRGBAString());
+        streamGrad.addColorStop(0.5, energyColor.adjustBrightness(0.8).toRGBAString());
+        streamGrad.addColorStop(1, energyColor.adjustBrightness(0.4).toRGBAString()); // Fade out back
 
         ctx.fillStyle = streamGrad;
         ctx.shadowColor = energyColor.toRGBAString();
@@ -202,7 +202,7 @@ export class EngineRenderer implements ComponentRenderer {
 
         // Nozzle Flare
         const nozzleGrad = ctx.createRadialGradient(ix, iy + ih/2, 0, ix, iy + ih/2, ih);
-        nozzleGrad.addColorStop(0, energyColor.withBrightness(1.0).withAlpha(0.8).toRGBAString());
+        nozzleGrad.addColorStop(0, energyColor.adjustBrightness(1.0).withAlpha(0.8).toRGBAString());
         nozzleGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = nozzleGrad;
         ctx.fillRect(ix - ih/2, iy, ih, ih); // Draw flare slightly outside
@@ -270,11 +270,11 @@ export class EngineRenderer implements ComponentRenderer {
         const grad = ctx.createLinearGradient(x, y, x, y + h);
         const base = component.color;
         // Top/Bottom dark, Middle highlight (Cylinder volume)
-        grad.addColorStop(0, base.withBrightness(-0.5).toRGBAString());
-        grad.addColorStop(0.3, base.withBrightness(-0.1).toRGBAString());
-        grad.addColorStop(0.5, base.withBrightness(0.3).toRGBAString()); // Specular highlight
-        grad.addColorStop(0.8, base.withBrightness(-0.1).toRGBAString());
-        grad.addColorStop(1, base.withBrightness(-0.5).toRGBAString());
+        grad.addColorStop(0, base.adjustBrightness(-0.5).toRGBAString());
+        grad.addColorStop(0.3, base.adjustBrightness(-0.1).toRGBAString());
+        grad.addColorStop(0.5, base.adjustBrightness(0.3).toRGBAString()); // Specular highlight
+        grad.addColorStop(0.8, base.adjustBrightness(-0.1).toRGBAString());
+        grad.addColorStop(1, base.adjustBrightness(-0.5).toRGBAString());
         ctx.fillStyle = grad;
         ctx.fill(component.shapePath);
 

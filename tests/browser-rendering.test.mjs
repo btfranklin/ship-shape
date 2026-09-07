@@ -76,6 +76,7 @@ test('capital ship archetypes and emissive compositing render with fixed seeds',
     await page.locator('#appCanvas').waitFor();
     await page.locator('#seedInput').fill('12345');
     await setControl(page, '#modeSelect', 'full');
+    await assert.ok(await page.locator('#rainbowControl').isVisible());
 
     for (const archetype of ['freight', 'science', 'industry', 'passenger', 'combat']) {
       await setControl(page, '#archetypeSelect', archetype);
@@ -106,17 +107,21 @@ test('capital ship archetypes and emissive compositing render with fixed seeds',
       'seed 7185 must render the same Freight ship in Random and Freight modes'
     );
 
+    await page.locator('#rainbowCheck').check();
     await setControl(page, '#archetypeSelect', 'science');
     await setControl(page, '#modeSelect', 'shape');
+    await assert.equal(await page.locator('#rainbowControl').isVisible(), false);
+    await assert.equal(await page.locator('#rainbowCheck').isChecked(), false);
     await page.locator('#generateBtn').click();
     await assertCanvasHasMeaningfulOutput(page.locator('#appCanvas'), 'capital ship wireframe');
     await assertCanvasTransformIsIdentity(page.locator('#appCanvas'), 'capital ship wireframe');
-
-    await page.locator('#seedInput').fill('90125');
-    await setControl(page, '#modeSelect', 'surface');
-    await page.locator('#generateBtn').click();
-    await assertCanvasHasMeaningfulOutput(page.locator('#appCanvas'), 'surface texture sample');
-    await assertCanvasTransformIsIdentity(page.locator('#appCanvas'), 'surface texture sample');
+    assert.deepEqual(
+      await page.locator('#appCanvas').evaluate((canvas) => (
+        [...canvas.getContext('2d').getImageData(0, 0, 1, 1).data]
+      )),
+      [0, 0, 0, 255],
+      'wireframe mode should paint an opaque black background'
+    );
 
     const greeblesModuleUrl = new URL(
       `/@fs${path.join(REPO_ROOT, 'src/greebles/index.ts')}`,
@@ -143,8 +148,9 @@ test('capital ship archetypes and emissive compositing render with fixed seeds',
       const rng = new RNG(90125);
       context.save();
       context.scale(600, 600);
-      surface.draw(context, rng, { skipEmissive: true });
-      surface.drawEmissive(context, rng);
+      const preparedSurface = surface.prepare(rng);
+      preparedSurface.drawBase(context);
+      preparedSurface.drawEmissive(context);
       context.restore();
     }, greeblesModuleUrl);
     await assertCanvasHasMeaningfulOutput(page.locator('#emissiveAuditCanvas'), 'emissive surface');

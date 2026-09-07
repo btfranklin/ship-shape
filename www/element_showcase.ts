@@ -1,15 +1,17 @@
 import { HSBAColor, RNG } from '../src/greebles/common.js';
-import { ComponentVariant, ShipComponent } from '../src/capitalships/ShipComponent.js';
-import { ComponentType, ShipArchetype } from '../src/capitalships/shipTypes.js';
+import { ShipComponent } from '../src/capitalships/ShipComponent.js';
+import type { ShipComponentOptions } from '../src/capitalships/ShipComponent.js';
+import { ShipArchetype } from '../src/capitalships/shipTypes.js';
 
-// Definition of Types
-interface TypeDef {
-    type: ComponentType;
-    variant?: ComponentVariant;
+type ComponentIdentity<Options extends ShipComponentOptions = ShipComponentOptions> =
+    Options extends ShipComponentOptions ? Pick<Options, 'type' | 'variant'> : never;
+
+type TypeDef = ComponentIdentity & {
     desc: string;
     greebles: string[];
     allowedArchetypes?: ShipArchetype[];
-}
+    orientation?: 'horizontal' | 'vertical';
+};
 
 const types: TypeDef[] = [
     {
@@ -78,7 +80,8 @@ const types: TypeDef[] = [
     },
     {
         type: 'storage',
-        variant: 'goods vertical', // Combine variants for showcase sizing
+        variant: 'goods',
+        orientation: 'vertical',
         desc: "Goods Container (Vertical Rectangular).",
         greebles: [
             "Shape: Tall Box/Crate",
@@ -88,7 +91,7 @@ const types: TypeDef[] = [
     },
     {
         type: 'storage',
-        variant: 'vertical',
+        orientation: 'vertical',
         desc: "Gas Storage (Vertical).",
         greebles: [
             "Shape: Pill/Capsule",
@@ -98,7 +101,8 @@ const types: TypeDef[] = [
     },
     {
         type: 'storage',
-        variant: 'liquid vertical', // Combine variants for showcase sizing
+        variant: 'liquid',
+        orientation: 'vertical',
         desc: "Liquid Storage (Vertical Capsule, flatter ends).",
         greebles: [
             "Shape: Flattened Capsule",
@@ -191,7 +195,7 @@ function render() {
         const info = document.createElement('div');
         info.className = 'element-info';
         info.innerHTML = `
-            <h2>${def.type.toUpperCase()} ${def.variant ? '(' + def.variant + ')' : ''}</h2>
+            <h2>${def.type.toUpperCase()} ${def.variant ? '(' + def.variant + ')' : ''}${def.orientation === 'vertical' ? ' (vertical)' : ''}</h2>
             <span class="archetype">${def.desc}</span>
             <ul class="greeble-list">
                 ${def.greebles.map(g => `<li>${g}</li>`).join('')}
@@ -263,16 +267,12 @@ function render() {
                     w = 120; h = 60;
                 }
             } else if (def.type === 'storage') {
-                if (def.variant && def.variant.includes('sphere')) {
+                if (def.variant === 'sphere') {
                     w = 140; h = 140;
-                } else if (def.variant && def.variant.includes('vertical')) {
+                } else if (def.orientation === 'vertical') {
                     w = 80; h = 160;
-                } else if (def.variant && def.variant.includes('goods')) {
-                    if (def.variant.includes('vertical')) {
-                         w = 80; h = 160; // Tall Boxy
-                    } else {
-                         w = 160; h = 80; // Wide Boxy
-                    }
+                } else if (def.variant === 'goods') {
+                    w = 160; h = 80;
                 } else {
                     w = 180; h = 90;
                 }
@@ -291,13 +291,12 @@ function render() {
             const invert = localRng.bool(); 
             
             const comp = new ShipComponent({
+                ...def,
                 bounds: { x: finalX, y: finalY, w, h },
                 zIndex: 10,
-                type: def.type,
                 color: theme,
                 rng: localRng,
                 shipArchetype: selectedArchetype,
-                variant: def.variant,
                 invertLighting: invert,
             });
             comp.draw(ctx, localRng);

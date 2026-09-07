@@ -27,7 +27,7 @@ export class CompositeShipRootPlanner {
             bounds: { x: engineX, y: engineY, w: engineW, h: engineH },
             zIndex: 10,
             type: 'engine',
-            color: themeColor.withBrightness(-0.1),
+            color: themeColor.adjustBrightness(-0.1),
             rng,
             shipArchetype: archetype,
             engineStyle,

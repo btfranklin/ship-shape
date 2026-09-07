@@ -35,11 +35,11 @@ export class RingRenderer implements ComponentRenderer {
         const grad = ctx.createLinearGradient(component.bounds.x, component.bounds.y, component.bounds.x, component.bounds.y + component.bounds.h);
         const base = component.color;
         
-        grad.addColorStop(0, base.withBrightness(-0.4).toRGBAString()); // Top Shadow
-        grad.addColorStop(0.1, base.withBrightness(-0.2).toRGBAString()); 
-        grad.addColorStop(0.5, base.withBrightness(0.3).toRGBAString()); // Mid Highlight
-        grad.addColorStop(0.9, base.withBrightness(-0.2).toRGBAString());
-        grad.addColorStop(1, base.withBrightness(-0.4).toRGBAString()); // Bottom Shadow
+        grad.addColorStop(0, base.adjustBrightness(-0.4).toRGBAString()); // Top Shadow
+        grad.addColorStop(0.1, base.adjustBrightness(-0.2).toRGBAString());
+        grad.addColorStop(0.5, base.adjustBrightness(0.3).toRGBAString()); // Mid Highlight
+        grad.addColorStop(0.9, base.adjustBrightness(-0.2).toRGBAString());
+        grad.addColorStop(1, base.adjustBrightness(-0.4).toRGBAString()); // Bottom Shadow
 
         ctx.fillStyle = grad;
         ctx.fill(component.shapePath);
@@ -59,7 +59,7 @@ export class RingRenderer implements ComponentRenderer {
         const angleStep = Math.PI / segmentCount;
         
         ctx.lineWidth = 2;
-        ctx.strokeStyle = base.withBrightness(-0.3).toRGBAString(); // Divider color
+        ctx.strokeStyle = base.adjustBrightness(-0.3).toRGBAString(); // Divider color
         
         // Iterate angles from -PI/2 (top) to PI/2 (bottom)
         for (let i = 1; i < segmentCount; i++) {
@@ -79,7 +79,7 @@ export class RingRenderer implements ComponentRenderer {
             ctx.stroke();
             
             // Highlight
-            const segHighlight = base.withBrightness(0.1).withAlpha(0.3).toRGBAString();
+            const segHighlight = base.adjustBrightness(0.1).withAlpha(0.3).toRGBAString();
             ctx.beginPath();
             ctx.moveTo(x, drawY - 2);
             ctx.quadraticCurveTo(x + w / 2, drawY + curveAmount - 2, x + w, drawY - 2);
