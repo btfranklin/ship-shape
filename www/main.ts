@@ -24,6 +24,8 @@ const rainbowCheck = document.getElementById('rainbowCheck') as HTMLInputElement
 const rainbowControl = document.getElementById('rainbowControl') as HTMLDivElement;
 const cutAwayInput = document.getElementById('cutAwayInput') as HTMLInputElement;
 const cutAwayControl = document.getElementById('cutAwayControl') as HTMLDivElement;
+const cutFromRearCheck = document.getElementById('cutFromRearCheck') as HTMLInputElement;
+const cutFromRearControl = document.getElementById('cutFromRearControl') as HTMLDivElement;
 const ARCHETYPES: readonly ShipArchetype[] = [
     'freight',
     'science',
@@ -38,6 +40,7 @@ let mode = 'full';
 function updateUI() {
     mode = modeSelect.value;
     cutAwayControl.hidden = mode !== 'derelict';
+    cutFromRearControl.hidden = mode !== 'derelict';
     const showRainbowControl = mode !== 'shape';
     rainbowControl.hidden = !showRainbowControl;
     if (!showRainbowControl) {
@@ -163,11 +166,13 @@ function renderFullShip(rng: RNG, theme: HSBAColor, archetype: ShipArchetype) {
     drawCapitalShip(ctx, components, rng, {
         condition: mode === 'ghost' ? 'ghost' : mode === 'derelict' ? 'derelict' : 'normal',
         damageSeed: Number.parseInt(seedInput.value, 10),
-        cutAway: Number(cutAwayInput.value) / 100
+        cutAway: Number(cutAwayInput.value) / 100,
+        cutFromRear: cutFromRearCheck.checked
     });
 }
 
 // Event Listeners
+cutFromRearCheck.addEventListener('change', generate);
 cutAwayInput.addEventListener('input', () => {
     cutAwayControl.querySelector('label')!.textContent = `Cut Away: ${cutAwayInput.value}% of Length`;
     generate();

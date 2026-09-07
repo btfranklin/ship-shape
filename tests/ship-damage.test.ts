@@ -61,3 +61,24 @@ test('some seeds expose long depth steps while others reverse or reduce them', (
   }
   assert.ok(exposed > 0 && reversed > 0 && shallow > 0);
 });
+
+test('rear cuts reverse all depth layers while preserving hull holes and randomness', () => {
+  for (const fraction of [0, 0.25, 0.5, 0.85]) {
+    const frontRng = new RNG(42);
+    const rearRng = new RNG(42);
+    const front = planShipDamage(bounds, [bounds], frontRng, fraction);
+    const rear = planShipDamage(bounds, [bounds], rearRng, fraction, true);
+    assert.equal(frontRng.next(), rearRng.next());
+    for (let i = 0; i < front.length; i++) {
+      const faces = [front[i], front[i].farHull, front[i].machinery];
+      const reverseFaces = [rear[i], rear[i].farHull, rear[i].machinery];
+      faces.forEach((face, layer) => {
+        if (face.kind === 'hole') assert.deepEqual(reverseFaces[layer].edge, face.edge);
+        else face.edge.forEach((point, index) => {
+          assert.equal(reverseFaces[layer].edge[index].x, bounds.x * 2 + bounds.w - point.x);
+          assert.equal(reverseFaces[layer].edge[index].y, point.y);
+        });
+      });
+    }
+  }
+});

@@ -133,3 +133,8 @@ The default is `0.5` (half the ship). The range is `0` through `0.95`; `0` makes
 holes only. The jagged edge varies around this cut position. Holes can cross the
 top or bottom hull edge or stay inside the hull. The playground has a percentage
 control for the cut.
+
+Set `cutFromRear: true` to cut from the rear engine end toward the front.
+The percentage keeps the same meaning. The default is a cut from the front.
+Hull holes stay in the same places when the direction changes. The playground
+provides a **Cut from Rear** checkbox for derelicts.

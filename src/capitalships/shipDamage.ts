@@ -23,7 +23,7 @@ function polygon(points: Point[]): Path2D {
     return path;
 }
 
-export function planShipDamage(bounds: ShipBounds, hulls: readonly ShipBounds[], rng: RNG, cutAway: number): ShipDamage[] {
+export function planShipDamage(bounds: ShipBounds, hulls: readonly ShipBounds[], rng: RNG, cutAway: number, cutFromRear = false): ShipDamage[] {
     const { x, y, w, h } = bounds;
     const damage: DamageEdge[] = [];
     // A torn end and enclosed breaches use the same edge treatment.
@@ -72,12 +72,30 @@ export function planShipDamage(bounds: ShipBounds, hulls: readonly ShipBounds[],
             ? bounds.w * rng.range(0.08, 0.18) * (rng.bool(0.8) ? 1 : -1)
             : 18;
         const middleDepth = deepCut ? depth * rng.range(0.35, 0.65) : 9;
-        return {
+        const planned = {
             ...breach,
             farHull: offsetDamageEdge(breach, bounds, rng, depth),
             machinery: offsetDamageEdge(breach, bounds, rng, middleDepth)
         };
+        if (!cutFromRear || breach.kind !== 'cut') return planned;
+        return {
+            ...mirrorCut(planned, bounds),
+            farHull: mirrorCut(planned.farHull, bounds),
+            machinery: mirrorCut(planned.machinery, bounds)
+        };
     });
+}
+
+/** Reverse the cut and its depth layers without moving the hull holes. */
+function mirrorCut(breach: DamageEdge, bounds: ShipBounds): DamageEdge {
+    const mirror = (point: Point): Point => ({ x: bounds.x * 2 + bounds.w - point.x, y: point.y });
+    const edge = breach.edge.map(mirror);
+    const path = polygon([
+        ...edge,
+        { x: bounds.x - bounds.w, y: bounds.y + bounds.h * 2 },
+        { x: bounds.x - bounds.w, y: bounds.y - bounds.h }
+    ]);
+    return { kind: breach.kind, edge, path, center: mirror(breach.center) };
 }
 
 function offsetDamageEdge(breach: DamageEdge, bounds: ShipBounds, rng: RNG, depth: number): DamageEdge {

@@ -170,7 +170,7 @@ test('ship conditions preserve seeded surfaces and expose real holes', { timeout
       const { RNG, HSBAColor } = await import(`/@fs${repoRoot}/src/greebles/index.ts`);
       const results = [];
       for (const archetype of ['freight', 'science', 'industry', 'passenger', 'combat']) {
-        const render = (condition, legacy = false, damageSeed = 42, cutAway = 0.5) => {
+        const render = (condition, legacy = false, damageSeed = 42, cutAway = 0.5, cutFromRear = false) => {
           const canvas = document.createElement('canvas');
           canvas.width = 1800;
           canvas.height = 1200;
@@ -178,7 +178,7 @@ test('ship conditions preserve seeded surfaces and expose real holes', { timeout
           const rng = new RNG(12345);
           const components = new CompositeShipGenerator().generate(1800, 1200, new HSBAColor(0.55, 0.1, 0.6), rng, archetype, 600);
           if (legacy) for (const component of components) component.draw(ctx, rng);
-          else drawCapitalShip(ctx, components, rng, { condition, damageSeed, cutAway });
+          else drawCapitalShip(ctx, components, rng, { condition, damageSeed, cutAway, cutFromRear });
           return { pixels: ctx.getImageData(0, 0, 1800, 1200).data, next: rng.next() };
         };
         const normal = render('normal');
@@ -189,10 +189,18 @@ test('ship conditions preserve seeded surfaces and expose real holes', { timeout
         const different = render('derelict', false, 12345);
         const holesOnly = render('derelict', false, 42, 0);
         const mostlyGone = render('derelict', false, 42, 0.8);
+        const rearCut = render('derelict', false, 42, 0.8, true);
         const rightEdge = (pixels) => {
           let edge = 0;
           for (let i = 3; i < pixels.length; i += 4) {
             if (pixels[i] > 240) edge = Math.max(edge, ((i - 3) / 4) % 1800);
+          }
+          return edge;
+        };
+        const leftEdge = (pixels) => {
+          let edge = 1800;
+          for (let i = 3; i < pixels.length; i += 4) {
+            if (pixels[i] > 240) edge = Math.min(edge, ((i - 3) / 4) % 1800);
           }
           return edge;
         };
@@ -204,16 +212,18 @@ test('ship conditions preserve seeded surfaces and expose real holes', { timeout
           dark += ghost.pixels[i] + ghost.pixels[i + 1] + ghost.pixels[i + 2];
         }
         results.push({ archetype, removed, retained, lit, dark,
+          rearRemoved: leftEdge(rearCut.pixels) > leftEdge(mostlyGone.pixels) + 200,
           cutLengths: rightEdge(mostlyGone.pixels) < rightEdge(derelict.pixels) - 100 && rightEdge(derelict.pixels) < rightEdge(holesOnly.pixels) - 200,
           normalUnchanged: normal.pixels.every((v, i) => v === legacy.pixels[i]),
           repeatable: derelict.pixels.every((v, i) => v === repeat.pixels[i]),
           different: derelict.pixels.some((v, i) => v !== different.pixels[i]),
-          rngUnchanged: normal.next === ghost.next && ghost.next === derelict.next
+          rngUnchanged: normal.next === ghost.next && ghost.next === derelict.next && rearCut.next === derelict.next
         });
       }
       return results;
     }, REPO_ROOT);
     for (const result of results) {
+      assert.ok(result.rearRemoved, `${result.archetype}: rear cuts must remove the engine end`);
       assert.ok(result.cutLengths, `${result.archetype}: larger cuts must remove more ship length`);
       assert.ok(result.normalUnchanged, `${result.archetype}: normal rendering changed`);
       assert.ok(result.repeatable && result.different, `${result.archetype}: damage seed must control output`);
@@ -228,6 +238,11 @@ test('ship conditions preserve seeded surfaces and expose real holes', { timeout
       await page.locator('#rainbowCheck').check();
       await assertCanvasHasMeaningfulOutput(page.locator('#appCanvas'), condition);
       await assertCanvasTransformIsIdentity(page.locator('#appCanvas'), condition);
+      if (condition === 'derelict') {
+        await page.locator('#cutFromRearCheck').check();
+        await assertCanvasHasMeaningfulOutput(page.locator('#appCanvas'), 'rear cut');
+        await assertCanvasTransformIsIdentity(page.locator('#appCanvas'), 'rear cut');
+      }
     }
   });
 });

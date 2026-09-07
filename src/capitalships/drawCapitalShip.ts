@@ -10,8 +10,10 @@ export type ShipCondition = 'normal' | 'ghost' | 'derelict';
 export interface ShipRenderOptions {
     condition?: ShipCondition;
     damageSeed?: number;
-    /** Fraction of the ship length to cut from the forward end, from 0 to 0.95. */
+    /** Fraction of the ship length to cut from the selected end, from 0 to 0.95. */
     cutAway?: number;
+    /** Start at the rear engine end instead of the forward end. */
+    cutFromRear?: boolean;
 }
 
 /** Draw generated components in order. Damage does not change the components. */
@@ -19,7 +21,7 @@ export function drawCapitalShip(
     ctx: CanvasRenderingContext2D,
     components: readonly (ShipComponent | UnifiedTrunkComponent)[],
     rng: RNG,
-    { condition = 'normal', damageSeed = 0, cutAway = 0.5 }: ShipRenderOptions = {}
+    { condition = 'normal', damageSeed = 0, cutAway = 0.5, cutFromRear = false }: ShipRenderOptions = {}
 ): void {
     if (!Number.isFinite(cutAway) || cutAway < 0 || cutAway > 0.95) {
         throw new RangeError('cutAway must be between 0 and 0.95.');
@@ -45,7 +47,7 @@ export function drawCapitalShip(
             const damageRng = new RNG(damageSeed);
             const supportHulls = body.filter(c => !('type' in c) || c.type === 'hull');
             const hulls = supportHulls.map(c => c.bounds);
-            const damage = planShipDamage(bounds, hulls, damageRng, cutAway);
+            const damage = planShipDamage(bounds, hulls, damageRng, cutAway, cutFromRear);
             const Path = getPath2D();
             const silhouette = new Path();
             for (const component of body) silhouette.addPath(component.shapePath);

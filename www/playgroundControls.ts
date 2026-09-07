@@ -164,6 +164,8 @@ function buildCapitalControls(): void {
     cutInput.value = '50';
     const cutControl = createControlGroup('Cut Away: 50% of Length', cutInput, cutInput.id);
     cutControl.id = 'cutAwayControl';
+    const rearControl = createCheckboxControl('cutFromRearCheck', 'Cut from Rear');
+    rearControl.id = 'cutFromRearControl';
 
 
     controls.replaceChildren(
@@ -185,6 +187,7 @@ function buildCapitalControls(): void {
             { value: 'shape', label: 'Structure (Wireframe)' }
         ]),
         cutControl,
+        rearControl,
         rainbowControl,
         createCommandButton('generateBtn', 'Generate Ship'),
         createSpacer(),
