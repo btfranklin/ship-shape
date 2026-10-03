@@ -9,10 +9,10 @@ screenshot of Ship Shape output.
 - Generation tool: built-in `image_gen`.
 - Conversion: JPEG at quality 90, scaled to 1280 pixels wide with `sips`.
 - Visible title: `Ship Shape`.
-- README link before publication:
-  `![Ship Shape banner](.github/social%20preview/ship_shape_social_preview.jpg "Ship Shape")`.
+- Public README link:
+  `![Ship Shape banner](https://raw.githubusercontent.com/btfranklin/ship-shape/main/.github/social%20preview/ship_shape_social_preview.jpg "Ship Shape")`.
 
-Use the confirmed raw GitHub URL when the repository has a public remote.
+The public image URL uses the repository's `main` branch.
 See [the release guide](../../docs/RELEASING.md) for the publication checklist.
 
 ## Generation Prompt

@@ -1,6 +1,6 @@
 # Ship Shape
 
-![Ship Shape banner](.github/social%20preview/ship_shape_social_preview.jpg "Ship Shape")
+![Ship Shape banner](https://raw.githubusercontent.com/btfranklin/ship-shape/main/.github/social%20preview/ship_shape_social_preview.jpg "Ship Shape")
 
 Ship Shape is a TypeScript library that generates capital spaceships and draws
 them with Canvas 2D. Use it to build complete ships or draw individual hull
@@ -17,18 +17,19 @@ details. It runs in a browser or with a compatible Node canvas renderer.
 
 ## Installation
 
-This repository is being prepared for its first public release. To use a local
-package, run these commands in the repository:
+The npm package is not yet published. Build an archive from the public source:
 
 ```sh
+git clone https://github.com/btfranklin/ship-shape.git
+cd ship-shape
 npm ci
 npm pack
 ```
 
-Then install the archive in your application:
+Then install the archive from an application directory next to the clone:
 
 ```sh
-npm install /path/to/ship-shape-0.1.0.tgz
+npm install ../ship-shape/ship-shape-0.1.0.tgz
 ```
 
 Use one of the public import paths:
@@ -119,7 +120,7 @@ new PanelGreebles(1, 1, theme, 8, true).draw(ctx, new RNG(123));
 ctx.restore();
 ```
 
-See the [interface guide](docs/INTERFACES.md) for separate base and light
+See the [interface guide](https://github.com/btfranklin/ship-shape/blob/main/docs/INTERFACES.md) for separate base and light
 passes, canvas clipping, and component construction.
 
 ## Node / Server-Side Rendering
@@ -163,7 +164,7 @@ npm run dev
 ```
 
 Open the address shown by Vite. The main page has tabs for ships and greebles.
-See the [playground guide](docs/PLAYGROUNDS.md) for the component and greeble
+See the [playground guide](https://github.com/btfranklin/ship-shape/blob/main/docs/PLAYGROUNDS.md) for the component and greeble
 showcases.
 
 ## Development And Documentation
@@ -178,14 +179,14 @@ npm run validate
 After changes to public exports or playground pages, update the generated
 references with `npm run generate:legibility`.
 
-The maintainer and agent guides start at [docs/index.md](docs/index.md):
+The maintainer and agent guides start at [docs/index.md](https://github.com/btfranklin/ship-shape/blob/main/docs/index.md):
 
-- [Development](docs/DEVELOPMENT.md): setup, repository layout, and changes.
-- [Architecture](docs/ARCHITECTURE.md): library layers and dependency rules.
-- [Interfaces](docs/INTERFACES.md): supported APIs and rendering contracts.
-- [Quality](docs/QUALITY.md): validation, browser tests, and CI.
-- [Releasing](docs/RELEASING.md): publication preparation and release workflow.
+- [Development](https://github.com/btfranklin/ship-shape/blob/main/docs/DEVELOPMENT.md): setup, repository layout, and changes.
+- [Architecture](https://github.com/btfranklin/ship-shape/blob/main/docs/ARCHITECTURE.md): library layers and dependency rules.
+- [Interfaces](https://github.com/btfranklin/ship-shape/blob/main/docs/INTERFACES.md): supported APIs and rendering contracts.
+- [Quality](https://github.com/btfranklin/ship-shape/blob/main/docs/QUALITY.md): validation, browser tests, and CI.
+- [Releasing](https://github.com/btfranklin/ship-shape/blob/main/docs/RELEASING.md): publication preparation and release workflow.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](https://github.com/btfranklin/ship-shape/blob/main/LICENSE).

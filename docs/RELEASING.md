@@ -1,79 +1,49 @@
 # Releasing
 
-## Current State
+## Repository And Package
 
-This repository is being prepared for its first public release. It has no Git
-remote. Its npm package name is `ship-shape`, and its current version is
-`0.1.0`. A public registry query on 2026-10-03 returned `E404` for that name.
-This check does not reserve the name. Repeat it immediately before publication.
+The source repository is [btfranklin/ship-shape](https://github.com/btfranklin/ship-shape).
+Its default branch is `main`. The npm package name is `ship-shape`, and its
+current version is `0.1.0`.
 
-CI and draft release notes are configured locally. No npm publishing workflow
-is configured. Local validation does not prove that GitHub Actions, repository
-secrets, or npm permissions are configured.
+The npm package is not yet published. A public registry query on 2026-10-03
+returned `E404` for that name. This check does not reserve the name. Repeat it
+immediately before npm publication.
 
-## Before Making The Repository Public
+The repository uses the MIT license. The author and public repository URLs are
+set in `package.json`. The README uses public GitHub URLs for its banner and
+reference links, so it does not need files outside the repository.
 
-1. Confirm the GitHub owner, repository name, and `main` default branch. Create
-   the public repository and add its address as `origin` when publication is
-   approved.
-2. Add the confirmed `repository`, `homepage`, and `bugs` URLs to `package.json`.
-   Do not use guessed addresses.
-3. Replace the README's local banner link with the same raw GitHub URL format
-   used by nearby public projects:
+## Release Workflows
 
-   ```text
-   https://raw.githubusercontent.com/<owner>/<repo>/main/.github/social%20preview/ship_shape_social_preview.jpg
-   ```
+- [CI](../.github/workflows/ci.yml) validates pushes and pull requests with
+  read-only repository access.
+- [Create Draft Release](../.github/workflows/create-draft-release.yml) creates
+  draft notes for pushed `v*.*.*` tags through Release Notes Scribe. It checks
+  out full history and needs `contents: write` to create the draft.
+- Set the `OPENAI_API_KEY` repository secret before pushing a release tag. The
+  library and its CI tests do not need this key.
+- Review the draft and release evidence before publishing a GitHub Release.
+  Validation and draft creation run independently.
+- No npm publishing workflow is configured. Publishing a GitHub Release does
+  not upload an npm package.
 
-   The local link works in this repository before a remote exists. Use the
-   public link before publishing to npm, because the archive does not include
-   `.github/`. Add a CI badge after the workflow has a confirmed public URL.
-4. Set `.github/social preview/ship_shape_social_preview.jpg` as the GitHub
-   repository social preview. It is a 1280 by 640 JPEG. The
-   [banner source record](../.github/social%20preview/README.md) contains its
-   generation prompt. It is promotional artwork, not library output.
-5. Confirm the MIT license and the author in `package.json`.
-6. Set the `OPENAI_API_KEY` repository secret for draft release notes. The
-   library and its CI tests do not need this key.
-7. Push the reviewed branch when approved. Confirm that CI passes on GitHub
-   before creating a release tag.
+These files follow the shared release format used by the author's public
+projects. Use four-space YAML mapping indentation and the shared sequence
+layout. For a job's `steps`, use twelve spaces before `-` and fourteen before
+item keys such as `with`. Python, PyPI, and PDM workflow rules do not apply to
+this TypeScript package.
 
-## Workflow Alignment
+All instructions and workflow files needed by this project are in this
+repository. A standalone clone does not need a parent workspace or sibling
+repository.
 
-The shared standard is in the parent public-repositories directory:
+## Banner
 
-- `../WORKFLOW_ALIGNMENT.md`
-- `../workflow-alignment.yml`
-- `../workflow-alignment.rb`
-
-These paths start at the repository root. They are local portfolio documents
-and will not be present in a standalone clone of this project.
-
-The relevant rules are:
-
-- `create-draft-release.yml` must match the common workflow. A pushed
-  `v*.*.*` tag creates a draft through Release Notes Scribe.
-- Check out full Git history so the draft can include changes between tags.
-- Review the draft and release evidence before publishing the GitHub Release.
-- Keep validation independent from draft creation.
-- Use four-space YAML mapping indentation and the shared sequence layout. For
-  a job's `steps`, use twelve spaces before `-` and fourteen before item keys
-  such as `with`.
-- Use a narrow, documented YAML-path exception only when a concrete package
-  requirement needs one.
-
-The Python package, PyPI publishing, and PDM verification rules do not apply to
-this TypeScript package. `ci.yml` remains a project-specific workflow. No
-portfolio exception or parent configuration change is required for this setup.
-
-From the parent public-repositories directory, check alignment with:
-
-```sh
-ruby workflow-alignment.rb --repo ship-shape
-```
-
-The checker compares the selected shared workflows. It does not test GitHub
-secrets, registry access, or npm publication.
+The [banner source record](../.github/social%20preview/README.md) contains the
+image-generation prompt. The banner is promotional artwork, not library output.
+The [1280 by 640 JPEG](../.github/social%20preview/ship_shape_social_preview.jpg)
+can also be uploaded as the repository social preview in GitHub settings.
 
 ## Prepare A Release
 
