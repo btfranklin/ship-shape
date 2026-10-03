@@ -336,6 +336,54 @@ test('multiple cutaways use the same paths and RNG state in every paint pass', {
   });
 });
 
+test('prepared surfaces own their theme, palette, and window colors', { timeout: 120000 }, async () => {
+  await auditPage('/index.html', async (page) => {
+    const results = await page.evaluate(async (repoRoot) => {
+      const { RNG, HSBAColor, CapitalShipSurfaceGreebles, CapitalShipWindowsGreebles } = await import(`/@fs${repoRoot}/src/greebles/index.ts`);
+      const windowColor = CapitalShipWindowsGreebles.BLUE_LIGHT;
+      const originalWindow = { h: windowColor.h, s: windowColor.s, b: windowColor.b, a: windowColor.a };
+      const paint = (prepared, method) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 300;
+        const ctx = canvas.getContext('2d');
+        ctx.save();
+        ctx.scale(300, 300);
+        prepared[method](ctx);
+        ctx.restore();
+        return ctx.getImageData(0, 0, 300, 300).data;
+      };
+      const equalPixels = (first, second) => first.every((value, index) => value === second[index]);
+      try {
+        return ['theme', 'palette', 'windows'].map((name) => {
+          const theme = new HSBAColor(0.55, 0.1, 0.6);
+          const lightColor = new HSBAColor(0.3, 1, 1);
+          const surface = new CapitalShipSurfaceGreebles(1, 1, theme, 'science', 'hull', false, false, [lightColor]);
+          const prepared = surface.prepare(new RNG(90125));
+          const beforeBase = paint(prepared, 'drawBase');
+          const beforeEmissive = paint(prepared, 'drawEmissive');
+          if (name === 'theme') theme.b = 0.05;
+          if (name === 'palette') lightColor.h = 0.9;
+          if (name === 'windows') { windowColor.h = 0; windowColor.s = 1; }
+          const later = surface.prepare(new RNG(90125));
+          return {
+            name,
+            baseUnchanged: equalPixels(beforeBase, paint(prepared, 'drawBase')),
+            emissiveUnchanged: equalPixels(beforeEmissive, paint(prepared, 'drawEmissive')),
+            laterChanged: !equalPixels(beforeBase, paint(later, 'drawBase'))
+              || !equalPixels(beforeEmissive, paint(later, 'drawEmissive')),
+          };
+        });
+      } finally {
+        Object.assign(windowColor, originalWindow);
+      }
+    }, REPO_ROOT);
+    for (const result of results) {
+      assert.ok(result.baseUnchanged && result.emissiveUnchanged, `${result.name}: source colors must not change an earlier prepared surface`);
+      assert.ok(result.laterChanged, `${result.name}: a new preparation must use the current colors`);
+    }
+  });
+});
+
 test('small windows keep the ship canvas visible and controls scrollable', { timeout: 120000 }, async () => {
   const viewports = [
     { width: 800, height: 600 },

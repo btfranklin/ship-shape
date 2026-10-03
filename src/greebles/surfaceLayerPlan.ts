@@ -84,10 +84,16 @@ export function createSurfaceLayerPlan(config: SurfaceLayerPlanConfig, rng: RNG)
         (style === 'clean' || style === 'standard' || style === 'industrial') &&
         (config.componentType === 'hull' || config.componentType === 'tower');
     const hasWindows = allowsWindows && rng.bool(knobs.windowChance);
-    const windowColor =
+    const sourceWindowColor =
         config.shipArchetype === 'passenger' || config.shipArchetype === 'science'
             ? CapitalShipWindowsGreebles.BLUE_LIGHT
             : CapitalShipWindowsGreebles.AMBER_LIGHT;
+    const windowColor = new HSBAColor(
+        sourceWindowColor.h,
+        sourceWindowColor.s,
+        sourceWindowColor.b,
+        sourceWindowColor.a
+    );
 
     const hasTrench = planTrench(config, style, knobs, rng);
 

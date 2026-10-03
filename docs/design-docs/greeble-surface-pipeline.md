@@ -21,6 +21,8 @@ Call `draw(context, rng)` when base and emissive layers can render in one pass. 
 Call `prepare(rng)` when another paint step must run between the base and emissive layers. It returns a `PreparedCapitalShipSurface` with `drawBase(context)` and `drawEmissive(context, options?)` methods. Preparation consumes all caller randomness and owns one immutable layer plan. Either paint method can run independently or repeatedly, and neither method consumes the caller's `RNG`.
 
 Each prepared surface owns its plan. Preparing the same `CapitalShipSurfaceGreebles` instance again does not change an earlier prepared surface.
+Preparation copies the theme, palette, and window color values. Later changes to
+the source colors affect a new preparation only.
 
 ## Editing Guidance
 

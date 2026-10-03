@@ -48,7 +48,7 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         const emissiveRenderer = new CapitalShipSurfaceEmissiveRenderer(
             this.xUnits,
             this.yUnits,
-            this.themeColor
+            config.themeColor
         );
 
         return {
@@ -68,12 +68,17 @@ export class CapitalShipSurfaceGreebles implements Drawable {
         return {
             xUnits: this.xUnits,
             yUnits: this.yUnits,
-            themeColor: this.themeColor,
+            themeColor: new HSBAColor(
+                this.themeColor.h,
+                this.themeColor.s,
+                this.themeColor.b,
+                this.themeColor.a
+            ),
             shipArchetype: this.shipArchetype,
             componentType: this.componentType,
             skipBaseFill: this.skipBaseFill,
             isTrunk: this.isTrunk,
-            lightColors: [...this.lightColors],
+            lightColors: this.lightColors.map(({ h, s, b, a }) => new HSBAColor(h, s, b, a)),
             emissiveMode
         };
     }
