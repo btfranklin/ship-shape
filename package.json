@@ -37,9 +37,15 @@
         "check:legibility": "node scripts/generate-legibility-artifacts.mjs --check",
         "prepack": "npm run clean && npm run build"
     },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
+    "keywords": [
+        "canvas",
+        "procedural-generation",
+        "spaceships",
+        "greebles",
+        "typescript"
+    ],
+    "author": "B.T. Franklin",
+    "license": "MIT",
     "devDependencies": {
         "@napi-rs/canvas": ">=1.0.10",
         "@types/node": ">=26.1.0",
