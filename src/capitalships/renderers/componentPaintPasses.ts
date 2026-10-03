@@ -40,7 +40,7 @@ export function drawDeferredEmissiveGreebles(
     context.clip(component.shapePath);
     context.translate(component.bounds.x, component.bounds.y);
     context.scale(UNIT_SCALE, UNIT_SCALE);
-    preparedSurface.drawEmissive(context, { clipPath: component.shapePath });
+    preparedSurface.drawEmissive(context);
     context.restore();
 }
 

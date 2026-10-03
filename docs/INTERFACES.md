@@ -26,6 +26,7 @@ Contract notes:
 - `HSBAColor.shiftHue(shift)` wraps the hue after applying the delta. `HSBAColor.withAlpha(alpha)` replaces alpha with the supplied value.
 - Most drawables expose `draw(ctx, rng)`.
 - `CapitalShipSurfaceGreebles.prepare(rng)` returns a `PreparedCapitalShipSurface`. Use `drawBase(ctx)` and then `drawEmissive(ctx, { clipPath? })` when base and emissive rendering need separate passes.
+- An emissive `clipPath` uses the current canvas coordinates. For a surface drawn under a normalized-unit transform, supply a path in normalized units. An existing canvas clip also applies to the emissive pass.
 - In Node, call `setPath2D()` before any rendering path that creates a `Path2D`.
 
 ## Capital Ships

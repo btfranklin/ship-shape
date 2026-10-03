@@ -40,6 +40,16 @@ export class CapitalShipSurfaceEmissiveRenderer {
     draw(context: CanvasRenderingContext2D, plan: EmissivePlan, options?: { clipPath?: Path2D }): void {
         if (!this.hasEmissiveContent(plan)) return;
 
+        context.save();
+        try {
+            if (options?.clipPath) context.clip(options.clipPath);
+            this.drawLayers(context, plan);
+        } finally {
+            context.restore();
+        }
+    }
+
+    private drawLayers(context: CanvasRenderingContext2D, plan: EmissivePlan): void {
         const transform = typeof context.getTransform === 'function' ? context.getTransform() : null;
         const bounds = transform ? this.getDeviceBounds(context, transform) : null;
         const offscreen = bounds
@@ -81,12 +91,6 @@ export class CapitalShipSurfaceEmissiveRenderer {
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
             }
             ctx.clearRect(0, 0, sized.width ?? 0, sized.height ?? 0);
-            if (options?.clipPath) {
-                if (typeof ctx.setTransform === 'function') {
-                    ctx.setTransform(1, 0, 0, 1, -bounds.left, -bounds.top);
-                }
-                ctx.clip(options.clipPath);
-            }
             applyTransform(ctx);
         };
 

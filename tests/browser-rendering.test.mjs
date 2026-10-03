@@ -206,6 +206,88 @@ test('capital ship archetypes and emissive compositing render with fixed seeds',
   assert.ok((audit.calls['Path2D.rect'] ?? 0) + (audit.calls['Path2D.lineTo'] ?? 0) > 0, 'native Path2D geometry should be exercised');
 });
 
+test('caller transforms preserve ship lights and normalized surface clips', { timeout: 120000 }, async () => {
+  await auditPage('/index.html', async (page) => {
+    const results = await page.evaluate(async (repoRoot) => {
+      const { ShipComponent, drawCapitalShip } = await import(`/@fs${repoRoot}/src/capitalships/index.ts`);
+      const { RNG, HSBAColor } = await import(`/@fs${repoRoot}/src/greebles/index.ts`);
+      const { CapitalShipSurfaceEmissiveRenderer } = await import(`/@fs${repoRoot}/src/greebles/CapitalShipSurfaceEmissiveRenderer.ts`);
+      const theme = new HSBAColor(0.55, 0.1, 0.6);
+      const hull = new ShipComponent({
+        type: 'hull', bounds: { x: 20, y: 20, w: 300, h: 300 },
+        zIndex: 0, color: theme, rng: new RNG(1), shipArchetype: 'passenger',
+      });
+      const countVisible = (canvas) => {
+        const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+        let visible = 0;
+        for (let i = 3; i < pixels.length; i += 4) if (pixels[i] > 0) visible++;
+        return visible;
+      };
+      const shipLights = [];
+      for (const [label, transform] of [
+        ['identity', [1, 0, 0, 1, 0, 0]],
+        ['translated', [1, 0, 0, 1, 500, 0]],
+        ['scaled', [1.5, 0, 0, 1.5, 400, 0]],
+        ['rotated', [0, 1, -1, 0, 500, 30]],
+      ]) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1000;
+        canvas.height = 600;
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(...transform);
+        const drawImage = ctx.drawImage.bind(ctx);
+        let lightPixels = 0;
+        ctx.drawImage = (image, ...args) => {
+          lightPixels += countVisible(image);
+          drawImage(image, ...args);
+        };
+        drawCapitalShip(ctx, [hull], new RNG(90125));
+        const matrix = ctx.getTransform();
+        shipLights.push({ label, lightPixels, transform: [matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f], expected: transform });
+      }
+      const surfaceClips = [];
+      for (const fallback of [false, true]) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 600;
+        canvas.height = 300;
+        const ctx = canvas.getContext('2d');
+        ctx.translate(250, 40);
+        ctx.scale(200, 200);
+        const getTransform = ctx.getTransform;
+        if (fallback) ctx.getTransform = undefined;
+        const clipPath = new Path2D();
+        clipPath.rect(0, 0, 0.5, 1);
+        new CapitalShipSurfaceEmissiveRenderer(1, 1, theme).draw(ctx, {
+          windows: { seeds: [1], color: HSBAColor.fromRGBA(171, 232, 255) },
+          occludersAfterLights: [], occludersAfterWindows: [], occludersAfterCutaways: [],
+        }, { clipPath });
+        ctx.getTransform = getTransform;
+        const pixels = ctx.getImageData(0, 0, 600, 300).data;
+        let outside = 0;
+        for (let i = 3; i < pixels.length; i += 4) {
+          const x = ((i - 3) / 4) % 600;
+          if (pixels[i] > 0 && (x < 250 || x >= 350)) outside++;
+        }
+        const visible = countVisible(canvas);
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0.75, 0.75, 0.05, 0.05);
+        const clipRestored = ctx.getImageData(405, 195, 1, 1).data[3] > 0;
+        surfaceClips.push({ fallback, visible, outside, clipRestored });
+      }
+      return { shipLights, surfaceClips };
+    }, REPO_ROOT);
+    for (const result of results.shipLights) {
+      assert.ok(result.lightPixels > 100, `${result.label}: ship lights must remain visible`);
+      assert.deepEqual(result.transform, result.expected, `${result.label}: drawing must restore the caller transform`);
+    }
+    for (const result of results.surfaceClips) {
+      assert.ok(result.visible > 100, `fallback=${result.fallback}: clipping must retain lights`);
+      assert.equal(result.outside, 0, `fallback=${result.fallback}: the clip must use normalized surface coordinates`);
+      assert.ok(result.clipRestored, `fallback=${result.fallback}: drawing must restore the caller clip`);
+    }
+  });
+});
+
 test('small windows keep the ship canvas visible and controls scrollable', { timeout: 120000 }, async () => {
   const viewports = [
     { width: 800, height: 600 },
