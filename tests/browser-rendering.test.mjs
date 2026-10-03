@@ -288,6 +288,54 @@ test('caller transforms preserve ship lights and normalized surface clips', { ti
   });
 });
 
+test('multiple cutaways use the same paths and RNG state in every paint pass', { timeout: 120000 }, async () => {
+  await auditPage('/index.html', async (page) => {
+    const results = await page.evaluate(async (repoRoot) => {
+      const { RNG, HSBAColor, CutawaySectionGreebles, setPath2D } = await import(`/@fs${repoRoot}/src/greebles/index.ts`);
+      const NativePath = Path2D;
+      const commands = new WeakMap();
+      class RecordedPath extends NativePath {
+        constructor() { super(); commands.set(this, []); }
+        moveTo(...args) { commands.get(this).push(['moveTo', ...args]); super.moveTo(...args); }
+        lineTo(...args) { commands.get(this).push(['lineTo', ...args]); super.lineTo(...args); }
+        closePath() { commands.get(this).push(['closePath']); super.closePath(); }
+      }
+      setPath2D(RecordedPath);
+      try {
+        const cutaways = new CutawaySectionGreebles(2, 2, new HSBAColor(0.55, 0.1, 0.6), 3);
+        return ['draw', 'drawBase', 'drawGlow', 'drawMask'].map((method) => {
+          const canvas = document.createElement('canvas');
+          canvas.width = canvas.height = 400;
+          const ctx = canvas.getContext('2d');
+          const paths = [];
+          const capture = (path) => paths.push(commands.get(path));
+          const clip = ctx.clip.bind(ctx);
+          ctx.clip = (path, ...args) => { capture(path); clip(path, ...args); };
+          const fill = ctx.fill.bind(ctx);
+          if (method === 'drawMask') ctx.fill = (path, ...args) => { capture(path); fill(path, ...args); };
+          const rng = new RNG(11);
+          ctx.save();
+          ctx.scale(200, 200);
+          cutaways[method](ctx, rng);
+          ctx.restore();
+          return { method, paths, next: rng.next() };
+        });
+      } finally {
+        setPath2D(NativePath);
+      }
+    }, REPO_ROOT);
+    const [combined, ...passes] = results;
+    assert.equal(combined.paths.length, 3, 'the fixture must paint three cutaways');
+    for (const pass of passes) {
+      assert.equal(pass.paths.length, combined.paths.length, `${pass.method}: every cutaway must be painted`);
+      for (const [index, path] of pass.paths.entries()) {
+        assert.ok(JSON.stringify(path) === JSON.stringify(combined.paths[index]), `${pass.method}: cutaway ${index} must match the combined pass`);
+      }
+      assert.equal(pass.next, combined.next, `${pass.method}: painting must consume the same caller randomness`);
+    }
+  });
+});
+
 test('small windows keep the ship canvas visible and controls scrollable', { timeout: 120000 }, async () => {
   const viewports = [
     { width: 800, height: 600 },

@@ -40,12 +40,7 @@ export class CutawaySectionGreebles implements Drawable {
         context.save();
         context.fillStyle = 'black';
         for (let i = 0; i < this.cutawayCount; i++) {
-            const w = rng.range(0.3, 0.7);
-            const h = rng.range(0.3, 0.7);
-            const x = rng.range(0, this.xUnits - w);
-            const y = rng.range(0, this.yUnits - h);
-            const path = this.generateClippingPath({ x, y, w, h }, rng);
-            context.fill(path);
+            context.fill(this.createCutaway(rng).path);
         }
         context.restore();
     }
@@ -65,16 +60,10 @@ export class CutawaySectionGreebles implements Drawable {
         const shouldDrawGlow = options.drawGlow || useLegacyGlow;
 
         for (let i = 0; i < this.cutawayCount; i++) {
-            // Generate random rect for the breach area
-            const w = rng.range(0.3, 0.7);
-            const h = rng.range(0.3, 0.7);
-            const x = rng.range(0, this.xUnits - w);
-            const y = rng.range(0, this.yUnits - h);
+            const { rect, path, rng: cutawayRng } = this.createCutaway(rng);
+            const { x, y, w, h } = rect;
 
-            // 1. Generate Path
-            const path = this.generateClippingPath({ x, y, w, h }, rng);
-
-            // 2. Draw Innards (Clipped)
+            // Draw the interior inside the cutaway.
             context.save();
             context.clip(path);
 
@@ -119,11 +108,11 @@ export class CutawaySectionGreebles implements Drawable {
                 context.restore();
 
                 // Draw Innards
-                this.drawInnards(context, { x, y, w, h }, innardsFillColor, rng);
+                this.drawInnards(context, rect, innardsFillColor, cutawayRng);
             }
             context.restore();
 
-            // 3. Outline the Breach (Clean edge)
+            // Draw the cutaway outline.
             if (options.drawBase) {
                 context.lineWidth = 0.002;
                 context.strokeStyle = 'black';
@@ -132,6 +121,23 @@ export class CutawaySectionGreebles implements Drawable {
         }
 
         context.restore();
+    }
+
+    private createCutaway(rng: RNG): {
+        rect: { x: number; y: number; w: number; h: number };
+        path: Path2D;
+        rng: RNG;
+    } {
+        // Each cutaway has its own RNG so interior drawing cannot move later cutaways.
+        const cutawayRng = new RNG(rng.intRange(1, 0x7fffffff));
+        const w = cutawayRng.range(0.3, 0.7);
+        const h = cutawayRng.range(0.3, 0.7);
+        const rect = {
+            x: cutawayRng.range(0, this.xUnits - w),
+            y: cutawayRng.range(0, this.yUnits - h),
+            w, h
+        };
+        return { rect, path: this.generateClippingPath(rect, cutawayRng), rng: cutawayRng };
     }
 
     private drawBacklight(
