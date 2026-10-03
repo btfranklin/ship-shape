@@ -47,6 +47,59 @@ function assertFiniteNumber(value: number, label: string) {
   assert.ok(Number.isFinite(value), `${label} must be finite`);
 }
 
+type RecordedPathCommand =
+  | { name: 'moveTo' | 'lineTo'; x: number; y: number }
+  | { name: 'closePath' };
+
+class RecordingPath2D extends FakePath2D {
+  readonly commands: RecordedPathCommand[] = [];
+
+  override moveTo(x: number, y: number): void {
+    this.commands.push({ name: 'moveTo', x, y });
+  }
+
+  override lineTo(x: number, y: number): void {
+    this.commands.push({ name: 'lineTo', x, y });
+  }
+
+  override closePath(): void {
+    this.commands.push({ name: 'closePath' });
+  }
+}
+
+function assertValidConvexPath(
+  path: RecordingPath2D,
+  bounds: Readonly<{ x: number; y: number; w: number; h: number }>,
+  label: string
+): void {
+  const points = path.commands.flatMap((command) => (
+    command.name === 'closePath' ? [] : [{ x: command.x, y: command.y }]
+  ));
+  assert.equal(path.commands.filter((command) => command.name === 'closePath').length, 1, `${label} must close once`);
+  assert.ok(points.length >= 3, `${label} must have at least three vertices`);
+  for (const [index, point] of points.entries()) {
+    assert.ok(Number.isFinite(point.x) && Number.isFinite(point.y), `${label} vertex ${index} must be finite`);
+    assert.ok(point.x >= bounds.x && point.x <= bounds.x + bounds.w, `${label} vertex ${index} must stay within x bounds`);
+    assert.ok(point.y >= bounds.y && point.y <= bounds.y + bounds.h, `${label} vertex ${index} must stay within y bounds`);
+  }
+
+  let turnDirection = 0;
+  let twiceArea = 0;
+  for (let index = 0; index < points.length; index++) {
+    const current = points[index];
+    const next = points[(index + 1) % points.length];
+    const afterNext = points[(index + 2) % points.length];
+    twiceArea += current.x * next.y - next.x * current.y;
+    const cross = (next.x - current.x) * (afterNext.y - next.y)
+      - (next.y - current.y) * (afterNext.x - next.x);
+    assert.ok(Math.abs(cross) > 1e-9, `${label} must not have a collapsed corner`);
+    const direction = Math.sign(cross);
+    if (turnDirection === 0) turnDirection = direction;
+    assert.equal(direction, turnDirection, `${label} must be convex and non-crossing`);
+  }
+  assert.ok(Math.abs(twiceArea) > 1e-9, `${label} must have non-zero area`);
+}
+
 function projectShipComponent(component: ShipComponent) {
   return {
     type: component.type,
@@ -191,6 +244,63 @@ test('CompositeShipGenerator structure is deterministic for fixed seeds', () => 
       projectShip(second),
       `${archetype} structure changed for the same seed`
     );
+  }
+});
+
+test('top-view weapon geometry stays valid for a 10 by 10 component', () => {
+  setPath2D(RecordingPath2D as unknown as typeof Path2D);
+  try {
+    const rng = new RNG(1);
+    const expectedRng = new RNG(1);
+    expectedRng.choice(['hex', 'chamfer', 'oct']);
+    expectedRng.range(5, 15);
+    expectedRng.range(8, 15);
+    const component = new ShipComponent({
+      bounds: { x: 25, y: 35, w: 10, h: 10 },
+      zIndex: 1,
+      type: 'weapon',
+      variant: 'top-view',
+      color: THEME,
+      rng,
+      shipArchetype: 'combat',
+    });
+    const path = component.shapePath as unknown as RecordingPath2D;
+
+    assert.equal(path.commands.filter((command) => command.name !== 'closePath').length, 8, 'seed 1 must exercise chamfer geometry');
+    assertValidConvexPath(path, component.bounds, '10 by 10 top-view weapon');
+    assert.equal(rng.next(), expectedRng.next(), 'geometry limits must preserve the RNG call count');
+  } finally {
+    setPath2D(FakePath2D as unknown as typeof Path2D);
+  }
+});
+
+test('small generated combat turrets stay inside bounds with valid polygons', () => {
+  setPath2D(RecordingPath2D as unknown as typeof Path2D);
+  try {
+    const components = new CompositeShipGenerator().generate(
+      600,
+      400,
+      THEME,
+      new RNG(17),
+      'combat'
+    );
+    const topViewWeapons = components.filter((component): component is ShipComponent => (
+      component instanceof ShipComponent
+      && component.type === 'weapon'
+      && component.variant === 'top-view'
+    ));
+    const smallTurrets = topViewWeapons.filter((component) => component.bounds.w < 30);
+
+    assert.ok(smallTurrets.length >= 2, 'combat seed 17 should include the two small turrets');
+    for (const [index, component] of topViewWeapons.entries()) {
+      assertValidConvexPath(
+        component.shapePath as unknown as RecordingPath2D,
+        component.bounds,
+        `combat seed 17 top-view weapon ${index} (${component.bounds.w} by ${component.bounds.h})`
+      );
+    }
+  } finally {
+    setPath2D(FakePath2D as unknown as typeof Path2D);
   }
 });
 

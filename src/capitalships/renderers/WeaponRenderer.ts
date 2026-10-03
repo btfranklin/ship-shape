@@ -17,7 +17,7 @@ export class WeaponRenderer implements ComponentRenderer {
             const shape = rng.choice(['hex', 'chamfer', 'oct']);
             
             // Inset slightly so it sits "on" the hull
-            const inset = rng.range(5, 15); // Fixed pixel inset
+            const inset = Math.min(rng.range(5, 15), w * 0.25, h * 0.25);
             const tx = x + inset;
             const ty = y + inset;
             const tw = w - inset*2;
@@ -31,7 +31,7 @@ export class WeaponRenderer implements ComponentRenderer {
                 p.lineTo(tx + tw*0.2, ty + th);
                 p.lineTo(tx, ty + th*0.5);
             } else if (shape === 'chamfer') {
-                const c = rng.range(8, 15); // Fixed pixel chamfer
+                const c = Math.min(rng.range(8, 15), tw * 0.45, th * 0.45);
                 p.moveTo(tx + c, ty);
                 p.lineTo(tx + tw - c, ty);
                 p.lineTo(tx + tw, ty + c);
