@@ -71,6 +71,49 @@ test('all documented playgrounds render through native Chromium canvas APIs', { 
   }
 });
 
+test('playground tabs support keyboard navigation and leave the tab list on Tab', { timeout: 120000 }, async () => {
+  await auditPage('/index.html', async (page) => {
+    const capitalTab = page.locator('#tab-capital-button');
+    const greebleTab = page.locator('#tab-greebles-button');
+
+    const assertActiveTab = async (button, panelId) => {
+      const buttonId = await button.getAttribute('id');
+      assert.equal(await button.getAttribute('aria-selected'), 'true');
+      assert.equal(await button.evaluate((element) => element.tabIndex), 0);
+      const inactiveTab = buttonId === 'tab-capital-button' ? greebleTab : capitalTab;
+      const inactivePanelId = panelId === 'tab-capital' ? 'tab-greebles' : 'tab-capital';
+      assert.equal(await inactiveTab.getAttribute('aria-selected'), 'false');
+      assert.equal(await inactiveTab.evaluate((element) => element.tabIndex), -1);
+      assert.equal(await page.locator(`#${panelId}`).getAttribute('aria-hidden'), 'false');
+      assert.equal(await page.locator(`#${inactivePanelId}`).getAttribute('aria-hidden'), 'true');
+      assert.equal(await page.evaluate(() => document.activeElement.id), buttonId);
+    };
+
+    await capitalTab.focus();
+    await page.keyboard.press('ArrowRight');
+    await assertActiveTab(greebleTab, 'tab-greebles');
+
+    await page.keyboard.press('ArrowRight');
+    await assertActiveTab(capitalTab, 'tab-capital');
+
+    await page.keyboard.press('ArrowLeft');
+    await assertActiveTab(greebleTab, 'tab-greebles');
+
+    await page.keyboard.press('Home');
+    await assertActiveTab(capitalTab, 'tab-capital');
+
+    await page.keyboard.press('End');
+    await assertActiveTab(greebleTab, 'tab-greebles');
+
+    await page.keyboard.press('Tab');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'refreshBtn');
+
+    await capitalTab.click();
+    assert.equal(await capitalTab.getAttribute('aria-selected'), 'true');
+    assert.equal(await page.locator('#tab-capital').getAttribute('aria-hidden'), 'false');
+  });
+});
+
 test('capital ship archetypes and emissive compositing render with fixed seeds', { timeout: 120000 }, async () => {
   const audit = await auditPage('/index.html', async (page) => {
     await page.locator('#appCanvas').waitFor();

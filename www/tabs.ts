@@ -18,11 +18,38 @@ function activateTab(targetId: string) {
     document.dispatchEvent(new CustomEvent('tabchange', { detail: { targetId } }));
 }
 
-tabButtons.forEach((button) => {
+tabButtons.forEach((button, index) => {
     button.addEventListener('click', () => {
         const targetId = button.dataset.tabTarget;
         if (!targetId) return;
         activateTab(targetId);
+    });
+
+    button.addEventListener('keydown', (event: KeyboardEvent) => {
+        let nextIndex: number;
+        switch (event.key) {
+            case 'ArrowRight':
+                nextIndex = (index + 1) % tabButtons.length;
+                break;
+            case 'ArrowLeft':
+                nextIndex = (index - 1 + tabButtons.length) % tabButtons.length;
+                break;
+            case 'Home':
+                nextIndex = 0;
+                break;
+            case 'End':
+                nextIndex = tabButtons.length - 1;
+                break;
+            default:
+                return;
+        }
+
+        event.preventDefault();
+        const nextButton = tabButtons[nextIndex];
+        const targetId = nextButton?.dataset.tabTarget;
+        if (!nextButton || !targetId) return;
+        activateTab(targetId);
+        nextButton.focus();
     });
 });
 
