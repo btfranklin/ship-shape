@@ -74,13 +74,29 @@ ctx.restore();
 
 ## Node / Server-Side Rendering
 
-Rendering uses `Path2D`. In Node, configure the implementation before drawing:
+Install the Node canvas renderer:
 
-```ts
-import { setPath2D } from 'ship-shape/greebles';
-import { Path2D } from 'canvas';
+```sh
+npm install @napi-rs/canvas
+```
+
+Configure `Path2D` before generating or drawing a ship. Save this JavaScript
+example in an `.mjs` file and run it with Node:
+
+```js
+import { writeFileSync } from 'node:fs';
+import { createCanvas, Path2D } from '@napi-rs/canvas';
+import { HSBAColor, RNG, setPath2D } from 'ship-shape/greebles';
+import { CompositeShipGenerator, drawCapitalShip } from 'ship-shape/capitalships';
 
 setPath2D(Path2D);
+const canvas = createCanvas(1200, 800);
+const ctx = canvas.getContext('2d');
+const rng = new RNG(12345);
+const theme = new HSBAColor(0.6, 0.1, 0.6);
+const components = new CompositeShipGenerator().generate(1200, 800, theme, rng, 'science', 600);
+drawCapitalShip(ctx, components, rng);
+writeFileSync('ship.png', canvas.toBuffer('image/png'));
 ```
 
 TypeScript consumers must include the `DOM` library because the public drawing APIs use the standard Canvas 2D types. A Node renderer must supply compatible canvas and `Path2D` implementations at runtime.

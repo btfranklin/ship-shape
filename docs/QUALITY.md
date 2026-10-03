@@ -22,7 +22,7 @@ Use `npm run generate:legibility` after changing public entrypoints, docs invent
 
 - ESLint covers TypeScript hygiene.
 - TypeScript compilation builds the package and declaration files.
-- The package test installs the generated archive in a clean consumer project. It checks all runtime entrypoints and the documented TypeScript configuration.
+- The package test installs the generated archive in a clean consumer project. It checks all runtime entrypoints and the documented TypeScript configuration. It also runs the README Node example with `@napi-rs/canvas` and checks visible output for all three ship conditions.
 - Pure model invariants verify deterministic capital ship generation, greeble planning, bounds, ordering, and structural relationships without treating test doubles as browser-rendering evidence.
 - Real Chromium rendering tests exercise representative capital ship and greeble scenarios against native Canvas 2D and `Path2D`. Unexpected console errors, page errors, request failures, invalid drawing arguments, unbalanced canvas state, transform leakage, and empty or uniform pixel output fail the suite. Semantic instrumentation is the primary oracle; coarse pixel assertions avoid brittle cross-platform screenshot baselines.
 - Structural tests use the TypeScript compiler and module resolver to enforce dependency direction across static imports, re-exports, type-only imports, side-effect imports, import-equals declarations, and string-literal dynamic imports. They also verify required docs, docs indexes, and docs consistency.

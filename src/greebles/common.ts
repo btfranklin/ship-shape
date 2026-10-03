@@ -119,5 +119,5 @@ export function getPath2D(): typeof Path2D {
     if (typeof Path2D !== 'undefined') return Path2D;
     const globalPath2D = (globalThis as unknown as { Path2D?: typeof Path2D }).Path2D;
     if (typeof globalPath2D !== 'undefined') return globalPath2D;
-    throw new Error('Path2D is not available. In Node, call setPath2D(canvas.Path2D) before rendering.');
+    throw new Error('Path2D is not available. In Node, call setPath2D() with a compatible implementation before rendering.');
 }

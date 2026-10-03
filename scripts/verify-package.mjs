@@ -8,6 +8,9 @@ import { fileURLToPath } from 'node:url';
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'ship-shape-package-'));
 const consumerDir = path.join(workspace, 'consumer');
+const canvasVersion = JSON.parse(
+  fs.readFileSync(path.join(rootDir, 'node_modules/@napi-rs/canvas/package.json'), 'utf8')
+).version;
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -58,6 +61,26 @@ try {
       '',
     ].join('\n')
   );
+  const nodeSection = fs.readFileSync(path.join(rootDir, 'README.md'), 'utf8')
+    .split('## Node / Server-Side Rendering')[1]?.split('\n## ')[0];
+  const nodeExample = nodeSection?.match(/```js\n([\s\S]*?)```/)?.[1];
+  assert.ok(nodeExample, 'The README must provide a Node rendering example.');
+  fs.writeFileSync(
+    path.join(consumerDir, 'node-rendering.mjs'),
+    [
+      "import assert from 'node:assert/strict';",
+      nodeExample,
+      'for (const condition of ["normal", "ghost", "derelict"]) {',
+      '  ctx.clearRect(0, 0, canvas.width, canvas.height);',
+      '  drawCapitalShip(ctx, components, new RNG(42), { condition });',
+      '  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;',
+      '  const visible = pixels.reduce((count, value, index) => count + (index % 4 === 3 && value > 0 ? 1 : 0), 0);',
+      '  assert.ok(visible > 1000, `${condition} must draw visible ship pixels in Node.`);',
+      '}',
+      'assert.ok(canvas.toBuffer("image/png").length > 1000, "The Node canvas must encode a PNG.");',
+      '',
+    ].join('\n')
+  );
   fs.writeFileSync(
     path.join(consumerDir, 'types.ts'),
     [
@@ -98,17 +121,18 @@ try {
     )
   );
 
-  run('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', archivePath], {
+  run('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', archivePath, `@napi-rs/canvas@${canvasVersion}`], {
     cwd: consumerDir,
   });
   run(process.execPath, ['runtime.mjs'], { cwd: consumerDir });
+  run(process.execPath, ['node-rendering.mjs'], { cwd: consumerDir });
   run(
     process.execPath,
     [path.join(rootDir, 'node_modules', 'typescript', 'bin', 'tsc'), '-p', 'tsconfig.json'],
     { cwd: consumerDir }
   );
 
-  console.log('Verified the packed runtime and TypeScript entrypoints.');
+  console.log('Verified the packed entrypoints and the documented Node renderer.');
 } finally {
   fs.rmSync(workspace, { recursive: true, force: true });
 }
