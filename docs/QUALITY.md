@@ -9,6 +9,7 @@ This is the single full local and CI validation gate. Install Chromium once with
 ## Focused Commands
 
 - `npm run lint`
+- `npm run typecheck:playgrounds`
 - `npm run build`
 - `npm run test`
 - `npm run test:package`
@@ -21,6 +22,7 @@ Use `npm run generate:legibility` after changing public entrypoints, docs invent
 ## What The Checks Enforce
 
 - ESLint covers TypeScript hygiene.
+- The playground type check applies the strict project TypeScript rules to `www/**/*.ts` and its imported source files. It emits no files.
 - TypeScript compilation builds the package and declaration files.
 - The package test installs the generated archive in a clean consumer project. It checks all runtime entrypoints and the documented TypeScript configuration. It also runs the README Node example with `@napi-rs/canvas` and checks visible output for all three ship conditions.
 - Pure model invariants verify deterministic capital ship generation, greeble planning, bounds, ordering, and structural relationships without treating test doubles as browser-rendering evidence.
