@@ -17,10 +17,12 @@ See [`QUALITY.md`](QUALITY.md) for focused validation commands and recovery guid
 
 ## Core References
 
+- Development setup and package checks: [`DEVELOPMENT.md`](DEVELOPMENT.md)
 - Architecture and dependency rules: [`ARCHITECTURE.md`](ARCHITECTURE.md)
 - Public APIs and generator contracts: [`INTERFACES.md`](INTERFACES.md)
 - Quality gates, CI, and structural checks: [`QUALITY.md`](QUALITY.md)
 - Runtime playground guide: [`PLAYGROUNDS.md`](PLAYGROUNDS.md)
+- Publication preparation and releases: [`RELEASING.md`](RELEASING.md)
 
 ## Design Docs
 

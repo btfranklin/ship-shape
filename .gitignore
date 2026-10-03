@@ -30,6 +30,10 @@ npm-debug.log*
 
 # Generated images
 ship_ts.png
+ship.png
+
+# Local package archives
+*.tgz
 
 # Environment variables
 .env

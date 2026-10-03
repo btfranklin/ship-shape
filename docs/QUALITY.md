@@ -36,6 +36,10 @@ CI installs dependencies and Chromium, then runs:
 
 - `npm run validate`
 
+CI uses read-only repository access. Release notes are created by a separate
+tag-triggered workflow. See [`RELEASING.md`](RELEASING.md) for that workflow and
+the publication checklist.
+
 ## Recovery Path
 
 - Public API changed: update the relevant index exports, run `npm run generate:legibility`, and refresh the interface docs if the contract changed.

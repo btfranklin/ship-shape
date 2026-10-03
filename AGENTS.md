@@ -7,6 +7,7 @@ Start with the docs map, not random source files:
 - Public entrypoints and generator contracts: [`docs/INTERFACES.md`](docs/INTERFACES.md)
 - Runtime pages and visual debugging surfaces: [`docs/PLAYGROUNDS.md`](docs/PLAYGROUNDS.md)
 - Quality gates and legibility checks: [`docs/QUALITY.md`](docs/QUALITY.md)
+- Publication preparation and releases: [`docs/RELEASING.md`](docs/RELEASING.md)
 
 ## Repo Shape
 

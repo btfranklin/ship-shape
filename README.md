@@ -1,76 +1,126 @@
 # Ship Shape
 
-Ship Shape is a procedural Canvas 2D capital ship rendering toolkit. It has two public layers:
+![Ship Shape banner](.github/social%20preview/ship_shape_social_preview.jpg "Ship Shape")
 
-- `ship-shape/capitalships`: procedural capital ship composition and rendering.
-- `ship-shape/greebles`: low-level surface primitives used by capital ships.
+Ship Shape is a TypeScript library that generates capital spaceships and draws
+them with Canvas 2D. Use it to build complete ships or draw individual hull
+details. It runs in a browser or with a compatible Node canvas renderer.
 
-The package is deterministic when you keep a shared `RNG` instance for a single run.
+## Features
 
-## Setup
+- Five ship types: freight, science, industry, passenger, and combat.
+- Hulls, engines, weapons, sensors, storage modules, rings, and towers.
+- Surface detail such as panels, pipes, windows, equipment, and lights.
+- Normal, ghost, and derelict ship conditions.
+- Seeded generation and rendering for repeatable output.
+- ES modules and TypeScript declarations, with no runtime package dependencies.
 
-Install the project dependencies and the Chromium browser used by the runtime tests:
+## Installation
+
+This repository is being prepared for its first public release. To use a local
+package, run these commands in the repository:
 
 ```sh
 npm ci
-npx playwright install chromium
+npm pack
 ```
 
-Run the full local validation gate:
+Then install the archive in your application:
 
 ```sh
-npm run validate
+npm install /path/to/ship-shape-0.1.0.tgz
 ```
 
-## Install And Import Surface
+Use one of the public import paths:
 
-Use the package entrypoints:
+- `ship-shape`: all public exports.
+- `ship-shape/capitalships`: complete ship generation and rendering.
+- `ship-shape/greebles`: surface detail primitives and shared drawing tools.
 
-- `ship-shape`
-- `ship-shape/greebles`
-- `ship-shape/capitalships`
+Deep imports from `src/...` are internal. TypeScript applications must include
+`DOM` in their compiler `lib` setting for the Canvas 2D types.
 
-Deep imports from `src/...` are internal-only and should not be treated as supported API.
+## Browser Quick Start
 
-## Quick Start
+Use this example in a browser application with an ES module build tool:
 
 ```ts
-import { RNG, HSBAColor } from 'ship-shape/greebles';
-import { CompositeShipGenerator } from 'ship-shape/capitalships';
+import { HSBAColor, RNG } from 'ship-shape/greebles';
+import { CompositeShipGenerator, drawCapitalShip } from 'ship-shape/capitalships';
 
-const rng = new RNG(12345);
+const canvas = document.createElement('canvas');
+canvas.width = 1200;
+canvas.height = 800;
+document.body.append(canvas);
+
+const ctx = canvas.getContext('2d');
+if (!ctx) throw new Error('Canvas 2D is not available.');
+
 const theme = new HSBAColor(0.6, 0.1, 0.6);
-const generator = new CompositeShipGenerator();
-
-const components = generator.generate(
+const components = new CompositeShipGenerator().generate(
   canvas.width,
   canvas.height,
   theme,
-  rng,
+  new RNG(12345),
   'science',
   600
 );
 
-for (const component of components) {
-  component.draw(ctx, rng);
-}
+drawCapitalShip(ctx, components, new RNG(67890));
 ```
+
+The generator returns components in drawing order. Reuse the same generation
+seed, render seed, and settings to repeat a ship. For a sequence of ships, keep
+one generation RNG and one render RNG for the sequence. Do not share these RNGs
+with unrelated work. Output can change between package releases.
+
+## Ship Conditions
+
+Use the components from the quick start to draw a ship with its power off or
+its hull damaged:
+
+```ts
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+drawCapitalShip(ctx, components, new RNG(67890), { condition: 'ghost' });
+
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+drawCapitalShip(ctx, components, new RNG(67890), {
+  condition: 'derelict',
+  damageSeed: 42,
+  cutAway: 0.5,
+  cutFromRear: false,
+});
+```
+
+The default condition is `normal`. A ghost ship keeps its hull and surface
+detail with its lights and engines off. A derelict adds torn ends, holes,
+plates, beams, and wires. Holes show the existing canvas background.
+
+Start each comparison with a new render RNG with the same seed. Damage uses a
+separate seed and does not change the generated components.
+
+`cutAway` is the fraction of ship length to remove. Its range is `0` through
+`0.95`, and its default is `0.5`. Set it to `0` for holes only. Set
+`cutFromRear: true` to cut from the engine end.
 
 ## Low-Level Greebles
 
-Greebles draw in normalized units. Scale the context to the desired pixel size first.
+Greebles draw in normalized units. Scale the context to the required pixel size:
 
 ```ts
-import { RNG, HSBAColor, PanelGreebles } from 'ship-shape/greebles';
+import { HSBAColor, PanelGreebles, RNG } from 'ship-shape/greebles';
 
-const rng = new RNG(123);
+const size = 200;
 const theme = HSBAColor.fromRGBA(150, 155, 160);
 
 ctx.save();
 ctx.scale(size, size);
-new PanelGreebles(1, 1, theme, 8, true).draw(ctx, rng);
+new PanelGreebles(1, 1, theme, 8, true).draw(ctx, new RNG(123));
 ctx.restore();
 ```
+
+See the [interface guide](docs/INTERFACES.md) for separate base and light
+passes, canvas clipping, and component construction.
 
 ## Node / Server-Side Rendering
 
@@ -99,58 +149,43 @@ drawCapitalShip(ctx, components, rng);
 writeFileSync('ship.png', canvas.toBuffer('image/png'));
 ```
 
-TypeScript consumers must include the `DOM` library because the public drawing APIs use the standard Canvas 2D types. A Node renderer must supply compatible canvas and `Path2D` implementations at runtime.
+The package test runs this example against the packed library and checks
+visible output for all three ship conditions. A Node renderer must supply
+compatible canvas and `Path2D` implementations at runtime.
 
-## Stable Contracts
+## Playgrounds
 
-- `CompositeShipGenerator.generate(...)` returns components sorted by `zIndex`.
-- `UnifiedTrunkComponent` groups trunk hull sections for capital ships.
-- `ShipComponentOptions` uses `type` to select valid variants and type-specific settings.
-- Callers should keep using the same `RNG` instance within a single render.
+To try the ship controls and greeble galleries locally:
 
-## Developer Commands
-
-- `npm run dev`
-- `npm run validate`
-- `npm run generate:legibility`
-
-See [`docs/QUALITY.md`](docs/QUALITY.md) for focused validation commands and recovery guidance.
-
-## Docs
-
-- Repo map: [`docs/index.md`](docs/index.md)
-- Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-- Interfaces: [`docs/INTERFACES.md`](docs/INTERFACES.md)
-- Quality gates: [`docs/QUALITY.md`](docs/QUALITY.md)
-- Playgrounds: [`docs/PLAYGROUNDS.md`](docs/PLAYGROUNDS.md)
-- Public API inventory: [`docs/generated/public-api-inventory.md`](docs/generated/public-api-inventory.md)
-- Playground inventory: [`docs/generated/playground-inventory.md`](docs/generated/playground-inventory.md)
-
-### Ghost ships and derelicts
-
-Use the same generated components to draw a ship with its power off or its hull damaged:
-
-```ts
-import { drawCapitalShip } from 'ship-shape/capitalships';
-
-drawCapitalShip(ctx, components, rng, { condition: 'ghost' });
-// Or draw a damaged hull with a repeatable damage pattern:
-drawCapitalShip(ctx, components, rng, { condition: 'derelict', damageSeed: 42 });
+```sh
+npm ci
+npm run dev
 ```
 
-Restore the same render RNG state before each draw to keep the surface detail the same.
-The `normal` condition is the default. Ghost ships keep their structure with lights
-and engine glow off. Derelicts add jagged breaks, holes, torn plates, beams, and wires.
-Damage does not change the components. Holes show the background behind the ship.
-The playground includes **Ghost Ship** and **Ruined Derelict** in its Mode control.
+Open the address shown by Vite. The main page has tabs for ships and greebles.
+See the [playground guide](docs/PLAYGROUNDS.md) for the component and greeble
+showcases.
 
-Set `cutAway` to the fraction of ship length to remove from the forward end.
-The default is `0.5` (half the ship). The range is `0` through `0.95`; `0` makes
-holes only. The jagged edge varies around this cut position. Holes can cross the
-top or bottom hull edge or stay inside the hull. The playground has a percentage
-control for the cut.
+## Development And Documentation
 
-Set `cutFromRear: true` to cut from the rear engine end toward the front.
-The percentage keeps the same meaning. The default is a cut from the front.
-Hull holes stay in the same places when the direction changes. The playground
-provides a **Cut from Rear** checkbox for derelicts.
+Install Chromium once, then run the full validation command:
+
+```sh
+npx playwright install chromium
+npm run validate
+```
+
+After changes to public exports or playground pages, update the generated
+references with `npm run generate:legibility`.
+
+The maintainer and agent guides start at [docs/index.md](docs/index.md):
+
+- [Development](docs/DEVELOPMENT.md): setup, repository layout, and changes.
+- [Architecture](docs/ARCHITECTURE.md): library layers and dependency rules.
+- [Interfaces](docs/INTERFACES.md): supported APIs and rendering contracts.
+- [Quality](docs/QUALITY.md): validation, browser tests, and CI.
+- [Releasing](docs/RELEASING.md): publication preparation and release workflow.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
