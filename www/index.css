@@ -273,6 +273,13 @@ button.icon-button svg { width: 16px; height: 16px; fill: currentColor; }
 
 @media (max-width: 1000px) {
     .panel-split { flex-direction: column; }
-    .panel-controls { width: 100%; border-left: none; border-top: 1px solid var(--line); }
+    .panel-main { flex: 0 0 40%; }
+    .panel-controls {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid var(--line);
+    }
     .corner-label { right: 20px; font-size: 1.05em; }
 }

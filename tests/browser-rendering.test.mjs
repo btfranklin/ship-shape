@@ -163,6 +163,65 @@ test('capital ship archetypes and emissive compositing render with fixed seeds',
   assert.ok((audit.calls['Path2D.rect'] ?? 0) + (audit.calls['Path2D.lineTo'] ?? 0) > 0, 'native Path2D geometry should be exercised');
 });
 
+test('small windows keep the ship canvas visible and controls scrollable', { timeout: 120000 }, async () => {
+  const viewports = [
+    { width: 800, height: 600 },
+    { width: 360, height: 640 },
+  ];
+
+  for (const viewport of viewports) {
+    await auditPage('/index.html', async (page) => {
+      await page.setViewportSize(viewport);
+      await page.locator('#appCanvas').waitFor();
+
+      for (const mode of ['full', 'derelict']) {
+        await setControl(page, '#modeSelect', mode);
+        const canvasSize = await page.locator('#appCanvas').evaluate((canvas) => {
+          const { width, height } = canvas.getBoundingClientRect();
+          return { width, height };
+        });
+        assert.ok(
+          canvasSize.width >= 150 && canvasSize.height >= 100,
+          `${viewport.width}x${viewport.height} ${mode} canvas should stay useful: ${canvasSize.width}x${canvasSize.height}`
+        );
+
+        const controls = page.locator('#controls');
+        const canScroll = await controls.evaluate((element) => element.scrollHeight > element.clientHeight);
+        assert.ok(canScroll, `${viewport.width}x${viewport.height} controls should use a scroll area`);
+
+        const controlCount = await page.locator(
+          '#controls input:visible, #controls select:visible, #controls button:visible, #controls a:visible'
+        ).count();
+        for (let index = 0; index < controlCount; index++) {
+          const control = page.locator(
+            '#controls input:visible, #controls select:visible, #controls button:visible, #controls a:visible'
+          ).nth(index);
+          await control.scrollIntoViewIfNeeded();
+          const controlPosition = await control.evaluate((element) => {
+            const controlBounds = element.getBoundingClientRect();
+            const panel = document.querySelector('#controls');
+            const panelBounds = panel.getBoundingClientRect();
+            return {
+              fits: controlBounds.top >= panelBounds.top - 1 && controlBounds.bottom <= panelBounds.bottom + 1,
+              controlTop: controlBounds.top,
+              controlBottom: controlBounds.bottom,
+              panelTop: panelBounds.top,
+              panelBottom: panelBounds.bottom,
+              scrollTop: panel.scrollTop,
+              scrollHeight: panel.scrollHeight,
+              clientHeight: panel.clientHeight,
+            };
+          });
+          assert.ok(
+            controlPosition.fits,
+            `${viewport.width}x${viewport.height} ${mode} control ${index} should be reachable by scrolling: ${JSON.stringify(controlPosition)}`
+          );
+        }
+      }
+    });
+  }
+});
+
 test('ship conditions preserve seeded surfaces and expose real holes', { timeout: 120000 }, async () => {
   await auditPage('/index.html', async (page) => {
     const results = await page.evaluate(async (repoRoot) => {
