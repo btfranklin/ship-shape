@@ -54,5 +54,10 @@ The `prepack` script clears build output and compiles the package. The archive
 contains `dist/`, package metadata, the README, and the license. Playgrounds,
 tests, and banner source files stay in the repository.
 
-See [RELEASING.md](RELEASING.md) for the publication checklist and release
-approval steps.
+For installation in another application, use the
+[README installation guide](https://github.com/btfranklin/ship-shape#installation).
+It explains release URLs and how to keep a locally built archive inside the
+application repository.
+
+See [RELEASING.md](RELEASING.md) for the tag workflow. It builds and checks a
+package archive, then attaches that archive to a draft GitHub Release.

@@ -17,20 +17,83 @@ details. It runs in a browser or with a compatible Node canvas renderer.
 
 ## Installation
 
-The npm package is not yet published. Build an archive from the public source:
+Ship Shape is distributed as built `.tgz` archives through GitHub Releases.
+Install an archive with the npm CLI. The package is not distributed through the
+npm registry, so a registry account or a reserved package name is not needed.
+
+### Install A Published Archive
+
+Open [GitHub Releases](https://github.com/btfranklin/ship-shape/releases) and
+select a published version. Copy the download URL of its
+`ship-shape-<version>.tgz` asset into `SHIP_SHAPE_ARCHIVE_URL`. In your
+application directory, run:
+
+```sh
+npm install --save-exact "$SHIP_SHAPE_ARCHIVE_URL"
+```
+
+Use the exact version URL. Keep the resulting `package.json` and lockfile in
+Git. The archive contains compiled JavaScript and TypeScript declarations, so
+an application does not need to build Ship Shape during installation.
+
+If no published release has a `.tgz` asset, build from source as described below.
+GitHub's automatic source ZIP and source tarball are not the installable package.
+
+### Build An Archive From Source
+
+For this example, keep the Ship Shape clone next to your application directory.
+Run these commands from their common parent directory:
 
 ```sh
 git clone https://github.com/btfranklin/ship-shape.git
 cd ship-shape
+git rev-parse HEAD
 npm ci
 npm pack
 ```
 
-Then install the archive from an application directory next to the clone:
+Record the full commit printed by `git rev-parse HEAD` in your application. Use
+`git checkout --detach <full-commit>` before `npm ci` if a specific source commit
+is required. `npm pack` runs the package build and prints the archive filename.
+It does not publish anything.
+
+Then run these commands in your application directory:
 
 ```sh
-npm install ../ship-shape/ship-shape-0.1.0.tgz
+mkdir -p vendor
+cp ../ship-shape/ship-shape-0.1.0.tgz vendor/
+npm install --save-exact ./vendor/ship-shape-0.1.0.tgz
 ```
+
+Use the filename printed by `npm pack` if the version has changed. Keep the
+archive under `vendor/`, `package.json`, and the lockfile in your application's
+Git repository. A fresh application clone must have the archive its lockfile
+uses. Do not leave its dependency pointing to a temporary directory or a path
+on one developer's computer.
+
+Building the archive needs Node.js 22.13.0 or later in the Node.js 22 release
+line and npm. It does not need Chromium or an API key. Development dependencies
+come from the npm registry during `npm ci`; Ship Shape itself uses archive
+installation.
+
+### Instructions For Coding Agents
+
+When adding Ship Shape to another project:
+
+1. Use the published release's `.tgz` download URL and pin the selected version.
+   If no package asset is available, use the source-build procedure above and
+   record its full commit.
+2. Install the archive inside the application project. Do not run
+   `npm install ship-shape`, copy `src/` into the application, or use a GitHub
+   source ZIP as a package.
+3. Use the public import paths listed below. Include `DOM` in TypeScript's
+   compiler `lib` setting. For Node rendering, follow the
+   [Node example](#node--server-side-rendering) before generating a ship.
+4. Verify that the application can import the package. For npm projects, run
+   `npm ls ship-shape` and the application's normal checks.
+
+Use your application's existing package manager when it is not npm; install
+from the same archive URL or stored archive file and keep its lockfile.
 
 Use one of the public import paths:
 
@@ -185,7 +248,7 @@ The maintainer and agent guides start at [docs/index.md](https://github.com/btfr
 - [Architecture](https://github.com/btfranklin/ship-shape/blob/main/docs/ARCHITECTURE.md): library layers and dependency rules.
 - [Interfaces](https://github.com/btfranklin/ship-shape/blob/main/docs/INTERFACES.md): supported APIs and rendering contracts.
 - [Quality](https://github.com/btfranklin/ship-shape/blob/main/docs/QUALITY.md): validation, browser tests, and CI.
-- [Releasing](https://github.com/btfranklin/ship-shape/blob/main/docs/RELEASING.md): publication preparation and release workflow.
+- [Releasing](https://github.com/btfranklin/ship-shape/blob/main/docs/RELEASING.md): build and attach archives to GitHub Releases.
 
 ## License
 

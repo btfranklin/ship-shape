@@ -13,6 +13,7 @@ This is the single full local and CI validation gate. Install Chromium once with
 - `npm run build`
 - `npm run test`
 - `npm run test:package`
+- `npm run test:package -- ship-shape-0.1.0.tgz` to check an existing archive without rebuilding it.
 - `npm run test:browser`
 - `npm run check:legibility`
 - `npm audit --audit-level=high`
@@ -36,9 +37,9 @@ CI installs dependencies and Chromium, then runs:
 
 - `npm run validate`
 
-CI uses read-only repository access. Release notes are created by a separate
-tag-triggered workflow. See [`RELEASING.md`](RELEASING.md) for that workflow and
-the publication checklist.
+CI uses read-only repository access. A separate tag workflow runs the full
+gate, builds an archive, checks that exact archive, and attaches it to a draft
+GitHub Release. See [`RELEASING.md`](RELEASING.md) for release steps.
 
 ## Recovery Path
 

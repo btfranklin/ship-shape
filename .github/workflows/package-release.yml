@@ -1,0 +1,69 @@
+name: Package Release
+
+on:
+    push:
+        tags:
+            - "v*.*.*"
+
+permissions:
+    contents: read
+
+concurrency:
+    group: package-release-${{ github.ref }}
+    cancel-in-progress: false
+
+jobs:
+    package-release:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: "22"
+                  cache: npm
+
+            - name: Check release version
+              env:
+                  RELEASE_TAG: ${{ github.ref_name }}
+              run: |
+                  node --input-type=module <<'JS'
+                  import assert from 'node:assert/strict';
+                  import fs from 'node:fs';
+                  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+                  const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+                  assert.equal(process.env.RELEASE_TAG, `v${pkg.version}`, 'Tag must match package version.');
+                  assert.equal(lock.version, pkg.version, 'Lockfile version must match.');
+                  assert.equal(lock.packages[''].version, pkg.version, 'Lockfile root version must match.');
+                  assert.equal(pkg.private, true, 'npm registry publication must stay disabled.');
+                  JS
+
+            - run: npm ci
+            - run: npx playwright install --with-deps chromium
+            - run: npm run validate
+
+            - name: Build and check the release archive
+              run: |
+                  npm pack
+                  version=$(node -p "require('./package.json').version")
+                  npm run test:package -- "ship-shape-${version}.tgz"
+
+            - name: Attach the archive to a draft release
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GH_REPO: ${{ github.repository }}
+                  RELEASE_TAG: ${{ github.ref_name }}
+              run: |
+                  version=$(node -p "require('./package.json').version")
+                  archive="ship-shape-${version}.tgz"
+                  if is_draft=$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft); then
+                      if [ "$is_draft" != "true" ]; then
+                          echo "A published release must not be changed."
+                          exit 1
+                      fi
+                      gh release upload "$RELEASE_TAG" "$archive" --clobber
+                  else
+                      gh release create "$RELEASE_TAG" "$archive" --draft --verify-tag --generate-notes
+                  fi

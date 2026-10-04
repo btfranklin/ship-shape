@@ -7,6 +7,12 @@ This directory is the repo-local system of record for architecture, supported in
 - `capitalships`: capital ship composition, renderer selection, and trunk merging.
 - `greebles`: low-level normalized-unit primitives and surface treatments used by capital ships.
 
+## Use The Library
+
+Start with the [README installation guide](https://github.com/btfranklin/ship-shape#installation)
+to add Ship Shape to another application. It includes instructions for coding
+agents, pinned release archives, and source builds.
+
 ## Canonical Commands
 
 - `npm run dev`
@@ -22,7 +28,7 @@ See [`QUALITY.md`](QUALITY.md) for focused validation commands and recovery guid
 - Public APIs and generator contracts: [`INTERFACES.md`](INTERFACES.md)
 - Quality gates, CI, and structural checks: [`QUALITY.md`](QUALITY.md)
 - Runtime playground guide: [`PLAYGROUNDS.md`](PLAYGROUNDS.md)
-- Publication preparation and releases: [`RELEASING.md`](RELEASING.md)
+- GitHub package archives and releases: [`RELEASING.md`](RELEASING.md)
 
 ## Design Docs
 

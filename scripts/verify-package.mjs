@@ -31,20 +31,27 @@ function run(command, args, options = {}) {
 }
 
 try {
-  run('npm', ['run', 'prepack']);
-  const packOutput = run(
-    'npm',
-    ['pack', '--ignore-scripts', '--json', '--pack-destination', workspace],
-    { capture: true }
-  );
-  const parsedPackResult = JSON.parse(packOutput);
-  const packResult = Array.isArray(parsedPackResult)
-    ? parsedPackResult
-    : Object.values(parsedPackResult);
-  assert.equal(packResult.length, 1, 'npm pack must create one archive.');
+  assert.ok(process.argv.length <= 3, 'Usage: npm run test:package -- [archive.tgz]');
+  let archivePath;
+  if (process.argv[2]) {
+    archivePath = path.resolve(process.argv[2]);
+    assert.ok(fs.statSync(archivePath).isFile(), 'The package archive must be a file.');
+  } else {
+    run('npm', ['run', 'prepack']);
+    const packOutput = run(
+      'npm',
+      ['pack', '--ignore-scripts', '--json', '--pack-destination', workspace],
+      { capture: true }
+    );
+    const parsedPackResult = JSON.parse(packOutput);
+    const packResult = Array.isArray(parsedPackResult)
+      ? parsedPackResult
+      : Object.values(parsedPackResult);
+    assert.equal(packResult.length, 1, 'npm pack must create one archive.');
 
-  const archivePath = path.join(workspace, packResult[0].filename);
-  assert.ok(fs.existsSync(archivePath), 'The package archive must exist.');
+    archivePath = path.join(workspace, packResult[0].filename);
+    assert.ok(fs.existsSync(archivePath), 'The package archive must exist.');
+  }
 
   fs.mkdirSync(consumerDir);
   fs.writeFileSync(
